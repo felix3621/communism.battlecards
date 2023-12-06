@@ -4,6 +4,8 @@ import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import livereload from 'rollup-plugin-livereload';
 import { terser } from 'rollup-plugin-terser';
+//import copy from 'rollup-plugin-copy';
+
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -30,6 +32,13 @@ export default {
     !production && serve(),
     !production && livereload('public'),
     production && terser(),
+    commonjs(),/*
+    copy({
+      targets: [
+        { src: 'public/*', dest: 'public/build' }, // Copy all files from public/ to public/build/
+      ],
+      flatten: false,
+    })*/
   ],
   watch: {
     clearScreen: false,

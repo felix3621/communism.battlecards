@@ -26,7 +26,7 @@
     }
     .EXP_FilLevel {
         position: fixed;
-        width:50%;
+        width:0%;
         float:left;
         height: 100%;
         border-radius: 25px;
@@ -35,7 +35,7 @@
     }
     #Panel2 {
         position: fixed;
-        right:0px;
+        right:-25px;
         top:25%;
         left:50%;
         bottom: 5%;
@@ -48,6 +48,95 @@
         transform: translate(0,-45px);
         margin: 0px;
         text-align: center;
+    }
+    #TabItems {
+        display: grid;
+        grid-template-rows: auto auto auto;
+        background-color: rgb(50, 50, 50);
+        outline: 5px black solid;
+        margin-right: 25px;
+        width: 100px;
+        height: 100%;
+        float: right;
+    }
+    #TabItems div {
+        width: 100%;
+        background-color: black;
+        aspect-ratio: 1/1;
+    }
+    #TabItems div:hover {
+        filter: opacity(0.5);
+    }
+    #TabHolder {
+        position: fixed;
+        right:100px;
+        top:25%;
+        left:50%;
+        bottom: 5%;
+    }
+    .Card {
+        position: relative;
+        width: 125px;
+        aspect-ratio: 2.73/3.93;
+        background-image: url("/images/CardFrame.png");
+        background-size: cover;
+        background-repeat: no-repeat;
+        z-index: 100;
+    }
+    .Card p {
+        position: absolute;
+        z-index: 100;
+        margin: 0;
+        color: black;
+        text-align: center;
+        left:0px;
+        right: 0px;
+        top: 0px;
+        bottom:  0px;
+        font-size: 120%;
+        padding: 7px;
+        -webkit-text-stroke-width: 0.5px;
+        -webkit-text-stroke-color: black;
+    }
+    .Card .CardImage {
+        z-index: 0;
+        position: absolute;
+        background-image: url(/images/Cards/BanditBOBCharacter.png);
+        width: 59%;
+        aspect-ratio: 1.66/2.14;
+        background-size: cover;
+        left:50%;
+        top:8%;
+        transform: translate(-50%,0);
+        z-index: 99;
+    }
+    .CardDMG {
+        position: absolute;
+        background-image: url("/images/DMGIcon.png");
+        width: 35px;
+        aspect-ratio: 1/1;
+        background-size: cover;
+        bottom: 0px;
+        transform: translate(-40%,20%);
+
+    }
+    .Card .CardHealth {
+        position: absolute;
+        background-image: url("/images/HealthIcon.png");
+        width: 35px;
+        aspect-ratio: 1/1;
+        background-size: cover;
+        bottom: 0px;
+        right:0px;
+        transform: translate(40%,20%);
+    }
+    .Card .CardCost {
+        position: absolute;
+        background-image: url("/images/EnergyIcon.png");
+        width: 35px;
+        aspect-ratio: 1/1;
+        background-size: cover;
+        transform: translate(-40%,-20%);
     }
 </style>
 <h1 class="Title" style="margin: 0px;">Welcome to BattleCards!</h1>
@@ -62,11 +151,23 @@
 <!--Select Match and Player Avatar-->
 <div id="Panel1">
 </div>
+
 <!--Select Deck and do other actions whit cards-->
 <div id="Panel2">
-    <h1 class="PanelTitle">Card Deck</h1>
-    <div id="TabItems"></div>
-    <div></div>
+    <h1 class="PanelTitle"><b>Card Deck</b></h1>
+    <div id="TabItems">
+        <div></div>
+    </div>
+    <div id="TabHolder">
+        <div id="CardDeck" style="width: 100%; height:100%;">
+            <div class="Card">
+                <div class="CardImage"></div>
+                <div class="CardDMG"><p>2</p></div>
+                <div class="CardHealth"><p>6</p></div>
+                <div class="CardCost"><p>4</p></div>
+            </div>
+        </div>
+    </div>
 </div>
 
 
@@ -88,7 +189,7 @@
         });
         let text = await user.json();
         console.log(text);*/
-        SetExpFilLevel(Exp);
+        SetExpFilLevel(100);
     })
 
     function SetExpFilLevel(Level) {
