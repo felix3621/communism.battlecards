@@ -1,38 +1,118 @@
-# create-svelte
+# Battlecards
 
-Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/master/packages/create-svelte).
+Start dev-website using:  `npm run dev`
 
-## Creating a project
 
-If you're seeing this, you've probably already done this step. Congrats!
 
-```bash
-# create a new project in the current directory
-npm create svelte@latest
+# website documentation
 
-# create a new project in my-app
-npm create svelte@latest my-app
-```
+## GamePage
 
-## Developing
+### Game Rules
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+can only place cards, if there is enough energy for that card
 
-```bash
-npm run dev
+players use energy to place out cards, different cards use different amount of energy
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+You get 2 cards from your deck each round
 
-## Building
+you can only attack on your turn
 
-To create a production version of your app:
+when you are done you press done, then it becomes the other players turn
 
-```bash
-npm run build
-```
+the cards have different stats
 
-You can preview the production build with `npm run preview`.
+can only attack the player avatar when there is only 1 enemy cards or less out
 
-> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
+the player avatar can also attack but it cost a little energy
+
+time limit on each turn
+
+select which card to attack
+
+attacking using cards do not cost energy
+
+attacking using cards happens at the end of the turn
+
+
+### GameScreen
+
+you on bottom, enemy on top
+
+hand is at complete bottom
+
+energy on right side bottom
+
+player avatar above hand
+
+cards get placed on battlefield (middle of screen)
+
+enemy mirrored of you, but hand is not visible
+
+end-turn middle-right
+
+
+## HomePage
+
+### Start a match
+
+- Player can do a quick match
+
+- join selected match
+
+- Possibly tournament mode that certain roles can activate
+
+
+### Select Player Cards
+
+Choose what cards to put in deck
+
+can have multiple of same cards
+
+max amount of cards in deck (20, may change)
+
+
+### Select Player Avatar
+
+Select the player character out of those you have unlocked
+
+
+### Cards And Player Avatar
+
+avatar unlocked by leveling up
+
+cards received after each round if it is a win
+
+display everything in a "collection book"
+
+scrap cards to receive magic dust, which is used to craft cards
+
+
+### Level System
+
+gain level each game, dependent on win/loss, and game shit
+
+also gain magic dust after each game
+
+gain extra magic dust and a few cards/avatars when leveling up
+
+
+
+## Settings (require password to modify)
+
+Change display name
+
+change password
+
+
+
+## Login
+
+Signup
+- username
+- display name
+- password
+
+Login
+- username
+- password
