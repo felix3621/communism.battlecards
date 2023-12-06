@@ -52,7 +52,7 @@ enemy mirrored of you, but hand is not visible
 end-turn middle-right
 
 
-## HomePage
+## HomePage (index)
 
 ### Start a match
 
