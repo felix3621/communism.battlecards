@@ -4,7 +4,8 @@ import { defineConfig } from 'vite';
 export default defineConfig({
     server: {
         proxy: {
-			'/api_chat': 'ws://localhost:3001'
+			'/api_chat': 'ws://localhost:3001',
+			'/api': 'http://localhost:5172'
         }
     },
 	plugins: [sveltekit()]
