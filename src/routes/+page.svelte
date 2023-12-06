@@ -78,14 +78,9 @@
         position: relative;
         width: 125px;
         aspect-ratio: 2.73/3.93;
-        background-image: url("/images/CardFrame.png");
-        background-size: cover;
-        background-repeat: no-repeat;
-        z-index: 100;
     }
     .Card p {
         position: absolute;
-        z-index: 100;
         margin: 0;
         color: black;
         text-align: center;
@@ -93,13 +88,12 @@
         right: 0px;
         top: 0px;
         bottom:  0px;
-        font-size: 120%;
-        padding: 7px;
+        font-size: 100%;
         -webkit-text-stroke-width: 0.5px;
         -webkit-text-stroke-color: black;
+        padding: 7px;
     }
     .Card .CardImage {
-        z-index: 0;
         position: absolute;
         background-image: url(/images/Cards/BanditBOBCharacter.png);
         width: 59%;
@@ -108,9 +102,15 @@
         left:50%;
         top:8%;
         transform: translate(-50%,0);
-        z-index: 99;
     }
-    .CardDMG {
+    .Card .CardFrame {
+        position: absolute;
+        width: 100%;
+        background-image: url("/images/CardFrame.png");
+        height: 100%;
+        background-size: cover;
+    }
+    .Card .CardDMG {
         position: absolute;
         background-image: url("/images/DMGIcon.png");
         width: 35px;
@@ -138,6 +138,32 @@
         background-size: cover;
         transform: translate(-40%,-20%);
     }
+    .Card .CardName {
+        position: absolute;
+        top:52%;
+        left:21%;
+        right:21%;
+        bottom: 39%;
+    }
+    .Card .CardDescription {
+        position: absolute;
+        top:70%;
+        left:21%;
+        right:21%;
+        bottom: 5%;
+    }
+    .Card p1 {
+        position: absolute;
+        color: white;
+        text-align: center;
+        left:0px;
+        right: 0px;
+        top: 0px;
+        bottom:  0px;
+    }
+    .CardDeck {
+        
+    }
 </style>
 <h1 class="Title" style="margin: 0px;">Welcome to BattleCards!</h1>
 <div class="EXP_Bar">
@@ -162,9 +188,12 @@
         <div id="CardDeck" style="width: 100%; height:100%;">
             <div class="Card">
                 <div class="CardImage"></div>
+                <div class="CardFrame"></div>
                 <div class="CardDMG"><p>2</p></div>
                 <div class="CardHealth"><p>6</p></div>
                 <div class="CardCost"><p>4</p></div>
+                <div class="CardName"><p1>Name!</p1></div>
+                <div class="CardDescription"><p1 style="font-size: 80%;">Description is broken and weird</p1></div>
             </div>
         </div>
     </div>
