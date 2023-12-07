@@ -18,7 +18,7 @@
         grid-template-rows: auto;
         outline: 3px black solid;
     }
-    #DisplayEnergy img {
+    :global(#DisplayEnergy img) {
         height: 100%;
     }
     #MidleLine {
@@ -26,7 +26,8 @@
         width: 100%;
         top: 50%;
         transform: translate(0,-50%);
-        left:0
+        left:0;
+        margin: 0;
     }
     #EnemyAvatar {
         position: fixed;
@@ -52,32 +53,131 @@
         aspect-ratio: 1.66/2.14;
         background-size: contain;
     }
-    :global(#EnemyHand) {
+    #EnemyOnField {
         position: fixed;
         left:25%;
-        bottom:30%;
+        bottom:50%;
+        top:25%;
+        right:25%;
+        padding: 5px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+        grid-template-rows: auto;
+        grid-gap: 1%;
+        place-items: center;
+    }
+    #PlayerOnField {
+        position: fixed;
+        left:25%;
+        bottom:26%;
         top:50%;
         right:25%;
         padding: 5px;
         display: grid;
-        grid-template-rows: repeat(1, minmax(100px, 100%));;
-        grid-template-columns: repeat(5, minmax(100px, 100px));
-        grid-gap: 5%;
+        grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+        grid-gap: 1%;
         place-items: center;
     }
     :global(.CharacterStone) {
+        height: 100%;
+        max-width: 100%;
+        max-height: 130px;
+        aspect-ratio: 1.66/2.14;
     }
-    
+    #EnemyHand {
+        position: fixed;
+        left:0%;
+        bottom:50%;
+        top:45px;
+        right:75%;
+        padding: 1%;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+        grid-template-rows: auto auto auto auto;
+        grid-gap: 5%;
+    }
+    #PlayerHand {
+        position: fixed;
+        left:0%;
+        bottom:0%;
+        top:50%;
+        right:75%;
+        padding: 1%;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(75px, 0.5fr));
+        grid-template-rows: auto auto auto auto;
+        grid-gap: 5%;
+        overflow-y: auto;
+        overflow-x: hidden;
+
+    }
+    #PlayerHand::-webkit-scrollbar {
+        width: 10px;
+    }
+
+    #PlayerHand::-webkit-scrollbar-thumb {
+        background-color: rgb(0, 0, 0);
+        border-radius: 5px;
+        border: 2px solid rgb(75, 75, 75);
+    }
+
+    #PlayerHand::-webkit-scrollbar-track {
+        background-color: rgb(50, 50, 50);
+        border-radius: 5px;
+        border: 2px solid rgb(127,127,127);
+    }
+    :global(.Selected) {
+        box-shadow: 0px 0px 20px 2px rgb(255, 255, 0);
+    }
+
+
+
+    #EndTurn {
+        position: fixed;
+        right:0px;
+        top:50%;
+        transform: translate(-25%,-50%) scale(1.5,1.5);
+        background-color: rgb(50, 50, 50);
+        color: white;
+    }
+    #TimeDispaly {
+        position: fixed;
+        right:0px;
+        top:50%;
+        transform: translate(-20px,-70px)
+    }
+    :global(.CardAnimation) {
+        animation: MoveToHand 3s;
+        height: 100px;
+    }
+    @keyframes MoveToHand {
+        0% {
+            position: fixed;
+            right:0;
+            bottom:50px;
+            transform: translate(100%);
+        }
+        100% {
+            position: fixed;
+            right:100%;
+            bottom:50px;
+            transform: translate(100%);
+        }
+    }
 </style>
 <hr id="MidleLine">
 <div id="EnemyAvatar"></div>
 <div id="PlayerAvatar"></div>
 <div id="EnemyHand"></div>
 <div id="PlayerHand"></div>
+<div id="EnemyOnField"></div>
+<div id="PlayerOnField"></div>
 <div id="DisplayEnergy">
     <img src="/images/EnergyIcon.png">
     <img src="/images/EnergyIcon.png">
 </div>
+<button id="EndTurn">EndTurn</button>
+<h1 id="TimeDispaly">2:00</h1>
 <div id="TopBar"><h1 style="margin: 0; text-align:center; color:white">Battle!</h1></div>
 
 <script>
@@ -119,15 +219,18 @@
         socket.onerror = (error) => {
             console.error('WebSocket error:', error);
         };
-        for (let i = 0; i < 4; i++) {
-            var Card = CreateCharacterStone(10,10,"MissingCharacter.png");
-            document.getElementById("EnemyHand").appendChild(Card);
+        for (let i = 0; i < 3; i++) {
+            PlayerOnField.push(new Stone(2,2,"MissingCharacter.png",document.getElementById("PlayerOnField")));
+            PlayerOnField.push(new Stone(2,2,"MissingCharacter.png",document.getElementById("EnemyOnField")));
         }
-        var Card = CreateCharacterStone(10,10,"MissingCharacter.png");
-        document.getElementById("EnemyHand").appendChild(Card);
+        for (let i = 0; i < 1; i++) {
+            PlayerHand.push(new Card("Name","Description",4,2,5,"MissingCharacter.png"));
+        }
 
         SetAllFontSizeInArray(FontSizeAdjusterArray);
         window.addEventListener('resize', () => SetAllFontSizeInArray(FontSizeAdjusterArray));
+
+        SetEnergyLevel(10);
     })
 
 
@@ -160,6 +263,27 @@
         FontSizeAdjusterArray.push(CharacterStoneHealthText);
 
         return CharacterStone;
+    }
+
+    function SetEnergyLevel(Amount) {
+        var EnergyHolder = document.getElementById("DisplayEnergy");
+        for (let i = 0; i < EnergyHolder.children.length || i < Amount; i++) {
+            if (i>= EnergyHolder.children.length && i < Amount) { // Create Child
+                var EnergyCrystal = document.createElement("img");
+                EnergyCrystal.src = "/images/EnergyIcon.png";
+                document.getElementById("DisplayEnergy").appendChild(EnergyCrystal);
+            } else if (i >= Amount) { // Remove Object
+                EnergyHolder.children[i].remove();
+            }
+        }
+    }
+
+    //Create Empty card 
+    function CreateEmptyCard() {
+        //THE Card
+        var Card = document.createElement("div");
+        Card.classList.add("EmptyCard");
+        return Card;
     }
     //Create Card
     function CreateCard(Name, Description, Cost, Attack, Health, Texture) {
@@ -253,6 +377,48 @@
             
             fontSize = fontSize * (scaleFactor * 0.575);
             Element.style.fontSize = `${fontSize}rem`;
+        }
+    }
+
+    class Card {
+        constructor(Name,Description,Cost,Attack,Health,Texture) {
+            this.Cost = Cost;
+            this.Health = Health;
+            this.Attack = Attack;
+            this.Texture = Texture;
+            this.Name = Name;
+            this.Description = Description;
+
+            this.Body = CreateEmptyCard();
+            document.body.appendChild(this.Body);
+            this.Body.classList.add("CardAnimation");
+            this.Body.addEventListener('animationend', () => {
+                // Add your code here to run when the animation is complete
+                this.Body.remove();
+                this.Body = CreateCard(Name,Description,Cost,Attack,Health,Texture);
+                document.getElementById("PlayerHand").appendChild(this.Body);
+
+                setTimeout(function() {SetAllFontSizeInArray(FontSizeAdjusterArray)}, 100);
+            });
+        }
+        Remove() {
+            this.Body.remove();
+        }
+    } 
+    class Stone {
+        constructor(Attack,Health,Texture, ParentNode, ) {
+            this.Health = Health;
+            this.Attack = Attack;
+            this.Texture = Texture;
+
+            this.Body = CreateCharacterStone(Attack,Health,Texture);
+            ParentNode.appendChild(this.Body);
+
+            this.UpdateVisuals(0,0);
+        }
+        UpdateVisuals(Attack = this.Health,Health = this.Health) {
+            this.Body.getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = Attack;
+            this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = Attack;
         }
     }
 </script>

@@ -117,7 +117,7 @@
     aspect-ratio: 1/1;
     background-size: cover;
     bottom: 0px;
-    transform: translate(-40%,20%);
+    transform: translate(0%,20%);
 
 }
 .CharacterStone .CharacterStoneHealth {
@@ -128,5 +128,11 @@
     background-size: cover;
     bottom: 0px;
     right:0px;
-    transform: translate(40%,20%);
+    transform: translate(0%,20%);
+}
+.EmptyCard {
+    position: relative;
+    aspect-ratio: 2.73/3.93;
+    background-size: cover;
+    background-image: url(images/EmptyCard.png);
 }

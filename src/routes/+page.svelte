@@ -88,7 +88,7 @@
         overflow-y: auto;
         overflow-x: hidden;
     }
-        #CardDeck::-webkit-scrollbar {
+    #CardDeck::-webkit-scrollbar {
         width: 10px;
     }
 
