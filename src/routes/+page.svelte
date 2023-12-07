@@ -105,32 +105,42 @@
     }
     #SettingsMenu {
         position: fixed;
-        right: -8.75px;
-        top:-8.75px;
+        right: 0px;
+        top:0px;
+    }
+    #SettingsMenu div:not(#SettingsCog) {
+        position: absolute;
+        top: 0px;
+        right:0px;
+        background-color: rgb(50, 50, 50);
+        outline: 2px gray solid;
+        padding: 5px;
+        padding-top: 68px;
+    }
+    #SettingsCog {
+        position: fixed;
+        right:  -15px;
+        top:    -20px;
+        width: 50px;
+        height:50px;
+        background-color: rgb(50, 50, 50);
+        padding: 5px 5px 5px 5px;
+        border: 2 gray solid;
+        margin-top: 5px;
         background-color: rgb(50, 50, 50);
         border-radius: 50%;
         border: 5px solid black;
         background-image: url("/images/settings.png");
-        width: 50px;
-        height:50px;
         background-size: contain;
-        z-index: 99;
     }
-    #SettingsMenu div {
-        z-index: 98;
-        position: absolute;
-        top: 50px;
-        right:2px;
-        background-color: rgb(50, 50, 50);
-        width: fit-content;
-        height: fit-content;
-        padding: 5px 5px 5px 5px;
-        border: 2 gray solid;
-        margin-top: 5px;
+    #SettingsCog:hover {
+        filter: opacity(0.5);
     }
+
     #SettingsMenu a {
         color: white;
         cursor: pointer;
+        text-decoration: none;
     }
     #SettingsMenu a:hover {
         color: rgb(150, 150, 150);
@@ -144,10 +154,17 @@
     <div class="EXP_FilLevel"></div>
 </div>
 <div id="SettingsMenu">
-    <div>
+    <div id="SettingsDropDown" style="display: none;">
         <a href="/settings">Settings</a>
         <a on:click={() => logOut()}>Logout</a>
     </div>
+    <div id="SettingsCog" on:click={() => {
+        if(document.getElementById("SettingsDropDown").style.display=="none"){
+            document.getElementById("SettingsDropDown").style.display="block";
+        } else{
+            document.getElementById("SettingsDropDown").style.display="none";
+        }
+    }}></div>
 </div>
 
 <div id="DisplayPlayer">

@@ -26,7 +26,7 @@ requires:
 - display_name
 
 Return:
-- DEVTEST
+- idk, just check the login
 
 information:
 - create an account, and log the client in
