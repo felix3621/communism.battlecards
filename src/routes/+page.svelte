@@ -74,113 +74,80 @@
         left:50%;
         bottom: 5%;
     }
-    :global(.Card) {
-        position: relative;
-        aspect-ratio: 2.73/3.93;
-    }
-    :global(.Card p) {
-        position: relative;
-        margin: 0;
-        color: black;
-        text-align: center;
-        left:50%;
-        top: 50%;
-        transform: translate(-50%,-50%);
-        width: fit-content;
-        height: fit-content;
-        -webkit-text-stroke-width: 0.5px;
-        -webkit-text-stroke-color: black;
-        user-select: none;
-        overflow: hidden;
-        white-space: nowrap;
-    }
-    :global(.Card .CardImage) {
-        position: absolute;
-        background-image: url(/images/Cards/BanditBOBCharacter.png);
-        width: 59%;
-        aspect-ratio: 1.66/2.14;
-        background-size: cover;
-        left:50%;
-        top:8%;
-        transform: translate(-50%,0);
-    }
-    :global(.Card .CardFrame) {
-        position: absolute;
-        width: 100%;
-        background-image: url("/images/CardFrame.png");
-        height: 100%;
-        background-size: cover;
-    }
-    :global(.Card .CardDMG) {
-        position: absolute;
-        background-image: url("/images/DMGIcon.png");
-        width: 40%;
-        aspect-ratio: 1/1;
-        background-size: cover;
-        bottom: 0px;
-        transform: translate(-40%,20%);
-
-    }
-    :global(.Card .CardHealth) {
-        position: absolute;
-        background-image: url("/images/HealthIcon.png");
-        width: 40%;
-        aspect-ratio: 1/1;
-        background-size: cover;
-        bottom: 0px;
-        right:0px;
-        transform: translate(40%,20%);
-    }
-    :global(.Card .CardCost) {
-        position: absolute;
-        background-image: url("/images/EnergyIcon.png");
-        width: 40%;
-        aspect-ratio: 1/1;
-        background-size: cover;
-        transform: translate(-40%,-20%);
-    }
-    :global(.Card .CardName) {
-        position: absolute;
-        top:52%;
-        left:21%;
-        right:21%;
-        bottom: 39%;
-    }
-    :global(.Card .CardDescription) {
-        position: absolute;
-        top:70%;
-        left:21%;
-        right:21%;
-        bottom: 5%;
-    }
-    :global(.Card p1) {
-        position: absolute;
-        color: white;
-        text-align: center;
-        left:0px;
-        right: 0px;
-        top: 0px;
-        bottom:  0px;
-        user-select: none;
-    }
     #CardDeck {
         position: absolute;
         bottom: 0px;
         top:0px;
         left:0px;
         right:0px;
-        padding: 15px;
+        padding: 5%;
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
         grid-template-rows: auto auto auto auto;
-        grid-gap: 5%;
+        grid-gap:10%;
         overflow-y: auto;
         overflow-x: hidden;
+    }
+        #CardDeck::-webkit-scrollbar {
+        width: 10px;
+    }
+
+    #CardDeck::-webkit-scrollbar-thumb {
+        background-color: rgb(0, 0, 0);
+        border-radius: 5px;
+        border: 2px solid rgb(75, 75, 75);
+    }
+
+    #CardDeck::-webkit-scrollbar-track {
+        background-color: rgb(50, 50, 50);
+        border-radius: 5px;
+        border: 2px solid rgb(127,127,127);
+    }
+    #SettingsMenu {
+        position: fixed;
+        right: -8.75px;
+        top:-8.75px;
+        background-color: rgb(50, 50, 50);
+        border-radius: 50%;
+        border: 5px solid black;
+        background-image: url("/images/settings.png");
+        width: 50px;
+        height:50px;
+        background-size: contain;
+        z-index: 99;
+    }
+    #SettingsMenu div {
+        z-index: 98;
+        position: absolute;
+        top: 50px;
+        right:2px;
+        background-color: rgb(50, 50, 50);
+        width: fit-content;
+        height: fit-content;
+        padding: 5px 5px 5px 5px;
+        border: 2 gray solid;
+        margin-top: 5px;
+    }
+    #SettingsMenu a {
+        color: white;
+        cursor: pointer;
+    }
+    #SettingsMenu a:hover {
+        color: rgb(150, 150, 150);
+    }
+    #SettingsMenu a:active {
+        color: rgb(175, 175, 175);
     }
 </style>
 <h1 class="Title" style="margin: 0px;">Welcome to BattleCards!</h1>
 <div class="EXP_Bar">
     <div class="EXP_FilLevel"></div>
+</div>
+<div id="SettingsMenu">
+    <div>
+        <a href="/settings">Settings</a>
+        <a on:click={() => logOut()}>Logout</a>
+    </div>
 </div>
 
 <div id="DisplayPlayer">
@@ -208,30 +175,39 @@
     import { onMount } from "svelte";
     var Level = 1;
     var Exp = 0;
+    var FontSizeAdjusterArray = new Array();
 
     onMount(async() => {
         const user = await fetch(window.location.origin+'/api/account/login', {
             method: 'POST',
             headers: {
 	    		'Content-Type': 'application/json',
-	    	},
-            body: JSON.stringify({
-	    		username: "testuser1",
-                password: "test",
-	    	}),
+	    	}
         });
         if (user.ok) {
             console.log(await user.json());
         } else {
-            console.warn("invalid credentials");
+            window.location.href = '/login';
         }
         SetExpFilLevel(100);
         for (let i = 0; i < 20; i++) {
-            var Card = CreateCard("","",0,0,0,"MissingCharacter.png");
+            var Card = CreateCard("test","testtttttttttttttttt",10,10,10,"MissingCharacter.png");
             document.getElementById("CardDeck").appendChild(Card);
         }
-        
+        SetAllFontSizeInArray(FontSizeAdjusterArray);
+        window.addEventListener('resize', () => SetAllFontSizeInArray(FontSizeAdjusterArray));
     })
+    
+    async function logOut() {
+        console.log("Hi")
+        let test = await fetch(window.location.origin+'/api/account/logout', {
+            method: 'POST',
+            headers: {
+	    		'Content-Type': 'application/json',
+	    	}
+        });
+        window.location.href = '/login';
+    }
 
     function SetExpFilLevel(Level) {
         var Bar = document.getElementsByClassName("EXP_FilLevel");
@@ -248,7 +224,7 @@
         //Character In the midle
         var CardImage = document.createElement("div");
         CardImage.classList.add("CardImage");
-        CardImage.style.backgroundImage = "url(/images/Cards/"+Texture+");";
+        CardImage.style.backgroundImage = "url('/images/Cards/"+Texture+"')";
         Card.appendChild(CardImage);
 
         //Card Frame
@@ -261,33 +237,33 @@
         CardDMG.classList.add("CardDMG");
         Card.appendChild(CardDMG);
 
-        //Name Display
+        //DMG Display
         var CardDMGText = document.createElement("p");
         CardDMGText.innerHTML = Attack;
         CardDMG.appendChild(CardDMGText);
-        window.addEventListener('resize', () => SetFontSize(CardDMGText));
+        FontSizeAdjusterArray.push(CardDMGText);
 
         //CardHealth
         var CardHealth = document.createElement("div");
         CardHealth.classList.add("CardHealth");
         Card.appendChild(CardHealth);
 
-        //Name Display
+        //Health Display
         var CardHealthText = document.createElement("p");
         CardHealthText.innerHTML = Health;
         CardHealth.appendChild(CardHealthText);
-        window.addEventListener('resize', () => SetFontSize(CardHealthText));
+        FontSizeAdjusterArray.push(CardHealthText);
 
         //CardCost
         var CardCost = document.createElement("div");
         CardCost.classList.add("CardCost");
         Card.appendChild(CardCost);
 
-        //Name Display
+        //Cost Display
         var CardCostText = document.createElement("p");
         CardCostText.innerHTML = Cost;
         CardCost.appendChild(CardCostText);
-        window.addEventListener('resize', () => SetFontSize(CardCostText));
+        FontSizeAdjusterArray.push(CardCostText);
 
         //CardName
         var CardName = document.createElement("div");
@@ -298,27 +274,39 @@
         var CardNameText = document.createElement("p1");
         CardNameText.innerHTML = Name;
         CardName.appendChild(CardNameText);
-        window.addEventListener('resize', () => SetFontSize(CardNameText));
+        FontSizeAdjusterArray.push(CardNameText);
 
         //CardDescription
         var CardDescription = document.createElement("div");
         CardDescription.classList.add("CardDescription");
         Card.appendChild(CardDescription);
 
-        //Name Display
+        //Description Display
         var CardDescriptionText = document.createElement("p1");
         CardDescriptionText.innerHTML = Description;
         CardDescriptionText.style.fontSize = "80%";
         CardDescription.appendChild(CardDescriptionText);
-        window.addEventListener('resize', () => SetFontSize(CardDescriptionText));
+        FontSizeAdjusterArray.push(CardDescriptionText);
 
         return Card;
     }
-    function SetFontSize(Element) {
-        var containerWidth = Element.parentNode.clientHeight;
-        var textWidth = Element.scrollHeight;
+    function SetAllFontSizeInArray(Array) {
+        for (var i = 0; i < Array.length; i++) {
+            const Element = Array[i];
+            
+            var containerHeight = Element.parentNode.clientHeight;
+            var textHeight = Element.scrollHeight;
 
-        var fontSize = containerWidth / textWidth;
-        Element.style.fontSize = `${fontSize}rem`;
+            //if Number(Element.style.fontSize) > 0 then use else 1, then multiply with fontSize
+
+            var scaleFactor = (containerHeight-5) / textHeight;
+
+            let fs = Number(Element.style.fontSize.slice(0, -3));
+
+            var fontSize = (fs > 0) ? fs : 1;
+            
+            fontSize = fontSize * (scaleFactor * 0.575);
+            Element.style.fontSize = `${fontSize}rem`;
+        }
     }
 </script>

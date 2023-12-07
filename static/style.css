@@ -1,0 +1,90 @@
+.Card {
+    position: relative;
+    aspect-ratio: 2.73/3.93;
+}
+.Card p {
+    position: relative;
+    margin: 0;
+    color: black;
+    text-align: center;
+    left:50%;
+    top: 50%;
+    transform: translate(-50%,-50%);
+    width: fit-content;
+    height: fit-content;
+    -webkit-text-stroke-width: 0.5px;
+    -webkit-text-stroke-color: black;
+    user-select: none;
+    overflow: hidden;
+    white-space: nowrap;
+}
+.Card .CardImage{
+    position: absolute;
+    width: 59%;
+    aspect-ratio: 1.66/2.14;
+    background-size: cover;
+    left:50%;
+    top:8%;
+    transform: translate(-50%,0);
+}
+.Card .CardFrame{
+    position: absolute;
+    width: 100%;
+    background-image: url("/images/CardFrame.png");
+    height: 100%;
+    background-size: cover;
+}
+.Card .CardDMG {
+    position: absolute;
+    background-image: url("/images/DMGIcon.png");
+    width: 40%;
+    aspect-ratio: 1/1;
+    background-size: cover;
+    bottom: 0px;
+    transform: translate(-40%,20%);
+
+}
+.Card .CardHealth {
+    position: absolute;
+    background-image: url("/images/HealthIcon.png");
+    width: 40%;
+    aspect-ratio: 1/1;
+    background-size: cover;
+    bottom: 0px;
+    right:0px;
+    transform: translate(40%,20%);
+}
+.Card .CardCost {
+    position: absolute;
+    background-image: url("/images/EnergyIcon.png");
+    width: 40%;
+    aspect-ratio: 1/1;
+    background-size: cover;
+    transform: translate(-40%,-20%);
+}
+.Card .CardName {
+    position: absolute;
+    top:45%;
+    left:21%;
+    right:21%;
+    bottom: 33%;
+}
+.Card .CardDescription {
+    position: absolute;
+    top:70%;
+    left:21%;
+    right:21%;
+    bottom: 5%;
+}
+.Card p1 {
+    position: absolute;
+    color: white;
+    text-align: center;
+    left:50%;
+    top: 50%;
+    transform: translate(-50%,-50%);
+    user-select: none;
+    width: 100%;
+    height: fit-content;
+    word-break: break-all;
+}
