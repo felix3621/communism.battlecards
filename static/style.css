@@ -88,3 +88,45 @@
     height: fit-content;
     word-break: break-all;
 }
+
+.CharacterStone {
+    position: relative;
+    aspect-ratio: 1.66/2.14;
+    background-size: cover;
+}
+.CharacterStone p {
+    position: relative;
+    margin: 0;
+    color: black;
+    text-align: center;
+    left:50%;
+    top: 50%;
+    transform: translate(-50%,-50%);
+    width: fit-content;
+    height: fit-content;
+    -webkit-text-stroke-width: 0.5px;
+    -webkit-text-stroke-color: black;
+    user-select: none;
+    overflow: hidden;
+    white-space: nowrap;
+}
+.CharacterStone .CharacterStoneDMG {
+    position: absolute;
+    background-image: url("/images/DMGIcon.png");
+    width: 40%;
+    aspect-ratio: 1/1;
+    background-size: cover;
+    bottom: 0px;
+    transform: translate(-40%,20%);
+
+}
+.CharacterStone .CharacterStoneHealth {
+    position: absolute;
+    background-image: url("/images/HealthIcon.png");
+    width: 40%;
+    aspect-ratio: 1/1;
+    background-size: cover;
+    bottom: 0px;
+    right:0px;
+    transform: translate(40%,20%);
+}
