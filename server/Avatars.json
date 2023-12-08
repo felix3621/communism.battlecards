@@ -1,0 +1,50 @@
+[
+    {
+        "Name":"BOB",
+        "Description":"Oh no the BOB has descended and is here to kill uss all!",
+        "Attack":"6",
+        "Health":"15",
+        "Cost":"8",
+        "Texture":"BOB"
+    },
+    {
+        "Name":"Felix",
+        "Description":"A furry that has to much free time",
+        "Attack":"6",
+        "Health":"15",
+        "Cost":"8",
+        "Texture":"Felix"
+    },
+    {
+        "Name":"FixFox",
+        "Description":"Oh no Fix Is Angry and is burning shit again",
+        "Attack":"6",
+        "Health":"5",
+        "Cost":"5",
+        "Texture":"FixFox"
+    },
+    {
+        "Name":"Lan",
+        "Description":"Mr Purple man is here and throws purple slime...",
+        "Attack":"5",
+        "Health":"5",
+        "Cost":"5",
+        "Texture":"Lan"
+    },
+    {
+        "Name":"Svein",
+        "Description":"SVEIN HAS OPPEND POWERSHELL RUN!",
+        "Attack":"10",
+        "Health":"20",
+        "Cost":"8",
+        "Texture":"Svein"
+    },
+    {
+        "Name":"Biden",
+        "Description":"Oh no Biden is going crazy... and is throwing ice cream?",
+        "Attack":"2",
+        "Health":"5",
+        "Cost":"4",
+        "Texture":"Biden"
+    }
+]

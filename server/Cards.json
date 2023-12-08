@@ -1,0 +1,18 @@
+[
+    {
+        "Name":"Bandit",
+        "Description":"A Bandit Ready to kill",
+        "Attack":"2",
+        "Health":"8",
+        "Cost":"4",
+        "Texture":"Bandit"
+    },
+    {
+        "Name":"PinkSlime",
+        "Description":"A wild Slime",
+        "Attack":"2",
+        "Health":"2",
+        "Cost":"2",
+        "Texture":"PurpleSlime"
+    }
+]
