@@ -34,7 +34,6 @@
         left:50%;
         top:55px;
         transform: translate(-50%,0);
-        background-image: url("/images/Cards/BanditBOBCharacter.png");
         width: 150px;
         max-width: 30%;
         max-height: 30%;
@@ -46,7 +45,6 @@
         left:50%;
         bottom:55px;
         transform: translate(-50%,0);
-        background-image: url("/images/Cards/BanditBOBCharacter.png");
         width: 150px;
         max-width: 30%;
         max-height: 30%;
@@ -57,19 +55,20 @@
         position: fixed;
         left:25%;
         bottom:50%;
-        top:25%;
+        top:35%;
         right:25%;
         padding: 5px;
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
         grid-template-rows: auto;
+        transform: translate(0,-10px);
         grid-gap: 1%;
         place-items: center;
     }
     #PlayerOnField {
         position: fixed;
         left:25%;
-        bottom:26%;
+        bottom:35%;
         top:50%;
         right:25%;
         padding: 5px;
@@ -81,7 +80,6 @@
     :global(.CharacterStone) {
         height: 100%;
         max-width: 100%;
-        max-height: 130px;
         aspect-ratio: 1.66/2.14;
     }
     #EnemyHand {
@@ -92,7 +90,7 @@
         right:75%;
         padding: 1%;
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(50px, 0.5fr));
         grid-template-rows: auto auto auto auto;
         grid-gap: 5%;
     }
@@ -127,7 +125,7 @@
         border: 2px solid rgb(127,127,127);
     }
     :global(.Selected) {
-        box-shadow: 0px 0px 20px 2px rgb(255, 255, 0);
+        filter: opacity(0.75);
     }
 
 
@@ -147,10 +145,14 @@
         transform: translate(-20px,-70px)
     }
     :global(.CardAnimation) {
-        animation: MoveToHand 3s;
+        animation: MoveToPlayerHand 3s;
         height: 100px;
     }
-    @keyframes MoveToHand {
+    :global(.EnemyCardAnimation) {
+        animation: MoveToEnemyHand 3s;
+        height: 100px;
+    }
+    @keyframes MoveToPlayerHand {
         0% {
             position: fixed;
             right:0;
@@ -163,6 +165,21 @@
             bottom:50px;
             transform: translate(100%);
         }
+    }
+    @keyframes MoveToEnemyHand {
+        0% {
+            position: fixed;
+            right:0;
+            transform: translate(100%);
+        }
+        100% {
+            position: fixed;
+            right:100%;
+            transform: translate(100%);
+        }
+    }
+    :global(body) {
+        background-color: black;
     }
 </style>
 <hr id="MidleLine">
@@ -185,7 +202,7 @@
 
     var EnemyAvatar;
     var PlayerAvatar;
-    var EnemyHand = 0;
+    var EnemyHand = new Array();
     var PlayerHand = new Array();
     var EnemyOnField = new Array();
     var PlayerOnField = new Array();
@@ -219,20 +236,39 @@
         socket.onerror = (error) => {
             console.error('WebSocket error:', error);
         };
+
+        //Testing
         for (let i = 0; i < 3; i++) {
             PlayerOnField.push(new Stone(2,2,"MissingCharacter.png",document.getElementById("PlayerOnField")));
             PlayerOnField.push(new Stone(2,2,"MissingCharacter.png",document.getElementById("EnemyOnField")));
         }
-        for (let i = 0; i < 1; i++) {
-            PlayerHand.push(new Card("Name","Description",4,2,5,"MissingCharacter.png"));
+        for (let i = 0; i < 10; i++) { // Give the player some cards!
+            PlayerHand.push(new Card("Name","Description",4,2,5,"Bandit.png"));
+            EnemyHand.push(new EnemyCard());
         }
+        PlayerAvatar = new Stone(2,2,"BOB.png",document.getElementById("PlayerAvatar"));
+        EnemyAvatar = new Stone(2,2,"Felix.png",document.getElementById("EnemyAvatar"));
 
+        SetEnergyLevel(10);
+
+        //Actual Commands
         SetAllFontSizeInArray(FontSizeAdjusterArray);
         window.addEventListener('resize', () => SetAllFontSizeInArray(FontSizeAdjusterArray));
 
-        SetEnergyLevel(10);
-    })
+        document.addEventListener('mousemove', function(event) {
+            // Get the element under the mouse cursor
+            const hoveredElement = document.elementFromPoint(event.clientX, event.clientY);
 
+            // Remove the 'Selected' class from all elements
+            document.querySelectorAll('.Selected').forEach(function(element) {
+                element.classList.remove('Selected');
+            });
+            // Add the 'hovered' class to the currently hovered element
+            if (hoveredElement && hoveredElement.classList.contains('Selectable')) {
+                hoveredElement.classList.add('Selected');
+            }
+        });
+    })
 
     function CreateCharacterStone(Attack, Health, Texture) {
         //THE CharacterStone
@@ -281,9 +317,9 @@
     //Create Empty card 
     function CreateEmptyCard() {
         //THE Card
-        var Card = document.createElement("div");
-        Card.classList.add("EmptyCard");
-        return Card;
+        var EmptyCard = document.createElement("div");
+        EmptyCard.classList.add("EmptyCard");
+        return EmptyCard;
     }
     //Create Card
     function CreateCard(Name, Description, Cost, Attack, Health, Texture) {
@@ -397,6 +433,7 @@
                 this.Body.remove();
                 this.Body = CreateCard(Name,Description,Cost,Attack,Health,Texture);
                 document.getElementById("PlayerHand").appendChild(this.Body);
+                this.Body.classList.add("Selectable");
 
                 setTimeout(function() {SetAllFontSizeInArray(FontSizeAdjusterArray)}, 100);
             });
@@ -412,13 +449,21 @@
             this.Texture = Texture;
 
             this.Body = CreateCharacterStone(Attack,Health,Texture);
+            this.Body.classList.add("Selectable");
             ParentNode.appendChild(this.Body);
 
-            this.UpdateVisuals(0,0);
+            //this.UpdateVisuals(0,0);
         }
         UpdateVisuals(Attack = this.Health,Health = this.Health) {
             this.Body.getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = Attack;
-            this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = Attack;
+            this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = Health;
+        }
+    }
+    class EnemyCard {
+        constructor() {
+            this.Body = CreateEmptyCard();
+            document.getElementById("EnemyHand").appendChild(this.Body);
+            this.Body.classList.add("EnemyCardAnimation");
         }
     }
 </script>

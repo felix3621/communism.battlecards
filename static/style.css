@@ -17,6 +17,7 @@
     user-select: none;
     overflow: hidden;
     white-space: nowrap;
+    pointer-events: none
 }
 .Card .CardImage{
     position: absolute;
@@ -26,6 +27,7 @@
     left:50%;
     top:8%;
     transform: translate(-50%,0);
+    pointer-events: none
 }
 .Card .CardFrame{
     position: absolute;
@@ -33,6 +35,7 @@
     background-image: url("/images/CardFrame.png");
     height: 100%;
     background-size: cover;
+    pointer-events: none
 }
 .Card .CardDMG {
     position: absolute;
@@ -42,6 +45,7 @@
     background-size: cover;
     bottom: 0px;
     transform: translate(-40%,20%);
+    pointer-events: none
 
 }
 .Card .CardHealth {
@@ -53,6 +57,7 @@
     bottom: 0px;
     right:0px;
     transform: translate(40%,20%);
+    pointer-events: none
 }
 .Card .CardCost {
     position: absolute;
@@ -61,6 +66,7 @@
     aspect-ratio: 1/1;
     background-size: cover;
     transform: translate(-40%,-20%);
+    pointer-events: none
 }
 .Card .CardName {
     position: absolute;
@@ -68,6 +74,7 @@
     left:21%;
     right:21%;
     bottom: 33%;
+    pointer-events: none
 }
 .Card .CardDescription {
     position: absolute;
@@ -75,6 +82,7 @@
     left:21%;
     right:21%;
     bottom: 5%;
+    pointer-events: none
 }
 .Card p1 {
     position: absolute;
@@ -87,6 +95,7 @@
     width: 100%;
     height: fit-content;
     word-break: break-all;
+    pointer-events: none
 }
 
 .CharacterStone {
@@ -109,6 +118,7 @@
     user-select: none;
     overflow: hidden;
     white-space: nowrap;
+    pointer-events: none
 }
 .CharacterStone .CharacterStoneDMG {
     position: absolute;
@@ -118,6 +128,7 @@
     background-size: cover;
     bottom: 0px;
     transform: translate(0%,20%);
+    pointer-events: none
 
 }
 .CharacterStone .CharacterStoneHealth {
@@ -129,6 +140,7 @@
     bottom: 0px;
     right:0px;
     transform: translate(0%,20%);
+    pointer-events: none
 }
 .EmptyCard {
     position: relative;
