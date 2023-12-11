@@ -194,7 +194,7 @@
     <img src="/images/EnergyIcon.png">
 </div>
 <button id="EndTurn">EndTurn</button>
-<h1 id="TimeDispaly">2:00</h1>
+<h1 id="TimeDisplay">2:00</h1>
 <div id="TopBar"><h1 style="margin: 0; text-align:center; color:white">Battle!</h1></div>
 
 <script>
@@ -206,11 +206,13 @@
     var PlayerHand = new Array();
     var EnemyOnField = new Array();
     var PlayerOnField = new Array();
+    var EnemyDisplayName;
+    var PlayerDisplayName;
 
     var PlayerEnergy = 4;
     var PlayerMaxEnergy = 4;
 
-    var Timer = "2:00";
+    var DisplayTitles = new Array();
 
     var FontSizeAdjusterArray = new Array();
     
@@ -224,7 +226,29 @@
 
         // Event listener for incoming messages from the server
         socket.onmessage = (event) => {
-            console.log(event)
+            /*
+            if (event.PlayerInfo) {
+                PlayerDisplayName = event.PlayerInfo.DisplayName;
+                PlayerAvatar = event.PlayerInfo.Avatar;
+                PlayerEnergy = event.PlayerInfo.Energy;
+                if (event.PlayerInfo.title!= "")
+                    DisplayTitles.push({Title:event.PlayerInfo.title,LifeTime:1});
+                //TODO: Needs to change this
+                PlayerOnField = event.PlayerInfo.Field;
+                PlayerHand = event.PlayerInfo.Hand;
+            }
+            if (event.EnemyInfo) {
+                EnemyDisplayName = event.EnemyInfo.DisplayName;
+                EnemyAvatar = event.EnemyInfo.Avatar;
+                EnemyHand = event.EnemyInfo.Hand;
+                //TODO: Needs to change this
+                EnemyOnField = event.EnemyInfo.Field;
+                
+            }
+            if (event.TurnTime) {
+                document.getElementById("TimeDisplay").innerHTML = event.TurnTime;
+            }*/
+            console.log(event);
         };
 
         // Event listener for when the connection is closed
@@ -238,6 +262,7 @@
         };
 
         //Testing
+        /*
         for (let i = 0; i < 3; i++) {
             PlayerOnField.push(new Stone(2,2,"MissingCharacter.png",document.getElementById("PlayerOnField")));
             PlayerOnField.push(new Stone(2,2,"MissingCharacter.png",document.getElementById("EnemyOnField")));
@@ -249,7 +274,7 @@
         PlayerAvatar = new Stone(2,2,"BOB.png",document.getElementById("PlayerAvatar"));
         EnemyAvatar = new Stone(2,2,"Felix.png",document.getElementById("EnemyAvatar"));
 
-        SetEnergyLevel(10);
+        SetEnergyLevel(10);*/
 
         //Actual Commands
         SetAllFontSizeInArray(FontSizeAdjusterArray);
@@ -438,6 +463,23 @@
                 setTimeout(function() {SetAllFontSizeInArray(FontSizeAdjusterArray)}, 100);
             });
         }
+        UpdateInfo(Name,Description,Cost,Attack,Health,Texture) {
+            this.Cost = Cost;
+            this.Health = Health;
+            this.Attack = Attack;
+            this.Texture = Texture;
+            this.Name = Name;
+            this.Description = Description;
+            if (this.Body.classList.includes("Card")) {
+                this.Body.children[0].style.backgroundImage = "url('/images/Cards/"+Texture+"')";
+                this.Body.children[2].children[0].innerHTML = Attack;
+                this.Body.children[3].children[0].innerHTML = Health;
+                this.Body.children[4].children[0].innerHTML = Cost;
+                this.Body.children[5].children[0].innerHTML = Name;
+                this.Body.children[6].children[0].innerHTML = Description;
+                SetAllFontSizeInArray(FontSizeAdjusterArray);
+            }
+        }
         Remove() {
             this.Body.remove();
         }
@@ -454,9 +496,13 @@
 
             //this.UpdateVisuals(0,0);
         }
-        UpdateVisuals(Attack = this.Health,Health = this.Health) {
+        UpdateVisuals(Attack = this.Health, Health = this.Health, Texture=this.Texture) {
             this.Body.getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = Attack;
             this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = Health;
+            this.Body.style.backgroundImage = "url('/images/Cards/"+Texture+"')";
+        }
+        Remove() {
+            this.Body.remove();
         }
     }
     class EnemyCard {

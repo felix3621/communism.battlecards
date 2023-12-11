@@ -3,10 +3,14 @@ const WebSocket = require('ws');
 const auth = require('./server/authentication.cjs');
 const db = require('./server/database.cjs');
 
+const avatar = require('./server/Avatars.json')
+const cards = require('./server/Cards.json')
+
 //Game Info
 var queuedUsers = new Array();
 var battleUsers = new Array();
 var battles = new Array();
+
 
 class Battle {
     constructor() {
@@ -29,7 +33,7 @@ class Battle {
     StartGame() {
         this.active = true;
         this.currentPlayer = "p1";
-        DrawCardsToPlayer(this.p1,2);
+        this.DrawCardsToPlayer(this.p1,2);
 
         this.p1.title = "You start!";
         this.p2.title = "You go next!";
@@ -38,55 +42,65 @@ class Battle {
         // Send to the right client
         //PlayerInfo: DisplayName, Avatar, Field, Hand, Energy, Title
         //EnemyInfo: DisplayName, Avatar, Field, Hand.length
-        let p1 = battleUsers.find(obj => obj.username == this.p1.UserName)
-        let p2 = battleUsers.find(obj => obj.username == this.p2.UserName)
-        p1.socket.send(JSON.stringify({
-            PlayerInfo: {
-                DisplayName:this.p1.DisplayName,
-                Avatar:this.p1.Avatar,
-                Field:this.p1.Field,
-                Hand:this.p1.Hand,
-                Energy:this.p1.Energy,
-                title:this.p1.title
-            },
-            EnemyInfo: {
-                DisplayName:this.p2.DisplayName,
-                Avatar:this.p2.Avatar,
-                Field:this.p2.Field,
-                Hand:this.p2.Hand.length
-            },
-            TurnTime:this.turnTime
-        }))
-        p2.socket.send(JSON.stringify({
-            PlayerInfo: {
-                DisplayName:this.p2.DisplayName,
-                Avatar:this.p2.Avatar,
-                Field:this.p2.Field,
-                Hand:this.p2.Hand,
-                Energy:this.p2.Energy,
-                title:this.p2.title
-            },
-            EnemyInfo: {
-                DisplayName:this.p1.DisplayName,
-                Avatar:this.p1.Avatar,
-                Field:this.p1.Field,
-                Hand:this.p1.Hand.length
-            },
-            TurnTime:this.turnTime
-        }))
+        if (this.p1 && this.p1.socket) {
+            let p1 = battleUsers.find(obj => obj.username == this.p1.UserName)
+            let rtn = {
+                PlayerInfo: {
+                    DisplayName:this.p1.DisplayName,
+                    Avatar:this.p1.Avatar,
+                    Field:this.p1.Field,
+                    Hand:this.p1.Hand,
+                    Energy:this.p1.Energy,
+                    title:this.p1.title
+                },
+                TurnTime:this.turnTime
+            }
+            if (this.p2) {
+                rtn+={
+                    EnemyInfo: {
+                        DisplayName:this.p2.DisplayName,
+                        Avatar:this.p2.Avatar,
+                        Field:this.p2.Field,
+                        Hand:this.p2.Hand.length
+                    }
+                }
+            }
+            p1.socket.send(JSON.stringify(rtn))
+        }
+        if (this.p2 && this.p2.socket){
+            let p2 = battleUsers.find(obj => obj.username == this.p2.UserName)
+            
+            p2.socket.send(JSON.stringify({
+                PlayerInfo: {
+                    DisplayName:this.p2.DisplayName,
+                    Avatar:this.p2.Avatar,
+                    Field:this.p2.Field,
+                    Hand:this.p2.Hand,
+                    Energy:this.p2.Energy,
+                    title:this.p2.title
+                },
+                EnemyInfo: {
+                    DisplayName:this.p1.DisplayName,
+                    Avatar:this.p1.Avatar,
+                    Field:this.p1.Field,
+                    Hand:this.p1.Hand.length
+                },
+                TurnTime:this.turnTime
+            }))
+        }
     }
     EndTurn() {
         this.turnTime = 180;
         if (this.currentPlayer == "p1"){
             this.currentPlayer = "p2";
             this.currentPlayer.Energy = this.maxEnergy;
-            DrawCardsToPlayer(this.p2,2);
+            this.DrawCardsToPlayer(this.p2,2);
             
         } else {
             this.maxEnergy++;
             this.currentPlayer = "p1";
             this.currentPlayer.Energy = this.maxEnergy;
-            DrawCardsToPlayer(this.p1,2);
+            this.DrawCardsToPlayer(this.p1,2);
         }
     }
     PlayerDisconnected(userName) {
@@ -105,7 +119,6 @@ class Battle {
         } else {
             this.p1.title = "Waiting for Players...";
         }
-        
         this.SendInfo()
     }
     DrawCardsToPlayer(player, amount) {
@@ -199,11 +212,13 @@ const webSocketServer = new WebSocket.Server({ noServer: true });
 
 //authenticate cookies
 async function authenticate(cookies) {
-    const cookie = cookies
+    const cookie = decodeURIComponent(
+                    cookies
                         .split(';')
                         .map(cookie => cookie.trim())
                         .find(cookie => cookie.startsWith('userToken='))
-                        .replace(/^userToken=/, '');
+                        .replace(/^userToken=/, ''));
+
 
     let token = JSON.parse(auth.decrypt(cookie))
     let username = auth.decrypt(token[0])
@@ -233,12 +248,15 @@ async function authorizeSocket(socket, request) {
 
 async function getPlayerInfo(username, player) {
     let client = await db.connect()
-    let result = await client.db("communism_battlecards").collection("accounts").findOne({usename: username})
+    let result = await client.db("communism_battlecards").collection("accounts").findOne({username: username})
     await client.close()
     
     player.DisplayName = result.display_name
-    player.Deck = result.deck
-    player.Avatar = result.avatar
+    player.Deck = new Array();
+    for (let i = 0; i < result.deck.length; i++) {
+        player.Deck.push(cards[result.deck]);
+    }
+    player.Avatar = avatar[result.avatar];
 }
 
 async function tick() {
@@ -257,12 +275,12 @@ async function tick() {
     }
     //if players in queue: join open battles, or create new battle
     if (queuedUsers.length > 0) {
-        if (!battles[-1].active) {
-            battles[-1].SetP2(queuedUsers[0].username)
-            battles[-1].StartGame()
+        if (battles.length > 0 && !battles[battles.length-1].active) {
+            battles[battles.length-1].SetP2(queuedUsers[0].username)
+            battles[battles.length-1].StartGame()
         } else {
             battles.push(new Battle());
-            battles[-1].SetP1(queuedUsers[0].username);
+            battles[battles.length-1].SetP1(queuedUsers[0].username);
         }
         battleUsers.push(queuedUsers[0]);
         queuedUsers.splice(0,1);
@@ -272,6 +290,7 @@ async function tick() {
     for (let i = 0; i < battles.length; i++) {
         battles[i].Update();
     }
+    console.log(battles)
 }
 
 // Handle WebSocket connections

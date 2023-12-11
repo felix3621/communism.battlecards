@@ -22,7 +22,17 @@ async function checkUser(username, password) {
 }
 
 auth.checkUser = async(req, res, next) => {
-    if (req.cookies && req.cookies.userToken) {
+    if (req.body.username && req.body.password) {
+        let user = await checkUser(req.body.username, req.body.password)
+        if (user) {
+            req.user = user
+            let userToken = auth.encrypt(JSON.stringify([auth.encrypt(req.body.username), auth.encrypt(req.body.password)]))
+            res.cookie('userToken', userToken, { httpOnly: true });
+            return next()
+        } else {
+            res.status(401).json({ message: 'Unauthorized credentials' });
+        }
+    } else if (req.cookies && req.cookies.userToken) {
         let token = JSON.parse(auth.decrypt(req.cookies.userToken))
         let username = auth.decrypt(token[0])
         let password = auth.decrypt(token[1])
@@ -33,16 +43,6 @@ auth.checkUser = async(req, res, next) => {
             return next()
         } else {
             res.status(401).json({ message: 'Unauthorized token' });
-        }
-    } else if (req.body.username && req.body.password) {
-        let user = await checkUser(req.body.username, req.body.password)
-        if (user) {
-            req.user = user
-            let userToken = auth.encrypt(JSON.stringify([auth.encrypt(req.body.username), auth.encrypt(req.body.password)]))
-            res.cookie('userToken', userToken, { httpOnly: true });
-            return next()
-        } else {
-            res.status(401).json({ message: 'Unauthorized credentials' });
         }
     } else {
         res.status(401).json({ message: 'Unauthorized' });
