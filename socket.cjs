@@ -301,8 +301,6 @@ webSocketServer.on('connection', async(socket, request) => {
         }
     }
 
-    connections[username] = socket
-
     socket.on('message', (message) => {
         //what game are we in?
         let game = battles.find(obj => obj.p1.UserName == username || obj.p2.UserName == username)
