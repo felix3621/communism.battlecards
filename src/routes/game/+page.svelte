@@ -77,7 +77,7 @@
         grid-gap: 1%;
         place-items: center;
     }
-    :global(.CharacterStone) {
+    :global(.CharacterStone:not(.Draggable)) {
         height: 100%;
         max-width: 100%;
         aspect-ratio: 1.66/2.14;
@@ -193,7 +193,22 @@
     }
     :global(.Draggable) {
         position: fixed;
-        height:100px;
+        width:100px;
+        transform: translate(-10%,-10%);
+    }
+    :global(.Glow) {
+        animation: glow 2s infinite;
+    }
+    @keyframes glow {
+      0% {
+        box-shadow: 0 0 10px rgba(248, 248, 165, 0.7);
+      }
+      50% {
+        box-shadow: 0 0 20px rgba(248, 248, 165, 0.7);
+      }
+      100% {
+        box-shadow: 0 0 10px rgba(248, 248, 165, 0.7);
+      }
     }
 </style>
 <hr id="MidleLine">
@@ -210,6 +225,7 @@
 <button id="EndTurn">EndTurn</button>
 <h1 id="TimeDisplay">2:00</h1>
 <h1 id="DisplayTitle"></h1>
+<div id="DraggableParent" style="position: fixed;"></div>
 <div id="TopBar"><h1 style="margin: 0; text-align:center; color:white">Battle!</h1></div>
 
 <script>
@@ -232,11 +248,16 @@
     var FontSizeAdjusterArray = new Array();
 
     var DraggableCard;
+
+    var MouseX;
+    var MouseY;
+
+    var socket;
     
     onMount(() => {
         EnemyAvatar = new Avatar(0,0,"MissingCharacter",document.getElementById("EnemyAvatar"),"")
         PlayerAvatar = new Avatar(0,0,"MissingCharacter",document.getElementById("PlayerAvatar"),"")
-        var socket = new WebSocket(`wss://${window.location.host}/gamesocket`);
+        socket = new WebSocket(`wss://${window.location.host}/gamesocket`);
 
         // Event listener for when the connection is established
         socket.onopen = () => {
@@ -248,7 +269,6 @@
             var data = event.data;
             if (data) {
                 data = JSON.parse(data);
-                console.log(data)
                 if (data.TurnTime) {
                     document.getElementById("TimeDisplay").innerHTML = data.TurnTime;
                 }
@@ -260,13 +280,11 @@
                     SetEnergyLevel(PlayerEnergy);
                     if (data.PlayerInfo.Title!= "")
                         DisplayTitles.push({Title:data.PlayerInfo.Title,LifeTime:1});
-
-                    //TODO: Needs to change this
                     for (let i = 0; i < data.PlayerInfo.Field.length || i<PlayerOnField.length; i++) {
-                        if (i<data.PlayerInfo.Field.length && i<PlayerOnField.length) {
-                            PlayerOnField.push(new Stone(data.PlayerInfo.Field[i].Attack,data.PlayerInfo.Field[i].Health,data.PlayerInfo.Field[i].Texture,document.getElementById("PlayerOnField")));
+                        if (i<data.PlayerInfo.Field.length && i>=PlayerOnField.length) {
+                            PlayerOnField.push(new Stone(data.PlayerInfo.Field[i].attackDMG, data.PlayerInfo.Field[i].health, data.PlayerInfo.Field[i].texture, document.getElementById("PlayerOnField")));
                         } else if (i<data.PlayerInfo.Field.length) {
-                            PlayerOnField[i].UpdateVisuals(data.PlayerInfo.Field[i].Attack,data.PlayerInfo.Field[i].Health,data.PlayerInfo.Field[i].Texture);
+                            PlayerOnField[i].UpdateVisuals(data.PlayerInfo.Field[i].attackDMG, data.PlayerInfo.Field[i].health, data.PlayerInfo.Field[i].texture);
                         } else {
                             PlayerOnField[i].Remove();
                             PlayerOnField.splice(i,1);
@@ -282,19 +300,19 @@
                         } else {
                             PlayerHand[i].Remove();
                             PlayerHand.splice(i,1);
+                            console.log("RemoveCard!");
                         }
                     }
                 }
                 if (data.EnemyInfo) {
                     EnemyDisplayName = data.EnemyInfo.DisplayName;
                     EnemyAvatar.UpdateVisuals(data.EnemyInfo.Avatar.Attack, data.EnemyInfo.Avatar.Health,data.EnemyInfo.Avatar.Texture,data.EnemyInfo.DisplayName);
-            
-                    //TODO: Needs to change this
+
                     for (let i = 0; i < data.EnemyInfo.Field.length || i<EnemyOnField.length; i++) {
-                        if (i<data.EnemyInfo.Field.length && i<EnemyOnField.length) {
-                            EnemyOnField.push(new Stone(data.EnemyInfo.Field[i].Attack,data.EnemyInfo.Field[i].Health,data.EnemyInfo.Field[i].Texture,document.getElementById("EnemyOnField")));
+                        if (i<data.EnemyInfo.Field.length && i<=EnemyOnField.length) {
+                            EnemyOnField.push(new Stone(data.EnemyInfo.Field[i].attackDMG, data.EnemyInfo.Field[i].health, data.EnemyInfo.Field[i].texture, document.getElementById("EnemyOnField")));
                         } else if (i<data.EnemyInfo.Field.length) {
-                            EnemyOnField[i].UpdateVisuals(data.EnemyInfo.Field[i].Attack,data.EnemyInfo.Field[i].Health,data.EnemyInfo.Field[i].Texture);
+                            EnemyOnField[i].UpdateVisuals(data.EnemyInfo.Field[i].attackDMG, data.EnemyInfo.Field[i].health, data.EnemyInfo.Field[i].texture);
                         } else {
                             EnemyOnField[i].Remove();
                             EnemyOnField.splice(i,1);
@@ -356,27 +374,67 @@
     // Function to handle mousemove events
     function handleMouseMove(event) {
         // Get the mouse coordinates from the event object
-        const mouseX = event.clientX;
-        const mouseY = event.clientY;
+        MouseX = event.clientX;
+        MouseY = event.clientY;
 
         if (DraggableCard) {
-            DraggableCard.Draggable.style.left = mouseX+"px";
-            DraggableCard.Draggable.style.top = mouseY+"px";
+            if (!DraggableCard.Class) {
+                DropDraggable();
+            } else {
+                DraggableCard.Draggable.style.left = MouseX+"px";
+                DraggableCard.Draggable.style.top = MouseY+"px";
+
+                var PlayerField = document.getElementById("PlayerOnField");
+                var LeftSide = PlayerField.getBoundingClientRect().left;
+                var TopSide = PlayerField.getBoundingClientRect().top;
+                if (MouseX>=LeftSide&&MouseX<=(LeftSide+PlayerField.offsetWidth)&&MouseY>=TopSide&&MouseY<=(TopSide+PlayerField.offsetHeight)) {
+                    DraggableCard.Draggable.style.display="none";
+                    if (!DraggableCard.Stone) {
+                        console.log("Create Stone")
+                        DraggableCard.Stone = CreateCharacterStone(DraggableCard.Class.Attack,DraggableCard.Class.Health,DraggableCard.Class.Texture);
+                        DraggableCard.Stone.classList.add("Draggable");
+                        document.getElementById("DraggableParent").appendChild(DraggableCard.Stone);
+                        DraggableCard.Stone.addEventListener('mouseup', ()=>PlaceStone());
+                    }   
+                        DraggableCard.Stone.style.display = "block";
+                        DraggableCard.Stone.style.left = MouseX+"px";
+                        DraggableCard.Stone.style.top = MouseY+"px";
+                } else if (DraggableCard.Stone) {
+                    DraggableCard.Stone.style.display = "none";
+                    DraggableCard.Draggable.style.display = "block";
+                }
+            }
+            
         }
     }
+    //Place the stone by the position of the Draggable
+    function PlaceStone() {
+        var PlayerField = document.getElementById("PlayerOnField");
+            var LeftSide = PlayerField.getBoundingClientRect().left;
+            var whereInDiv = (MouseX-LeftSide)/PlayerField.offsetWidth;
 
-    function SelectDraggable(Element) {
+            var WhatToSend = Math.floor(whereInDiv*(PlayerOnField.length+1));
+            socket.send(JSON.stringify({function:"PlaceCard",SelectedIndex:WhatToSend,SelectedCardIndex:PlayerHand.indexOf(DraggableCard.Class)}));
+            DropDraggable();
+    }
+
+    //Select the object to drag and start drag
+    function SelectDraggable(Element,Class=null) {
         if (DraggableCard) {
             DropDraggable();
         }
-        DraggableCard = {Card:Element,Draggable:Element.cloneNode(true)};
+        DraggableCard = {Card:Element,Draggable:Element.cloneNode(true),Stone:null,Class:Class};
         Element.style.display = "none";
         DraggableCard.Draggable.classList.add("Draggable");
-        document.Body.appendChild(DraggableCard.Draggable)
+        DraggableCard.Draggable.addEventListener('mouseup', ()=>DropDraggable());
+        document.getElementById("DraggableParent").appendChild(DraggableCard.Draggable);
     }
     function DropDraggable() {
         DraggableCard.Card.style.display = "block";
         DraggableCard.Draggable.remove();
+        if (DraggableCard.Stone) {
+            DraggableCard.Stone.remove();
+        }
         DraggableCard = null;
     }
 
@@ -576,13 +634,12 @@
                 this.Body.classList.add("Selectable");
 
                 setTimeout(function() {SetAllFontSizeInArray(FontSizeAdjusterArray)}, 100);
-                this.Body.addEventListener('mousedown', ()=>SelectDraggable(this.Body));
-                this.Body.addEventListener('mouseup', ()=>DropDraggable());
+                this.Body.addEventListener('mousedown', ()=>SelectDraggable(this.Body,this));
             });
         }
     } 
     class Stone {
-        constructor(Attack,Health,Texture, ParentNode, ) {
+        constructor(Attack,Health,Texture, ParentNode) {
             this.Health = Health;
             this.Attack = Attack;
             this.Texture = Texture;

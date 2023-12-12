@@ -11,7 +11,7 @@ var queuedUsers = new Array();
 var battleUsers = new Array();
 var battles = new Array();
 
-const roundTime = 1
+const roundTime = 120
 
 
 class Battle {
@@ -135,7 +135,7 @@ class Battle {
     }
     DrawCardsToPlayer(player, amount) {
         var AvalebleCards = new Array();
-        //FIXME: issues...
+        //FIXME: issues... //The problem being that the timer run this function before the info from the database had ben read// Fix so that it only becomes active or starts the game after all info is loaded
         for (let i = 0; i < player.Deck.length; i++) {
             if (player.Deck[i].Cost<=this.maxEnergy) {
                 AvalebleCards.push(player.Deck[i]);
@@ -165,19 +165,19 @@ class Player {
     }
     PlaceCard(input) {
         if (this.match.currentPlayer == this.PlayerType){
-            var SelectedCard = input.SelectedCard;
             var SelectedIndex = input.SelectedIndex;
             var SelectedCardIndex = input.SelectedCardIndex;
-            if (this.Hand[SelectedCardIndex] == SelectedCard) {
+            if (this.Hand[SelectedCardIndex] && this.Deck.length<=6) {
                 var newField = [
                     ...this.Field.slice(0, SelectedIndex),
-                    new stone(SelectedCard.Attack,SelectedCard.Health,SelectedCard.Texture,1),
-                    ...this.Field.slice(SelectedIndex)
+                    new stone(this.Hand[SelectedCardIndex].Attack,this.Hand[SelectedCardIndex].Health,this.Hand[SelectedCardIndex].Texture,1),
+                    ...this.Field.slice(SelectedIndex) 
                 ];
                 this.Field = newField;
                 this.Hand.splice(SelectedCardIndex,1);
             } 
         }
+        console.log(this.Field,this.Hand);
     }
     SelectStoneTarget(input) {
         if (this.match.currentPlayer == this.PlayerType){
@@ -339,6 +339,7 @@ webSocketServer.on('connection', async(socket, request) => {
             command = JSON.parse(message)
             if (game[p1 ? "p1" : "p2"][command.function])
                 game[p1 ? "p1" : "p2"][command.function](command)
+            console.log(game[p1 ? "p1" : "p2"][command.function]);
         }
     });
 
