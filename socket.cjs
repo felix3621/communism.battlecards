@@ -11,6 +11,8 @@ var queuedUsers = new Array();
 var battleUsers = new Array();
 var battles = new Array();
 
+const roundTime = 1
+
 
 class Battle {
     constructor() {
@@ -18,9 +20,10 @@ class Battle {
         this.gameData = {};
         this.p1 = null;
         this.p2 = null;
-        this.turnTime = 180;
+        this.turnTime = roundTime;
         this.maxEnergy = 4;
         this.currentPlayer = "";
+        this.round = 0;
     }
     SetP1(userName) {
         this.p1 = new Player(userName,this,"p1");
@@ -34,6 +37,7 @@ class Battle {
         this.active = true;
         this.currentPlayer = "p1";
         this.DrawCardsToPlayer(this.p1,2);
+        this.round = 1;
 
         this.p1.title = "You start!";
         this.p2.title = "You go next!";
@@ -42,64 +46,72 @@ class Battle {
         // Send to the right client
         //PlayerInfo: DisplayName, Avatar, Field, Hand, Energy, Title
         //EnemyInfo: DisplayName, Avatar, Field, Hand.length
-        if (this.p1 && this.p1.socket) {
+        if (this.p1 && this.p1.Avatar) {
             let p1 = battleUsers.find(obj => obj.username == this.p1.UserName)
-            let rtn = {
-                PlayerInfo: {
-                    DisplayName:this.p1.DisplayName,
-                    Avatar:this.p1.Avatar,
-                    Field:this.p1.Field,
-                    Hand:this.p1.Hand,
-                    Energy:this.p1.Energy,
-                    title:this.p1.title
-                },
-                TurnTime:this.turnTime
-            }
-            if (this.p2) {
-                rtn+={
-                    EnemyInfo: {
+            if (p1 && p1.socket) {
+                let rtn = {
+                    PlayerInfo: {
+                        DisplayName:this.p1.DisplayName,
+                        Avatar:this.p1.Avatar,
+                        Field:this.p1.Field,
+                        Hand:this.p1.Hand,
+                        Energy:this.p1.Energy,
+                        Title:this.p1.title
+                    },
+                    TurnTime:this.turnTime,
+                    MaxEnergy:this.maxEnergy,
+                    round:this.round
+                }
+                if (this.p2) {
+                    rtn.EnemyInfo ={
                         DisplayName:this.p2.DisplayName,
                         Avatar:this.p2.Avatar,
                         Field:this.p2.Field,
                         Hand:this.p2.Hand.length
                     }
                 }
+                p1.socket.send(JSON.stringify(rtn))
             }
-            p1.socket.send(JSON.stringify(rtn))
         }
-        if (this.p2 && this.p2.socket){
+        if (this.p2 && this.p2.Avatar){
             let p2 = battleUsers.find(obj => obj.username == this.p2.UserName)
-            
-            p2.socket.send(JSON.stringify({
-                PlayerInfo: {
-                    DisplayName:this.p2.DisplayName,
-                    Avatar:this.p2.Avatar,
-                    Field:this.p2.Field,
-                    Hand:this.p2.Hand,
-                    Energy:this.p2.Energy,
-                    title:this.p2.title
-                },
-                EnemyInfo: {
-                    DisplayName:this.p1.DisplayName,
-                    Avatar:this.p1.Avatar,
-                    Field:this.p1.Field,
-                    Hand:this.p1.Hand.length
-                },
-                TurnTime:this.turnTime
-            }))
+            if (p2 && p2.socket) {
+                let rtn = {
+                    PlayerInfo: {
+                        DisplayName:this.p2.DisplayName,
+                        Avatar:this.p2.Avatar,
+                        Field:this.p2.Field,
+                        Hand:this.p2.Hand,
+                        Energy:this.p2.Energy,
+                        Title:this.p2.title
+                    },
+                    EnemyInfo: {
+                        DisplayName:this.p1.DisplayName,
+                        Avatar:this.p1.Avatar,
+                        Field:this.p1.Field,
+                        Hand:this.p1.Hand.length
+                    },
+                    TurnTime:this.turnTime,
+                    MaxEnergy:this.maxEnergy,
+                    round:this.round
+                }
+                p2.socket.send(JSON.stringify(rtn))
+            }
         }
     }
     EndTurn() {
-        this.turnTime = 180;
+        this.turnTime = roundTime;
         if (this.currentPlayer == "p1"){
             this.currentPlayer = "p2";
-            this.currentPlayer.Energy = this.maxEnergy;
             this.DrawCardsToPlayer(this.p2,2);
             
         } else {
-            this.maxEnergy++;
+            if (this.maxEnergy < 10)
+                this.maxEnergy++;
             this.currentPlayer = "p1";
-            this.currentPlayer.Energy = this.maxEnergy;
+            this.p2.Energy = this.maxEnergy;
+            this.p1.Energy = this.maxEnergy;
+            this.round++;
             this.DrawCardsToPlayer(this.p1,2);
         }
     }
@@ -114,7 +126,7 @@ class Battle {
             this.p2.title = "";
             this.turnTime--;
             if (this.turnTime <= 0) {
-                
+                this.EndTurn()
             }
         } else {
             this.p1.title = "Waiting for Players...";
@@ -123,13 +135,14 @@ class Battle {
     }
     DrawCardsToPlayer(player, amount) {
         var AvalebleCards = new Array();
+        //FIXME: issues...
         for (let i = 0; i < player.Deck.length; i++) {
-            if (player.Deck[i].cost<=this.maxEnergy) {
+            if (player.Deck[i].Cost<=this.maxEnergy) {
                 AvalebleCards.push(player.Deck[i]);
             }
         }
         for (let i = 0; i < amount; i++) {
-            player.Hand.push([Math.floor(Math.random() * AvalebleCards.length)]);
+            player.Hand.push(AvalebleCards[Math.floor(Math.random() * AvalebleCards.length)]);
         }
     }
 }
@@ -158,7 +171,7 @@ class Player {
             if (this.Hand[SelectedCardIndex] == SelectedCard) {
                 var newField = [
                     ...this.Field.slice(0, SelectedIndex),
-                    new stone(SelectedCard.attackDMG,SelectedCard.health,SelectedCard.texture,1),
+                    new stone(SelectedCard.Attack,SelectedCard.Health,SelectedCard.Texture,1),
                     ...this.Field.slice(SelectedIndex)
                 ];
                 this.Field = newField;
@@ -254,7 +267,7 @@ async function getPlayerInfo(username, player) {
     player.DisplayName = result.display_name
     player.Deck = new Array();
     for (let i = 0; i < result.deck.length; i++) {
-        player.Deck.push(cards[result.deck]);
+        player.Deck.push(cards[result.deck[i]]);
     }
     player.Avatar = avatar[result.avatar];
 }
@@ -277,7 +290,6 @@ async function tick() {
     if (queuedUsers.length > 0) {
         if (battles.length > 0 && !battles[battles.length-1].active) {
             battles[battles.length-1].SetP2(queuedUsers[0].username)
-            battles[battles.length-1].StartGame()
         } else {
             battles.push(new Battle());
             battles[battles.length-1].SetP1(queuedUsers[0].username);
@@ -290,7 +302,6 @@ async function tick() {
     for (let i = 0; i < battles.length; i++) {
         battles[i].Update();
     }
-    console.log(battles)
 }
 
 // Handle WebSocket connections

@@ -93,6 +93,7 @@
         grid-template-columns: repeat(auto-fit, minmax(50px, 0.5fr));
         grid-template-rows: auto auto auto auto;
         grid-gap: 5%;
+        overflow: hidden;
     }
     #PlayerHand {
         position: fixed;
@@ -138,11 +139,12 @@
         background-color: rgb(50, 50, 50);
         color: white;
     }
-    #TimeDispaly {
+    #TimeDisplay {
         position: fixed;
         right:0px;
         top:50%;
-        transform: translate(-20px,-70px)
+        transform: translate(-20px,-70px);
+        color: white;
     }
     :global(.CardAnimation) {
         animation: MoveToPlayerHand 3s;
@@ -181,6 +183,18 @@
     :global(body) {
         background-color: black;
     }
+    .DisplayTitle {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%,-50%);
+        font-size: large;
+        color: white;
+    }
+    :global(.Draggable) {
+        position: fixed;
+        height:100px;
+    }
 </style>
 <hr id="MidleLine">
 <div id="EnemyAvatar"></div>
@@ -195,6 +209,7 @@
 </div>
 <button id="EndTurn">EndTurn</button>
 <h1 id="TimeDisplay">2:00</h1>
+<h1 id="DisplayTitle"></h1>
 <div id="TopBar"><h1 style="margin: 0; text-align:center; color:white">Battle!</h1></div>
 
 <script>
@@ -215,8 +230,12 @@
     var DisplayTitles = new Array();
 
     var FontSizeAdjusterArray = new Array();
+
+    var DraggableCard;
     
     onMount(() => {
+        EnemyAvatar = new Avatar(0,0,"MissingCharacter",document.getElementById("EnemyAvatar"),"")
+        PlayerAvatar = new Avatar(0,0,"MissingCharacter",document.getElementById("PlayerAvatar"),"")
         var socket = new WebSocket(`wss://${window.location.host}/gamesocket`);
 
         // Event listener for when the connection is established
@@ -226,29 +245,83 @@
 
         // Event listener for incoming messages from the server
         socket.onmessage = (event) => {
-            /*
-            if (event.PlayerInfo) {
-                PlayerDisplayName = event.PlayerInfo.DisplayName;
-                PlayerAvatar = event.PlayerInfo.Avatar;
-                PlayerEnergy = event.PlayerInfo.Energy;
-                if (event.PlayerInfo.title!= "")
-                    DisplayTitles.push({Title:event.PlayerInfo.title,LifeTime:1});
-                //TODO: Needs to change this
-                PlayerOnField = event.PlayerInfo.Field;
-                PlayerHand = event.PlayerInfo.Hand;
+            var data = event.data;
+            if (data) {
+                data = JSON.parse(data);
+                console.log(data)
+                if (data.TurnTime) {
+                    document.getElementById("TimeDisplay").innerHTML = data.TurnTime;
+                }
+                if (data.PlayerInfo) {
+                    PlayerDisplayName = data.PlayerInfo.DisplayName;
+                    PlayerAvatar.UpdateVisuals(data.PlayerInfo.Avatar.Attack,data.PlayerInfo.Avatar.Health,data.PlayerInfo.Avatar.Texture,data.PlayerInfo.DisplayName);
+                    PlayerEnergy = data.PlayerInfo.Energy;
+                    PlayerMaxEnergy = data.MaxEnergy;
+                    SetEnergyLevel(PlayerEnergy);
+                    if (data.PlayerInfo.Title!= "")
+                        DisplayTitles.push({Title:data.PlayerInfo.Title,LifeTime:1});
+
+                    //TODO: Needs to change this
+                    for (let i = 0; i < data.PlayerInfo.Field.length || i<PlayerOnField.length; i++) {
+                        if (i<data.PlayerInfo.Field.length && i<PlayerOnField.length) {
+                            PlayerOnField.push(new Stone(data.PlayerInfo.Field[i].Attack,data.PlayerInfo.Field[i].Health,data.PlayerInfo.Field[i].Texture,document.getElementById("PlayerOnField")));
+                        } else if (i<data.PlayerInfo.Field.length) {
+                            PlayerOnField[i].UpdateVisuals(data.PlayerInfo.Field[i].Attack,data.PlayerInfo.Field[i].Health,data.PlayerInfo.Field[i].Texture);
+                        } else {
+                            PlayerOnField[i].Remove();
+                            PlayerOnField.splice(i,1);
+                        }
+                    }
+                    var SpawnAmount =0;
+                    for (let i = 0; i < data.PlayerInfo.Hand.length || i<PlayerHand.length; i++) {
+                        if (i<data.PlayerInfo.Hand.length && i>=PlayerHand.length) {
+                            PlayerHand.push(new Card(data.PlayerInfo.Hand[i].Name, data.PlayerInfo.Hand[i].Description, data.PlayerInfo.Hand[i].Cost, data.PlayerInfo.Hand[i].Attack, data.PlayerInfo.Hand[i].Health, data.PlayerInfo.Hand[i].Texture, SpawnAmount));
+                            SpawnAmount++;
+                        } else if (i<data.PlayerInfo.Hand.length) {
+                            PlayerHand[i].UpdateVisuals(data.PlayerInfo.Hand[i].Name, data.PlayerInfo.Hand[i].Description, data.PlayerInfo.Hand[i].Cost, data.PlayerInfo.Hand[i].Attack, data.PlayerInfo.Hand[i].Health, data.PlayerInfo.Hand[i].Texture);
+                        } else {
+                            PlayerHand[i].Remove();
+                            PlayerHand.splice(i,1);
+                        }
+                    }
+                }
+                if (data.EnemyInfo) {
+                    EnemyDisplayName = data.EnemyInfo.DisplayName;
+                    EnemyAvatar.UpdateVisuals(data.EnemyInfo.Avatar.Attack, data.EnemyInfo.Avatar.Health,data.EnemyInfo.Avatar.Texture,data.EnemyInfo.DisplayName);
+            
+                    //TODO: Needs to change this
+                    for (let i = 0; i < data.EnemyInfo.Field.length || i<EnemyOnField.length; i++) {
+                        if (i<data.EnemyInfo.Field.length && i<EnemyOnField.length) {
+                            EnemyOnField.push(new Stone(data.EnemyInfo.Field[i].Attack,data.EnemyInfo.Field[i].Health,data.EnemyInfo.Field[i].Texture,document.getElementById("EnemyOnField")));
+                        } else if (i<data.EnemyInfo.Field.length) {
+                            EnemyOnField[i].UpdateVisuals(data.EnemyInfo.Field[i].Attack,data.EnemyInfo.Field[i].Health,data.EnemyInfo.Field[i].Texture);
+                        } else {
+                            EnemyOnField[i].Remove();
+                            EnemyOnField.splice(i,1);
+                        }
+                    }
+                    var SpawnAmount = 0;
+                    for (let i = 0; i < data.EnemyInfo.Hand || i < EnemyHand.length; i++) {
+                        if (i<data.EnemyInfo.Hand && i>=EnemyHand.length) {
+                            EnemyHand.push(new EnemyCard(SpawnAmount));
+                            SpawnAmount++;
+                        } else if (i>=data.EnemyInfo.Hand) {
+                            EnemyHand[i].Remove();
+                            EnemyHand.splice(i,1);
+                            console.log("Remove",i)
+                        }
+                    }
+                }  
             }
-            if (event.EnemyInfo) {
-                EnemyDisplayName = event.EnemyInfo.DisplayName;
-                EnemyAvatar = event.EnemyInfo.Avatar;
-                EnemyHand = event.EnemyInfo.Hand;
-                //TODO: Needs to change this
-                EnemyOnField = event.EnemyInfo.Field;
-                
+            if (DisplayTitles.length>0) {
+                document.getElementById("DisplayTitle").innerHTML = DisplayTitles[0].Title;
+                DisplayTitles[0].LifeTime--;
+            } else {
+                document.getElementById("DisplayTitle").innerHTML = "";
             }
-            if (event.TurnTime) {
-                document.getElementById("TimeDisplay").innerHTML = event.TurnTime;
-            }*/
-            console.log(event);
+
+            // Add a listener for the mousemove event
+            document.addEventListener('mousemove', handleMouseMove);
         };
 
         // Event listener for when the connection is closed
@@ -260,21 +333,6 @@
         socket.onerror = (error) => {
             console.error('WebSocket error:', error);
         };
-
-        //Testing
-        /*
-        for (let i = 0; i < 3; i++) {
-            PlayerOnField.push(new Stone(2,2,"MissingCharacter.png",document.getElementById("PlayerOnField")));
-            PlayerOnField.push(new Stone(2,2,"MissingCharacter.png",document.getElementById("EnemyOnField")));
-        }
-        for (let i = 0; i < 10; i++) { // Give the player some cards!
-            PlayerHand.push(new Card("Name","Description",4,2,5,"Bandit.png"));
-            EnemyHand.push(new EnemyCard());
-        }
-        PlayerAvatar = new Stone(2,2,"BOB.png",document.getElementById("PlayerAvatar"));
-        EnemyAvatar = new Stone(2,2,"Felix.png",document.getElementById("EnemyAvatar"));
-
-        SetEnergyLevel(10);*/
 
         //Actual Commands
         SetAllFontSizeInArray(FontSizeAdjusterArray);
@@ -295,11 +353,38 @@
         });
     })
 
+    // Function to handle mousemove events
+    function handleMouseMove(event) {
+        // Get the mouse coordinates from the event object
+        const mouseX = event.clientX;
+        const mouseY = event.clientY;
+
+        if (DraggableCard) {
+            DraggableCard.Draggable.style.left = mouseX+"px";
+            DraggableCard.Draggable.style.top = mouseY+"px";
+        }
+    }
+
+    function SelectDraggable(Element) {
+        if (DraggableCard) {
+            DropDraggable();
+        }
+        DraggableCard = {Card:Element,Draggable:Element.cloneNode(true)};
+        Element.style.display = "none";
+        DraggableCard.Draggable.classList.add("Draggable");
+        document.Body.appendChild(DraggableCard.Draggable)
+    }
+    function DropDraggable() {
+        DraggableCard.Card.style.display = "block";
+        DraggableCard.Draggable.remove();
+        DraggableCard = null;
+    }
+
     function CreateCharacterStone(Attack, Health, Texture) {
         //THE CharacterStone
         var CharacterStone = document.createElement("div");
         CharacterStone.classList.add("CharacterStone");
-        CharacterStone.style.backgroundImage = "url('/images/Cards/"+Texture+"')";
+        CharacterStone.style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
 
         //DMG
         var CharacterStoneDMG = document.createElement("div");
@@ -328,13 +413,17 @@
 
     function SetEnergyLevel(Amount) {
         var EnergyHolder = document.getElementById("DisplayEnergy");
-        for (let i = 0; i < EnergyHolder.children.length || i < Amount; i++) {
+        for (let i = 0; i < EnergyHolder.children.length || i < PlayerMaxEnergy; i++) {
             if (i>= EnergyHolder.children.length && i < Amount) { // Create Child
                 var EnergyCrystal = document.createElement("img");
                 EnergyCrystal.src = "/images/EnergyIcon.png";
                 document.getElementById("DisplayEnergy").appendChild(EnergyCrystal);
+            } else if (i>= EnergyHolder.children.length && i < PlayerMaxEnergy) {
+                EnergyHolder.children[i].style.filter = "grayscale(0.5)";
             } else if (i >= Amount) { // Remove Object
                 EnergyHolder.children[i].remove();
+            } else {
+                EnergyHolder.children[i].style.filter = "";
             }
         }
     }
@@ -355,7 +444,7 @@
         //Character In the midle
         var CardImage = document.createElement("div");
         CardImage.classList.add("CardImage");
-        CardImage.style.backgroundImage = "url('/images/Cards/"+Texture+"')";
+        CardImage.style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
         Card.appendChild(CardImage);
 
         //Card Frame
@@ -442,7 +531,7 @@
     }
 
     class Card {
-        constructor(Name,Description,Cost,Attack,Health,Texture) {
+        constructor(Name,Description,Cost,Attack,Health,Texture,SpawnDelay=0) {
             this.Cost = Cost;
             this.Health = Health;
             this.Attack = Attack;
@@ -450,38 +539,46 @@
             this.Name = Name;
             this.Description = Description;
 
+            setTimeout(() => {
+                this.CreateBody();
+                }, SpawnDelay*500);
+        }
+        UpdateVisuals(Name,Description,Cost,Attack,Health,Texture) {
+            this.Cost = Cost;
+            this.Health = Health;
+            this.Attack = Attack;
+            this.Texture = Texture;
+            this.Name = Name;
+            this.Description = Description;
+            if (this.Body && this.Body.classList.contains("Card")) {
+                this.Body.children[0].style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
+                this.Body.children[2].children[0].innerHTML = Attack;
+                this.Body.children[3].children[0].innerHTML = Health;
+                this.Body.children[4].children[0].innerHTML = Cost;
+                this.Body.children[5].children[0].innerHTML = Name;
+                this.Body.children[6].children[0].innerHTML = Description;
+                //SetAllFontSizeInArray(FontSizeAdjusterArray);
+            }
+        }
+        Remove() {
+            if (this.Body)
+                this.Body.remove();
+        }
+        CreateBody() {
             this.Body = CreateEmptyCard();
             document.body.appendChild(this.Body);
             this.Body.classList.add("CardAnimation");
             this.Body.addEventListener('animationend', () => {
                 // Add your code here to run when the animation is complete
                 this.Body.remove();
-                this.Body = CreateCard(Name,Description,Cost,Attack,Health,Texture);
+                this.Body = CreateCard(this.Name,this.Description,this.Cost,this.Attack,this.Health,this.Texture);
                 document.getElementById("PlayerHand").appendChild(this.Body);
                 this.Body.classList.add("Selectable");
 
                 setTimeout(function() {SetAllFontSizeInArray(FontSizeAdjusterArray)}, 100);
+                this.Body.addEventListener('mousedown', ()=>SelectDraggable(this.Body));
+                this.Body.addEventListener('mouseup', ()=>DropDraggable());
             });
-        }
-        UpdateInfo(Name,Description,Cost,Attack,Health,Texture) {
-            this.Cost = Cost;
-            this.Health = Health;
-            this.Attack = Attack;
-            this.Texture = Texture;
-            this.Name = Name;
-            this.Description = Description;
-            if (this.Body.classList.includes("Card")) {
-                this.Body.children[0].style.backgroundImage = "url('/images/Cards/"+Texture+"')";
-                this.Body.children[2].children[0].innerHTML = Attack;
-                this.Body.children[3].children[0].innerHTML = Health;
-                this.Body.children[4].children[0].innerHTML = Cost;
-                this.Body.children[5].children[0].innerHTML = Name;
-                this.Body.children[6].children[0].innerHTML = Description;
-                SetAllFontSizeInArray(FontSizeAdjusterArray);
-            }
-        }
-        Remove() {
-            this.Body.remove();
         }
     } 
     class Stone {
@@ -493,23 +590,52 @@
             this.Body = CreateCharacterStone(Attack,Health,Texture);
             this.Body.classList.add("Selectable");
             ParentNode.appendChild(this.Body);
-
-            //this.UpdateVisuals(0,0);
         }
         UpdateVisuals(Attack = this.Health, Health = this.Health, Texture=this.Texture) {
             this.Body.getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = Attack;
             this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = Health;
-            this.Body.style.backgroundImage = "url('/images/Cards/"+Texture+"')";
+            this.Body.style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
         }
         Remove() {
             this.Body.remove();
         }
     }
     class EnemyCard {
-        constructor() {
+        constructor(SpawnDelay) {
+            setTimeout(() => {
+                this.CreateBody();
+                }, SpawnDelay*500);
+            
+        }
+        Remove() {
+            if (this.Body)
+                this.Body.remove();
+        }
+        CreateBody() {
             this.Body = CreateEmptyCard();
             document.getElementById("EnemyHand").appendChild(this.Body);
             this.Body.classList.add("EnemyCardAnimation");
+        }
+    }
+    class Avatar {
+        constructor(Attack,Health,Texture, ParentNode, DisplayName) {
+            this.Health = Health;
+            this.Attack = Attack;
+            this.Texture = Texture;
+            this.DisplayName = DisplayName;
+
+            this.Body = CreateCharacterStone(Attack,Health,Texture);
+            this.Body.classList.add("Selectable");
+            ParentNode.appendChild(this.Body);
+        }
+        UpdateVisuals(Attack = this.Attack, Health = this.Health, Texture=this.Texture, DisplayName = PlayerDisplayName) {
+            this.Body.getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = Attack;
+            this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = Health;
+            this.Body.style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
+            this.DisplayName = DisplayName;
+        }
+        Remove() {
+            this.Body.remove();
         }
     }
 </script>
