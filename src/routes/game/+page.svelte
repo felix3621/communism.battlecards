@@ -438,14 +438,19 @@
             if (event.target && event.target.classList && event.target.classList.contains("CharacterStone")) {
                 var TargetClass
                 for (let i = 0; i < EnemyOnField.length; i++) {
-                    const element = EnemyOnField[i];
-                    if (element.Body == event.target)
-                        TargetClass = element
+                    if (EnemyOnField[i].Body == event.target){
+                        TargetClass = EnemyOnField[i]
+                    }
                 }
                 if (!TargetClass && EnemyAvatar.Body == event.target) {
                     TargetClass = EnemyAvatar;
                 }
-            }
+
+                if (TargetClass) {
+                    DraggableSelectTarget.SelectedTarget = TargetClass.Body;
+                    FakeDisplay = TargetClass;
+                }
+            } else {FakeDisplay=null}
         }
     }
     //Place the stone by the position of the Draggable
@@ -764,7 +769,7 @@
         }
     }
     class Avatar {
-        constructor(Attack,Health,Texture, ParentNode, DisplayName) {
+        constructor(Attack, Health, Texture, ParentNode, DisplayName) {
             this.Health = Health;
             this.Attack = Attack;
             this.Texture = Texture;
@@ -778,11 +783,14 @@
         }
         UpdateVisuals(Attack = this.Attack, Health = this.Health, Texture=this.Texture, DisplayName = PlayerDisplayName, AttackCooldown = this.AttackCooldown) {
             if (FakeDisplay && FakeDisplay.Class == this) {
-                this.Body.getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = Attack-FakeDisplay.AttackReduction;
-                this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = Health-FakeDisplay.HealthReduction;
+                this.Body.getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = Attack-DraggableSelectTarget.Class.Attack;
+                this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = Health-DraggableSelectTarget.Class.Health;
+                this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].style.color ="red";
+                console.log(this);
             } else {
                 this.Body.getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = Attack;
                 this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = Health;
+                this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].style.color ="black";
             }
             this.Body.style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
             this.DisplayName = DisplayName;
