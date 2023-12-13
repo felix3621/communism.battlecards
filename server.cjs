@@ -12,5 +12,5 @@ app.use(cookieParser());
 app.use('/api', require('./server/api/routes.cjs'));
 
 app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+    console.log(`api running on port ${port}`);
 });

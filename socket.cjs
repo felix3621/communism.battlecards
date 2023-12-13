@@ -372,5 +372,5 @@ httpServer.on('upgrade', (request, socket, head) => {
 
 // Listen on port 3000
 httpServer.listen(3000, () => {
-    console.log('Server listening on port 3000');
+    console.log('socket running on port 3000');
 });

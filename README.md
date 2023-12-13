@@ -1,8 +1,6 @@
 # Battlecards
 
-Start (dev) website using:  `npm run dev`
-
-Start backend server using:  `node server.cjs`
+start everything by: ```npm start```
 
 
 
