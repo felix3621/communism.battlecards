@@ -4,15 +4,15 @@ const auth = require('./server/authentication.cjs');
 const db = require('./server/database.cjs');
 
 const avatar = require('./server/Avatars.json')
-const cards = require('./server/Cards.json')
+const cards = require('./server/Cards.json');
+const { Int32 } = require('mongodb');
 
 //Game Info
 var queuedUsers = new Array();
 var battleUsers = new Array();
 var battles = new Array();
 
-const roundTime = 120
-
+const roundTime = 300
 
 class Battle {
     constructor() {
@@ -24,6 +24,7 @@ class Battle {
         this.maxEnergy = 4;
         this.currentPlayer = "";
         this.round = 0;
+        this.DataLoaded = 0;
     }
     SetP1(userName) {
         this.p1 = new Player(userName,this,"p1");
@@ -33,14 +34,28 @@ class Battle {
         this.p2 = new Player(userName,this,"p2");
         if (this.p1 && this.p2) {this.active = true; this.StartGame();}
     }
+    waitForPlayerData() {
+        return new Promise(resolve => {
+            if (this.DataLoaded == 2) {
+                resolve(true)
+            } else {
+                setTimeout(() => {
+                    let wait = "loop";
+                    resolve(wait);
+                }, 100);
+            }
+        })
+    }
     StartGame() {
-        this.active = true;
-        this.currentPlayer = "p1";
-        this.DrawCardsToPlayer(this.p1,2);
-        this.round = 1;
-
-        this.p1.title = "You start!";
-        this.p2.title = "You go next!";
+        this.waitForPlayerData().then(() => {
+            this.active = true;
+            this.currentPlayer = "p1";
+            this.DrawCardsToPlayer(this.p1,2);
+            this.round = 1;
+    
+            this.p1.Energy = this.maxEnergy;
+            this.p2.Energy = this.maxEnergy;
+        })
     }
     SendInfo() {
         // Send to the right client
@@ -58,9 +73,10 @@ class Battle {
                         Energy:this.p1.Energy,
                         Title:this.p1.title
                     },
-                    TurnTime:this.turnTime,
+                    TurnTime:Math.round(this.turnTime/10),
                     MaxEnergy:this.maxEnergy,
-                    round:this.round
+                    round:this.round,
+                    yourTurn: this.currentPlayer == "p1"
                 }
                 if (this.p2) {
                     rtn.EnemyInfo ={
@@ -91,9 +107,10 @@ class Battle {
                         Field:this.p1.Field,
                         Hand:this.p1.Hand.length
                     },
-                    TurnTime:this.turnTime,
+                    TurnTime:Math.round(this.turnTime/10),
                     MaxEnergy:this.maxEnergy,
-                    round:this.round
+                    round:this.round,
+                    yourTurn: this.currentPlayer == "p2"
                 }
                 p2.socket.send(JSON.stringify(rtn))
             }
@@ -122,8 +139,16 @@ class Battle {
     Update() {
 
         if (this.active) {
-            this.p1.title = "";
-            this.p2.title = "";
+            if (this.currentPlayer == "p1") {
+                this.p1.title = "Your turn";
+                this.p2.title = "Other player's turn";
+            } else if (this.currentPlayer == "p2") {
+                this.p1.title = "Other player's turn";
+                this.p2.title = "Your turn";
+            } else {
+                this.p1.title = "ERROR";
+                this.p2.title = "ERROR";
+            }
             this.turnTime--;
             if (this.turnTime <= 0) {
                 this.EndTurn()
@@ -135,7 +160,6 @@ class Battle {
     }
     DrawCardsToPlayer(player, amount) {
         var AvalebleCards = new Array();
-        //FIXME: issues... //The problem being that the timer run this function before the info from the database had ben read// Fix so that it only becomes active or starts the game after all info is loaded
         for (let i = 0; i < player.Deck.length; i++) {
             if (player.Deck[i].Cost<=this.maxEnergy) {
                 AvalebleCards.push(player.Deck[i]);
@@ -161,23 +185,23 @@ class Player {
         this.Energy = 4;
         this.match = match;
 
-        getPlayerInfo(userName,this);
+        getPlayerInfo(userName,this, match);
     }
     PlaceCard(input) {
         if (this.match.currentPlayer == this.PlayerType){
             var SelectedIndex = input.SelectedIndex;
             var SelectedCardIndex = input.SelectedCardIndex;
-            if (this.Hand[SelectedCardIndex] && this.Deck.length<=6) {
+            if (this.Hand[SelectedCardIndex] && this.Field.length<6 && this.Energy >= this.Hand[SelectedCardIndex].Cost) {
                 var newField = [
                     ...this.Field.slice(0, SelectedIndex),
                     new stone(this.Hand[SelectedCardIndex].Attack,this.Hand[SelectedCardIndex].Health,this.Hand[SelectedCardIndex].Texture,1),
                     ...this.Field.slice(SelectedIndex) 
                 ];
                 this.Field = newField;
+                this.Energy -= this.Hand[SelectedCardIndex].Cost;
                 this.Hand.splice(SelectedCardIndex,1);
-            } 
+            }
         }
-        console.log(this.Field,this.Hand);
     }
     SelectStoneTarget(input) {
         if (this.match.currentPlayer == this.PlayerType){
@@ -196,7 +220,6 @@ class Player {
     }
     EndTurn(Input) {
         if (this.match.currentPlayer == this.PlayerType) {
-            this.title = "End Turn";
             this.match.EndTurn();
         }
     }
@@ -259,7 +282,7 @@ async function authorizeSocket(socket, request) {
     return username
 }
 
-async function getPlayerInfo(username, player) {
+async function getPlayerInfo(username, player, game) {
     let client = await db.connect()
     let result = await client.db("communism_battlecards").collection("accounts").findOne({username: username})
     await client.close()
@@ -270,6 +293,7 @@ async function getPlayerInfo(username, player) {
         player.Deck.push(cards[result.deck[i]]);
     }
     player.Avatar = avatar[result.avatar];
+    game.DataLoaded++
 }
 
 async function tick() {
@@ -339,7 +363,6 @@ webSocketServer.on('connection', async(socket, request) => {
             command = JSON.parse(message)
             if (game[p1 ? "p1" : "p2"][command.function])
                 game[p1 ? "p1" : "p2"][command.function](command)
-            console.log(game[p1 ? "p1" : "p2"][command.function]);
         }
     });
 
@@ -361,7 +384,7 @@ webSocketServer.on('connection', async(socket, request) => {
     });
 });
 
-setInterval(tick, 1000);
+setInterval(tick, 100);
 
 // Upgrade the connection to WebSocket when a WebSocket request is received
 httpServer.on('upgrade', (request, socket, head) => {
