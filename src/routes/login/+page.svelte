@@ -135,7 +135,10 @@
             method: 'POST',
             headers: {
 	    		'Content-Type': 'application/json',
-	    	}
+	    	},
+            body: JSON.stringify({
+                createTestUser: false
+            })
         });
         if (user.ok) {
             window.location.href = '/';

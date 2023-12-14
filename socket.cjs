@@ -5,12 +5,13 @@ const db = require('./server/database.cjs');
 
 const avatar = require('./server/Avatars.json')
 const cards = require('./server/Cards.json');
-const { Int32 } = require('mongodb');
 
 //Game Info
 var queuedUsers = new Array();
 var battleUsers = new Array();
 var battles = new Array();
+
+var gameID = 0;
 
 const roundTime = 300
 
@@ -25,6 +26,9 @@ class Battle {
         this.currentPlayer = "";
         this.round = 0;
         this.DataLoaded = 0;
+        this.private = false;
+        this.code = null
+        this.dead = false;
     }
     SetP1(userName) {
         this.p1 = new Player(userName,this,"p1");
@@ -86,6 +90,9 @@ class Battle {
                         Hand:this.p2.Hand.length
                     }
                 }
+                if (!this.active) {
+                    rtn.code = this.code
+                }
                 p1.socket.send(JSON.stringify(rtn))
             }
         }
@@ -121,7 +128,13 @@ class Battle {
         if (this.currentPlayer == "p1"){
             this.currentPlayer = "p2";
             this.DrawCardsToPlayer(this.p2,2);
-            
+
+            for (let i = 0; i < this.p2.Field.length; i++) {
+                if (this.p2.Field[i].attackCooldown>0) {
+                    this.p2.Field[i].attackCooldown--;
+                }
+            }
+            this.p2.Avatar.attackCooldown = 0;
         } else {
             if (this.maxEnergy < 10)
                 this.maxEnergy++;
@@ -130,11 +143,18 @@ class Battle {
             this.p1.Energy = this.maxEnergy;
             this.round++;
             this.DrawCardsToPlayer(this.p1,2);
+            for (let i = 0; i < this.p1.Field.length; i++) {
+                if (this.p1.Field[i].attackCooldown>0) {
+                    this.p1.Field[i].attackCooldown--;
+                }
+            }
+            this.p1.Avatar.attackCooldown = 0;
         }
     }
     PlayerDisconnected(userName) {
-        //other player win
-        //stop battle, and disconnect all players
+        if ((this.p1 && this.p1.UserName == userName) || (this.p2 && this.p2.UserName == userName)) {
+            this.EndGame(userName)
+        }
     }
     Update() {
 
@@ -156,6 +176,16 @@ class Battle {
         } else {
             this.p1.title = "Waiting for Players...";
         }
+        let p1
+        let p2
+        if (this.p1)
+            p1 = battleUsers.find(obj => obj.username == this.p1.UserName)
+        if (this.p2)
+            p2 = battleUsers.find(obj => obj.username == this.p2.UserName)
+        if (p1 && !p1.socket && p2 && !p2.socket)
+            this.EndGame()
+        else if (p1 && !p1.socket && !p2)
+            this.EndGame()
         this.SendInfo()
     }
     DrawCardsToPlayer(player, amount) {
@@ -168,6 +198,10 @@ class Battle {
         for (let i = 0; i < amount; i++) {
             player.Hand.push(AvalebleCards[Math.floor(Math.random() * AvalebleCards.length)]);
         }
+    }
+    EndGame(looser) {
+        console.log("Endgame, Looser:", looser)
+        this.dead = true;
     }
 }
 class Player {
@@ -204,18 +238,45 @@ class Player {
         }
     }
     SelectStoneTarget(input) {
+        var Enemy;
+        if (this.PlayerType == "p1") {
+            Enemy = this.match.p2;
+        } else {
+            Enemy = this.match.p1;
+        }
+        var SelectedAttackIndex = input.SelectedAttackIndex;
         if (this.match.currentPlayer == this.PlayerType){
-            var SelectedStoneIndex = input.SelectedStoneIndex;
-            var SelectedAttackIndex = input.SelectedAttackIndex;
-            var Enemy;
-            if (this.PlayerType == "p1") {
-                Enemy = this.match.p2;
-            } else {
-                Enemy = this.match.p1;
+            var AttackingStone;
+            var TargetStone;
+
+            if (input.Type == "Avatar") {
+                AttackingStone = this.Avatar;
+            } else if (input.SelectedStoneIndex!=null) {
+                AttackingStone = this.Field[input.SelectedStoneIndex];
             }
-            if (this.Field[SelectedStoneIndex] && Enemy.Field[SelectedAttackIndex]) {
-                this.Field[SelectedStoneIndex].Attack = SelectedAttackIndex;
+            if (input.EnemyType=="Avatar" && Enemy.Field.length==0) {
+                TargetStone = Enemy.Avatar;
+            } else if (input.SelectedAttackIndex!=null) {
+                TargetStone = Enemy.Field[input.SelectedAttackIndex];
             }
+            if (AttackingStone && !AttackingStone.attackCooldown) {AttackingStone.attackCooldown = 0;}
+            if (AttackingStone && TargetStone && AttackingStone.attackCooldown<=0) {
+                TargetStone.Health -= AttackingStone.Attack;
+                AttackingStone.attackCooldown++;
+                if (TargetStone.Health<=0) {
+                    if (input.EnemyType=="Avatar") {
+                        this.match.SendInfo();
+                        if (this.match.p1 == this) {
+                            this.match.EndGame(this.match.p2.UserName);
+                        } else {
+                            this.match.EndGame(this.match.p1.UserName);
+                        }
+                    } else {
+                        Enemy.Field.splice(input.SelectedStoneIndex,1);
+                    }
+                }
+            }
+            //FIXME: this can generate a negative health issue
         }
     }
     EndTurn(Input) {
@@ -229,10 +290,10 @@ class Player {
 }
 
 class stone {
-    constructor(attackDMG, health, texture, attackCooldown) {
-        this.attackDMG = attackDMG;
-        this.health = health;
-        this.texture = texture;
+    constructor(Attack, Health, Texture, attackCooldown) {
+        this.Attack = Attack;
+        this.Health = Health;
+        this.Texture = Texture;
         this.attackCooldown = attackCooldown;
     }
 }
@@ -248,15 +309,19 @@ const webSocketServer = new WebSocket.Server({ noServer: true });
 
 //authenticate cookies
 async function authenticate(cookies) {
-    const cookie = decodeURIComponent(
-                    cookies
+    var cookie = cookies
                         .split(';')
                         .map(cookie => cookie.trim())
-                        .find(cookie => cookie.startsWith('userToken='))
-                        .replace(/^userToken=/, ''));
+                        .find(cookie => cookie.startsWith('userToken=')
+                )
+    if (cookie) {
+        cookie = cookie.replace(/^userToken=/, '');
+    } else {
+        return null
+    }
 
 
-    let token = JSON.parse(auth.decrypt(cookie))
+    let token = JSON.parse(auth.decrypt(decodeURIComponent(cookie)))
     let username = auth.decrypt(token[0])
     let password = auth.decrypt(token[1])
 
@@ -292,7 +357,7 @@ async function getPlayerInfo(username, player, game) {
     for (let i = 0; i < result.deck.length; i++) {
         player.Deck.push(cards[result.deck[i]]);
     }
-    player.Avatar = avatar[result.avatar];
+    player.Avatar = { ...avatar[result.avatar]};
     game.DataLoaded++
 }
 
@@ -300,7 +365,7 @@ async function tick() {
     for (let i = 0; i < battleUsers.length; i++) {
         //if logged on: ensure disconnectTime is 30, else count-down
         if (battleUsers[i].socket) {
-            battleUsers[i].reconnectTime = 30;
+            battleUsers[i].reconnectTime = 300;
         } else {
             battleUsers[i].reconnectTime--;
             //if disconnectTime of player hits 0, remove them, and handle that
@@ -312,10 +377,19 @@ async function tick() {
     }
     //if players in queue: join open battles, or create new battle
     if (queuedUsers.length > 0) {
+        let added = false
         if (battles.length > 0 && !battles[battles.length-1].active) {
-            battles[battles.length-1].SetP2(queuedUsers[0].username)
-        } else {
+            for (let i = battles.length - 1; i >= 0; i--) {
+                if (!battles[i].active && !battles[i].private) {
+                    battles[i].SetP2(queuedUsers[0].username)
+                    added = true;
+                    break;
+                }
+            }
+        }
+        if (!added) {
             battles.push(new Battle());
+            battles[battles.length-1].code = auth.encrypt("game_"+gameID)
             battles[battles.length-1].SetP1(queuedUsers[0].username);
         }
         battleUsers.push(queuedUsers[0]);
@@ -324,7 +398,30 @@ async function tick() {
     
     //update all battles
     for (let i = 0; i < battles.length; i++) {
-        battles[i].Update();
+        if (battles[i].dead) {
+            if (battles[i].p1) {
+                let user1 = battleUsers.find(obj => obj.username == battles[i].p1.UserName)
+                if (user1) {
+                    if (user1.socket)
+                        user1.socket.close(1008,'Game ended')
+                    battleUsers = battleUsers.filter(obj => obj.username != user1.username)
+                }
+            }
+
+            if (battles[i].p2) {
+                let user2 = battleUsers.find(obj => obj.username == battles[i].p2.UserName)
+                if (user2) {
+                    if (user2.socket)
+                        user2.socket.close(1008,'Game ended')
+                    battleUsers = battleUsers.filter(obj => obj.username != user2.username)
+                }
+            }
+
+            battles.splice(i,1)
+            i--
+        } else {
+            battles[i].Update();
+        }
     }
 }
 

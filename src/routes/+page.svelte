@@ -33,11 +33,21 @@
         background-color: rgb(50,150,255);
         transition: 2s;
     }
+    #Panel1 {
+        position: fixed;
+        left:5%;
+        top:25%;
+        right:60%;
+        bottom: 50%;
+        background-color: rgb(50, 50, 50);
+        border-radius: 25px;
+        outline: 5px black solid;
+    }
     #Panel2 {
         position: fixed;
         right:-25px;
         top:25%;
-        left:50%;
+        left:60%;
         bottom: 5%;
         background-color: rgb(50, 50, 50);
         border-radius: 25px;
@@ -71,7 +81,7 @@
         position: fixed;
         right:50px;
         top:25%;
-        left:50%;
+        left:60%;
         bottom: 5%;
     }
     #CardDeck {
@@ -148,6 +158,23 @@
     #SettingsMenu a:active {
         color: rgb(175, 175, 175);
     }
+    .btn {
+        border: 2px solid black;
+        background-color: #7f7f7f;
+        color: white;
+    }
+    .btn:hover {
+        background-color: #999999;
+    }
+    .btn:active {
+        background-color: #b3b3b3;
+    }
+    #quickPlay {
+        width: 100%;
+        height: 15%;
+        transform: translate(0,-37.5px);
+        border-radius: 25px 25px 0 0;
+    }
 </style>
 <h1 class="Title" style="margin: 0px;">Welcome to BattleCards!</h1>
 <div class="EXP_Bar">
@@ -173,6 +200,8 @@
 </div>
 <!--Select Match and Player Avatar-->
 <div id="Panel1">
+    <h1 class="PanelTitle" style="position: relative"><b>Game</b></h1>
+    <button id="quickPlay" class="btn" on:click={() => window.location.href = "/game"}>Quick Play</button>
 </div>
 
 <!--Select Deck and do other actions whit cards-->
