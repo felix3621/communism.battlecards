@@ -16,19 +16,59 @@
         "Texture":"PurpleSlime"
     },
     {
-        "Name":"FixFox",
-        "Description":"",
+        "Name":"Alex",
+        "Description":"Alex From Minecraft",
+        "Attack":4,
+        "Health":10,
+        "Cost":5,
+        "Texture":"ALEX"
+    },
+    {
+        "Name":"Steve",
+        "Description":"Steve From Minecraft",
+        "Attack":5,
+        "Health":8,
+        "Cost":5,
+        "Texture":"STEVE"
+    },
+    {
+        "Name":"Bloob",
+        "Description":"Its a Bloob",
         "Attack":2,
-        "Health":2,
+        "Health":3,
         "Cost":2,
-        "Texture":"FixFox"
+        "Texture":"Bloob"
+    },
+    {
+        "Name":"Biden",
+        "Description":"Oh no Biden is going crazy... and is throwing ice cream?",
+        "Attack":2,
+        "Health":5,
+        "Cost":4,
+        "Texture":"Biden"
     },
     {
         "Name":"Svein",
-        "Description":"",
-        "Attack":2,
-        "Health":2,
-        "Cost":2,
+        "Description":"SVEIN HAS OPPEND POWERSHELL RUN!",
+        "Attack":6,
+        "Health":10,
+        "Cost":8,
         "Texture":"Svein"
+    },
+    {
+        "Name":"Runar",
+        "Description":"Runar talks his way into battle!",
+        "Attack":4,
+        "Health":15,
+        "Cost":8,
+        "Texture":"Runar"
+    },
+    {
+        "Name":"Goblin",
+        "Description":"Green and Ugly!",
+        "Attack":3,
+        "Health":3,
+        "Cost":3,
+        "Texture":"Goblin"
     }
 ]

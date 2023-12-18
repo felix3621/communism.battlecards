@@ -32,19 +32,11 @@
         "Texture":"Ian"
     },
     {
-        "Name":"Svein",
-        "Description":"SVEIN HAS OPPEND POWERSHELL RUN!",
-        "Attack":10,
-        "Health":20,
-        "Cost":8,
-        "Texture":"Svein"
-    },
-    {
-        "Name":"Biden",
-        "Description":"Oh no Biden is going crazy... and is throwing ice cream?",
+        "Name":"Professor Hornung",
+        "Description":"Professor Horning -Adrian",
         "Attack":2,
         "Health":5,
         "Cost":4,
-        "Texture":"Biden"
+        "Texture":"Professor Hornung"
     }
 ]

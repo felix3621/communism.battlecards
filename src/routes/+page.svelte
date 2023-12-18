@@ -86,10 +86,10 @@
     }
     #CardDeck {
         position: absolute;
-        bottom: 0px;
-        top:0px;
-        left:0px;
-        right:0px;
+        bottom: 10%;
+        top:10%;
+        left:10%;
+        right:10%;
         padding: 5%;
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
@@ -97,6 +97,18 @@
         grid-gap:10%;
         overflow-y: auto;
         overflow-x: hidden;
+        background-color: rgb(50, 50, 50);
+        border-radius: 25px;
+        border: 5px rgb(25,25,25) solid;
+        
+    }
+    #CardDeckPanel {
+        position: absolute;
+        bottom: 0px;
+        top:0px;
+        left:0px;
+        right:0px;
+        background-color: rgba(0, 0, 0, 1);
     }
     #CardDeck::-webkit-scrollbar {
         width: 10px;
@@ -206,15 +218,12 @@
 
 <!--Select Deck and do other actions whit cards-->
 <div id="Panel2">
-    <h1 class="PanelTitle"><b>Card Deck</b></h1>
-    <div id="TabItems">
-        <div></div>
-    </div>
-    <div id="TabHolder">
-        <div id="CardDeck">
-        </div>
-    </div>
+    <h1 class="PanelTitle"></h1>
+    
 </div>
+<div id="CardDeckPanel" style="display:none;">
+    <div id="CardDeck"></div>
+</div>æ
 
 
 <script>
@@ -236,10 +245,6 @@
             window.location.href = '/login';
         }
         SetExpFilLevel(100);
-        for (let i = 0; i < 20; i++) {
-            var Card = CreateCard("test","testtttttttttttttttt",10,10,10,"MissingCharacter.png");
-            document.getElementById("CardDeck").appendChild(Card);
-        }
         SetAllFontSizeInArray(FontSizeAdjusterArray);
         window.addEventListener('resize', () => SetAllFontSizeInArray(FontSizeAdjusterArray));
     })
@@ -355,4 +360,38 @@
             Element.style.fontSize = `${fontSize}rem`;
         }
     }
+
+    class Card {
+        constructor(Name,Description,Cost,Attack,Health,Texture,SpawnDelay=0) {
+            this.Cost = Cost;
+            this.Health = Health;
+            this.Attack = Attack;
+            this.Texture = Texture;
+            this.Name = Name;
+            this.Description = Description;
+
+            this.Body = CreateCard(this.Name,this.Description,this.Cost,this.Attack,this.Health,this.Texture);
+        }
+        UpdateVisuals(Name,Description,Cost,Attack,Health,Texture) {
+            this.Cost = Cost;
+            this.Health = Health;
+            this.Attack = Attack;
+            this.Texture = Texture;
+            this.Name = Name;
+            this.Description = Description;
+            if (this.Body) {
+                this.Body.children[0].style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
+                this.Body.children[2].children[0].innerHTML = Attack;
+                this.Body.children[3].children[0].innerHTML = Health;
+                this.Body.children[4].children[0].innerHTML = Cost;
+                this.Body.children[5].children[0].innerHTML = Name;
+                this.Body.children[6].children[0].innerHTML = Description;
+                //SetAllFontSizeInArray(FontSizeAdjusterArray);
+            }
+        }
+        Remove() {
+            if (this.Body)
+                this.Body.remove();
+        }
+    } 
 </script>

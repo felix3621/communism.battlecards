@@ -233,33 +233,41 @@
         transform: translate(50%,0);
     }
     #EnemyName {
-        position: fixed;
+        position: absolute;
         left:50%;
-        top:30%;
+        bottom: -10px;
         transform: translate(-50%,100%);
         color:white;
-        width: 150px;
-        max-width: 30%;
+        width: 100%;
         text-align: center;
         font-size: 100%;
+        z-index: 111;
+        text-shadow: 1px 0 #000000;
+        letter-spacing:1px;
+        font-weight:bold;
     }
     #PlayerName {
-        position: fixed;
+        position: absolute;
         left:50%;
-        bottom:5%;
+        bottom: -10px;
         transform: translate(-50%,100%);
         color:white;
-        width: 150px;
-        max-width: 30%;
+        width: 100%;
         text-align: center;
         font-size: 100%;
+        z-index: 111;
+        text-shadow: 1px 0 #000000;
+        letter-spacing:1px;
+        font-weight:bold;
+    }
+    :global(.OnCooldown) {
+        filter: opacity(0.5);
     }
 </style>
 <hr id="MidleLine">
-<div id="EnemyAvatar"></div>
-<h1 id="EnemyName">Waiting for Player...</h1>
-<div id="PlayerAvatar"></div>
-<h1 id="PlayerName"></h1>
+<div id="EnemyAvatar"><h1 id="EnemyName">Waiting for Player...</h1></div>
+
+<div id="PlayerAvatar"><h1 id="PlayerName"></h1></div>
 <div id="EnemyHand"></div>
 <div id="PlayerHand"></div>
 <div id="EnemyOnField"></div>
@@ -334,7 +342,7 @@
                         if (i<data.PlayerInfo.Field.length && i>=PlayerOnField.length) {
                             PlayerOnField.push(new Stone(data.PlayerInfo.Field[i].Attack, data.PlayerInfo.Field[i].Health, data.PlayerInfo.Field[i].Texture, document.getElementById("PlayerOnField")));
                         } else if (i<data.PlayerInfo.Field.length) {
-                            PlayerOnField[i].UpdateVisuals(data.PlayerInfo.Field[i].Attack, data.PlayerInfo.Field[i].Health, data.PlayerInfo.Field[i].Texture);
+                            PlayerOnField[i].UpdateVisuals(data.PlayerInfo.Field[i].Attack, data.PlayerInfo.Field[i].Health, data.PlayerInfo.Field[i].Texture, data.PlayerInfo.Field[i].attackCooldown);
                         } else {
                             console.log(data.PlayerInfo.Field);
                             PlayerOnField[i].Remove();
@@ -357,13 +365,13 @@
                 if (data.EnemyInfo) {
                     EnemyDisplayName = data.EnemyInfo.DisplayName;
                     document.getElementById("EnemyName").innerText = EnemyDisplayName;
-                    EnemyAvatar.UpdateVisuals(data.EnemyInfo.Avatar.Attack, data.EnemyInfo.Avatar.Health, data.EnemyInfo.Avatar.Texture, 0, "Avatar");
+                    EnemyAvatar.UpdateVisuals(data.EnemyInfo.Avatar.Attack, data.EnemyInfo.Avatar.Health, data.EnemyInfo.Avatar.Texture, data.EnemyInfo.Avatar.attackCooldown, "Avatar");
                 
                     for (let i = 0; i < data.EnemyInfo.Field.length || i<EnemyOnField.length; i++) {
                         if (i<data.EnemyInfo.Field.length && i>= EnemyOnField.length) {
                             EnemyOnField.push(new Stone(data.EnemyInfo.Field[i].Attack, data.EnemyInfo.Field[i].Health, data.EnemyInfo.Field[i].Texture, document.getElementById("EnemyOnField")));
                         } else if (i<data.EnemyInfo.Field.length) {
-                            EnemyOnField[i].UpdateVisuals(data.EnemyInfo.Field[i].Attack, data.EnemyInfo.Field[i].Health, data.EnemyInfo.Field[i].Texture, 0, i.toString());
+                            EnemyOnField[i].UpdateVisuals(data.EnemyInfo.Field[i].Attack, data.EnemyInfo.Field[i].Health, data.EnemyInfo.Field[i].Texture, data.EnemyInfo.Field[i].attackCooldown, i.toString());
                         } else {
                             EnemyOnField[i].Remove();
                             EnemyOnField.splice(i,1);
@@ -726,16 +734,9 @@
 
             var fontSize = (fs > 0) ? fs : 1;
             
-            fontSize = fontSize * (scaleFactor * 0.575);
+            fontSize = fontSize * (scaleFactor*0.575);
             Element.style.fontSize = `${fontSize}rem`;
         }
-    }
-
-    function removeAllEventListeners(element) {
-        // Clone the element to remove all its events
-        const newElement = element.cloneNode(true);
-        element.parentNode.replaceChild(newElement, element);
-        return newElement;
     }
 
     class Card {
@@ -817,6 +818,12 @@
             this.Attack = Attack;
             this.Health = Health;
             this.Texture = Texture;
+            console.log(this)
+            if (this.AttackCooldown>0) {
+                this.Body.classList.add("OnCooldown");
+            } else {
+                this.Body.classList.remove("OnCooldown");
+            }
         }
         Remove() {
             this.Body.remove();
@@ -826,7 +833,7 @@
             if (DraggableSelectTarget) {
             DropDraggable();
         }
-            if (!yourTurn) {return;}
+            if (!yourTurn && this.AttackCooldown > 0) {return;}
             var TargetIndicator = document.createElement("img");
             TargetIndicator.classList.add("TargetIndicator");
             TargetIndicator.src = "/images/target.png";

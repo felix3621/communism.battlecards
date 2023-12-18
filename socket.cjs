@@ -125,16 +125,18 @@ class Battle {
     }
     EndTurn() {
         this.turnTime = roundTime;
+        console.log(this.round);
         if (this.currentPlayer == "p1"){
             this.currentPlayer = "p2";
             this.DrawCardsToPlayer(this.p2,2);
-
-            for (let i = 0; i < this.p2.Field.length; i++) {
-                if (this.p2.Field[i].attackCooldown>0) {
-                    this.p2.Field[i].attackCooldown--;
+            if (this.round > 1) {
+                for (let i = 0; i < this.p2.Field.length; i++) {
+                    if (this.p2.Field[i].attackCooldown>0) {
+                        this.p2.Field[i].attackCooldown--;
+                    }
                 }
-            }
-            this.p2.Avatar.attackCooldown = 0;
+                this.p2.Avatar.attackCooldown = 0;
+            }            
         } else {
             if (this.maxEnergy < 10)
                 this.maxEnergy++;
@@ -272,11 +274,10 @@ class Player {
                             this.match.EndGame(this.match.p1.UserName);
                         }
                     } else {
-                        Enemy.Field.splice(input.SelectedStoneIndex,1);
+                        Enemy.Field.splice(Enemy.Field.indexOf(TargetStone),1);
                     }
                 }
             }
-            //FIXME: this can generate a negative health issue
         }
     }
     EndTurn(Input) {
