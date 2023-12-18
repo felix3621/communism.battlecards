@@ -33,12 +33,12 @@
         background-color: rgb(50,150,255);
         transition: 2s;
     }
-    #Panel1 {
+    #gamePanel {
         position: fixed;
-        left:5%;
-        top:25%;
-        right:60%;
-        bottom: 50%;
+        left:40%;
+        top:40%;
+        right:40%;
+        bottom: 40%;
         background-color: rgb(50, 50, 50);
         border-radius: 25px;
         outline: 5px black solid;
@@ -47,42 +47,18 @@
         position: fixed;
         right:-25px;
         top:25%;
-        left:60%;
+        width: 100px;
         bottom: 5%;
         background-color: rgb(50, 50, 50);
         border-radius: 25px;
         outline: 5px black solid;
+        padding-left: 2px;
     }
     .PanelTitle {
         position: fixed;
         transform: translate(0,-45px);
         margin: 0px;
         text-align: center;
-    }
-    #TabItems {
-        display: grid;
-        grid-template-rows: auto auto auto;
-        background-color: rgb(50, 50, 50);
-        outline: 5px black solid;
-        margin-right: 25px;
-        width: 50px;
-        height: 100%;
-        float: right;
-    }
-    #TabItems div {
-        width: 100%;
-        background-color: black;
-        aspect-ratio: 1/1;
-    }
-    #TabItems div:hover {
-        filter: opacity(0.5);
-    }
-    #TabHolder {
-        position: fixed;
-        right:50px;
-        top:25%;
-        left:60%;
-        bottom: 5%;
     }
     #CardDeck {
         position: absolute;
@@ -174,6 +150,7 @@
         border: 2px solid black;
         background-color: #7f7f7f;
         color: white;
+        cursor:pointer;
     }
     .btn:hover {
         background-color: #999999;
@@ -182,10 +159,51 @@
         background-color: #b3b3b3;
     }
     #quickPlay {
-        width: 100%;
-        height: 15%;
+        width: 95%;
+        margin-left: 2.5%;
+        margin-top: 2.5%;
+        height: 30%;
         transform: translate(0,-37.5px);
         border-radius: 25px 25px 0 0;
+        font-size: 200%;
+        font-weight: bolder;
+        padding: 0;
+    }
+    #privateGame {
+        width: 94.75%;
+        margin-left: 2.5%;
+        margin-top: 1%;
+        height: 25%;
+        transform: translate(0,-37.5px);
+        font-size: 200%;
+        font-weight: bolder;
+        padding: 0;
+    }
+    #gameCode {
+        width: 40%;
+        height: 25%;
+        transform: translate(0,calc(-30px - 5%));
+        border-radius: 0 0 0 20px;
+        margin-left: 2.5%;
+        font-size: 225%;
+    }
+    #joinCode {
+        transform: translate(0,calc(-30px - 6.5%));
+        width: 40%;
+        height: 30%;
+        margin-left: 11%;
+        border-radius: 0 0 20px 0;
+        font-size: 200%;
+    }
+    .Icon {
+        aspect-ratio: 1/1;
+        width:100px;
+    }
+    #DeckButton {
+        background-image: url(images/DeckIcon.png);
+        background-size: cover;
+        border-radius: 25px 0 0 0;
+        cursor:pointer;
     }
 </style>
 <h1 class="Title" style="margin: 0px;">Welcome to BattleCards!</h1>
@@ -211,19 +229,22 @@
     <div class="PlayerName"><p></p></div>
 </div>
 <!--Select Match and Player Avatar-->
-<div id="Panel1">
+<div id="gamePanel">
     <h1 class="PanelTitle" style="position: relative"><b>Game</b></h1>
     <button id="quickPlay" class="btn" on:click={() => window.location.href = "/game"}>Quick Play</button>
+    <button id="privateGame" class="btn">Private Game</button>
+    <input type="text" id="gameCode" placeholder="Code">
+    <button id="joinCode" class="btn">Join</button>
 </div>
 
 <!--Select Deck and do other actions whit cards-->
 <div id="Panel2">
-    <h1 class="PanelTitle"></h1>
-    
+    <div class="Icon" id="DeckButton" on:click={()=>document.getElementById("CardDeckPanel").style.display="block"}></div>
 </div>
 <div id="CardDeckPanel" style="display:none;">
+    <button style="position: fixed;right:0;top:0;font-size:50px" class="btn" on:click={()=>document.getElementById("CardDeckPanel").style.display="none"}>X</button>
     <div id="CardDeck"></div>
-</div>æ
+</div>
 
 
 <script>
@@ -247,6 +268,7 @@
         SetExpFilLevel(100);
         SetAllFontSizeInArray(FontSizeAdjusterArray);
         window.addEventListener('resize', () => SetAllFontSizeInArray(FontSizeAdjusterArray));
+        ShowDeck();
     })
     
     async function logOut() {
@@ -275,7 +297,7 @@
         //Character In the midle
         var CardImage = document.createElement("div");
         CardImage.classList.add("CardImage");
-        CardImage.style.backgroundImage = "url('/images/Cards/"+Texture+"')";
+        CardImage.style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
         Card.appendChild(CardImage);
 
         //Card Frame
@@ -358,6 +380,52 @@
             
             fontSize = fontSize * (scaleFactor * 0.575);
             Element.style.fontSize = `${fontSize}rem`;
+        }
+    }
+
+    async function ShowDeck() {
+        const deck = await fetch(window.location.origin+'/api/cards/getDeck', {
+            method: 'GET',
+            headers: {
+	    		'Content-Type': 'application/json',
+	    	}
+        });
+        var Deck = await deck.json();
+
+        //Remove the add new card from the end if it exsist
+        var newCardElementToRemove = document.getElementById("NewCard");
+        if (newCardElementToRemove) 
+            newCardElementToRemove.remove();
+        
+        var DeckParent = document.getElementById("CardDeck");
+        for (let i = 0; i < Deck.length || i < DeckParent.children.length; i++) {
+            var CurrentChild;
+            if (i>= DeckParent.children.length && i < Deck.length) {
+                CurrentChild = CreateCard(Deck[i].Name,Deck[i].Description,Deck[i].Cost,Deck[i].Attack,Deck[i].Health,Deck[i].Texture);
+                DeckParent.appendChild(CurrentChild);
+                console.log("CreateCard")
+            } else if (i< DeckParent.children.length) {
+                CurrentChild = DeckParent.children[i];
+                CurrentChild.children[0].style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
+                CurrentChild.children[2].children[0].innerHTML = Attack;
+                CurrentChild.children[3].children[0].innerHTML = Health;
+                CurrentChild.children[4].children[0].innerHTML = Cost;
+                CurrentChild.children[5].children[0].innerHTML = Name;
+                CurrentChild.children[6].children[0].innerHTML = Description;
+            }
+            if (i>=Deck.length) {
+                DeckParent.children[i].remove();
+                i--;
+            }
+        }
+
+        //Re add it if it suld exsist
+        if (Deck.length<20) {
+            var AddNewCard;
+            if (!document.getElementById("NewCard")){
+                AddNewCard = document.createElement("div");
+                AddNewCard.id = "NewCard";
+            }
         }
     }
 
