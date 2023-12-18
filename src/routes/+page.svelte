@@ -49,10 +49,6 @@
         top:25%;
         width: 100px;
         bottom: 5%;
-        background-color: rgb(50, 50, 50);
-        border-radius: 25px;
-        outline: 5px black solid;
-        padding-left: 2px;
     }
     .PanelTitle {
         position: fixed;
@@ -60,7 +56,7 @@
         margin: 0px;
         text-align: center;
     }
-    #CardDeck {
+    #CardDeck, #Inventory {
         position: absolute;
         bottom: 10%;
         top:10%;
@@ -68,7 +64,7 @@
         right:10%;
         padding: 5%;
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(100px, 0.3fr));
         grid-template-rows: auto auto auto auto;
         grid-gap:10%;
         overflow-y: auto;
@@ -78,7 +74,7 @@
         border: 5px rgb(25,25,25) solid;
         
     }
-    #CardDeckPanel {
+    #CardDeckPanel, #InvontoryPanel {
         position: absolute;
         bottom: 0px;
         top:0px;
@@ -86,17 +82,17 @@
         right:0px;
         background-color: rgba(0, 0, 0, 1);
     }
-    #CardDeck::-webkit-scrollbar {
+    #CardDeck::-webkit-scrollbar, #Inventory::-webkit-scrollbar {
         width: 10px;
     }
 
-    #CardDeck::-webkit-scrollbar-thumb {
+    #CardDeck::-webkit-scrollbar-thumb, #Inventory::-webkit-scrollbar-thumb {
         background-color: rgb(0, 0, 0);
         border-radius: 5px;
         border: 2px solid rgb(75, 75, 75);
     }
 
-    #CardDeck::-webkit-scrollbar-track {
+    #CardDeck::-webkit-scrollbar-track, #Inventory::-webkit-scrollbar-track {
         background-color: rgb(50, 50, 50);
         border-radius: 5px;
         border: 2px solid rgb(127,127,127);
@@ -170,30 +166,39 @@
         padding: 0;
     }
     #privateGame {
-        width: 94.75%;
+        width: 95%;
         margin-left: 2.5%;
         margin-top: 1%;
-        height: 25%;
+        height: 30%;
         transform: translate(0,-37.5px);
         font-size: 200%;
         font-weight: bolder;
         padding: 0;
     }
-    #gameCode {
-        width: 40%;
-        height: 25%;
-        transform: translate(0,calc(-30px - 5%));
-        border-radius: 0 0 0 20px;
+    #joinByCode {
+        width: 95%;
         margin-left: 2.5%;
-        font-size: 225%;
-    }
-    #joinCode {
-        transform: translate(0,calc(-30px - 6.5%));
-        width: 40%;
+        margin-top: 2.5%;
         height: 30%;
-        margin-left: 11%;
-        border-radius: 0 0 20px 0;
+        transform: translate(0,-37.5px);
         font-size: 200%;
+        font-weight: bolder;
+        padding: 0;
+        overflow: hidden;
+    }
+    #joinByCode *{
+        width: 45%;
+        height: 100%;
+        font-size: 125%;
+    }
+    #joinByCode input {
+        padding: 0;
+        border-radius: 0 0 0 25px;
+    }
+    #joinByCode button {
+        position: fixed;
+        margin-left: 10%;
+        border-radius: 0 0 25px 0;
     }
     .Icon {
         aspect-ratio: 1/1;
@@ -202,8 +207,44 @@
     #DeckButton {
         background-image: url(images/DeckIcon.png);
         background-size: cover;
-        border-radius: 25px 0 0 0;
         cursor:pointer;
+    }
+    .Icon:hover {
+        filter: opacity(0.95);
+    }
+    :global(#NewCard,#RemoveCard) {
+        background-color: #414141;
+        border: 4px black solid;
+        border-radius: 15px;
+        aspect-ratio: 2.73/3.93;
+        
+    }
+    :global(#NewCard div) {
+        background-image: url(images/plus.png);
+        background-size: cover;
+        aspect-ratio: 1/1;
+        width: 50%;
+        margin-top: 50%;
+        margin-left: 50%;
+        transform: translate(-50%,-5%);
+        pointer-events: none;
+        
+    }
+    :global(#RemoveCard div) {
+        background-image: url(images/plus.png);
+        background-size: cover;
+        aspect-ratio: 1/1;
+        width: 50%;
+        margin-top: 50%;
+        margin-left: 50%;
+        transform: translate(-50%,-5%);
+        pointer-events: none;
+    }
+    :global(#NewCard:hover) {
+        filter: opacity(0.5);
+    }
+    :global(.ClicableCard:hover) {
+        filter: opacity(0.60);
     }
 </style>
 <h1 class="Title" style="margin: 0px;">Welcome to BattleCards!</h1>
@@ -232,18 +273,24 @@
 <div id="gamePanel">
     <h1 class="PanelTitle" style="position: relative"><b>Game</b></h1>
     <button id="quickPlay" class="btn" on:click={() => window.location.href = "/game"}>Quick Play</button>
-    <button id="privateGame" class="btn">Private Game</button>
-    <input type="text" id="gameCode" placeholder="Code">
-    <button id="joinCode" class="btn">Join</button>
+    <button id="privateGame" class="btn" on:click={() => window.location.href = "/game?private=true"}>Private Game</button>
+    <div id="joinByCode">
+        <input type="text" placeholder="Code">
+        <button class="btn" on:click={() => window.location.href = "/game?code="+document.getElementById("joinByCode").children[0].value}>Join</button>
+    </div>
 </div>
 
 <!--Select Deck and do other actions whit cards-->
 <div id="Panel2">
-    <div class="Icon" id="DeckButton" on:click={()=>document.getElementById("CardDeckPanel").style.display="block"}></div>
+    <div class="Icon" id="DeckButton" on:click={()=>{document.getElementById("CardDeckPanel").style.display="block"; ShowDeck();}}></div>
 </div>
 <div id="CardDeckPanel" style="display:none;">
     <button style="position: fixed;right:0;top:0;font-size:50px" class="btn" on:click={()=>document.getElementById("CardDeckPanel").style.display="none"}>X</button>
     <div id="CardDeck"></div>
+</div>
+<div id="InventoryPanel" style="display:none;">
+    <button style="position: fixed;right:0;top:0;font-size:50px" class="btn" on:click={()=>document.getElementById("InventoryPanel").style.display="none"}>X</button>
+    <div id="Inventory"></div>
 </div>
 
 
@@ -268,7 +315,6 @@
         SetExpFilLevel(100);
         SetAllFontSizeInArray(FontSizeAdjusterArray);
         window.addEventListener('resize', () => SetAllFontSizeInArray(FontSizeAdjusterArray));
-        ShowDeck();
     })
     
     async function logOut() {
@@ -391,6 +437,7 @@
 	    	}
         });
         var Deck = await deck.json();
+        console.log(Deck);
 
         //Remove the add new card from the end if it exsist
         var newCardElementToRemove = document.getElementById("NewCard");
@@ -402,16 +449,21 @@
             var CurrentChild;
             if (i>= DeckParent.children.length && i < Deck.length) {
                 CurrentChild = CreateCard(Deck[i].Name,Deck[i].Description,Deck[i].Cost,Deck[i].Attack,Deck[i].Health,Deck[i].Texture);
+                CurrentChild.classList.add("ClicableCard");
                 DeckParent.appendChild(CurrentChild);
-                console.log("CreateCard")
-            } else if (i< DeckParent.children.length) {
+                (function(index) {
+                    CurrentChild.addEventListener("click", ()=> {
+                        GetCardFromInventory(index);
+                });
+                })(i);
+            } else if (i < Deck.length && i < DeckParent.children.length) {
                 CurrentChild = DeckParent.children[i];
-                CurrentChild.children[0].style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
-                CurrentChild.children[2].children[0].innerHTML = Attack;
-                CurrentChild.children[3].children[0].innerHTML = Health;
-                CurrentChild.children[4].children[0].innerHTML = Cost;
-                CurrentChild.children[5].children[0].innerHTML = Name;
-                CurrentChild.children[6].children[0].innerHTML = Description;
+                CurrentChild.children[0].style.backgroundImage = "url('/images/Cards/"+Deck[i].Texture+".png')";
+                CurrentChild.children[2].children[0].innerHTML = Deck[i].Attack;
+                CurrentChild.children[3].children[0].innerHTML = Deck[i].Health;
+                CurrentChild.children[4].children[0].innerHTML = Deck[i].Cost;
+                CurrentChild.children[5].children[0].innerHTML = Deck[i].Name;
+                CurrentChild.children[6].children[0].innerHTML = Deck[i].Description;
             }
             if (i>=Deck.length) {
                 DeckParent.children[i].remove();
@@ -421,12 +473,96 @@
 
         //Re add it if it suld exsist
         if (Deck.length<20) {
-            var AddNewCard;
+            console.log(document.getElementById("NewCard"));
             if (!document.getElementById("NewCard")){
-                AddNewCard = document.createElement("div");
+                var AddNewCard = document.createElement("div");
                 AddNewCard.id = "NewCard";
+                DeckParent.appendChild(AddNewCard);
+                var AddButton = document.createElement("div");
+                AddNewCard.appendChild(AddButton);
+                AddNewCard.addEventListener("click",()=> {GetCardFromInventory(-1)});
             }
         }
+        SetAllFontSizeInArray(FontSizeAdjusterArray);
+    }
+
+    //GetFromInventory 
+    async function GetCardFromInventory(WhatIndexToReplace) {
+        var InventoryPanel = document.getElementById("InventoryPanel");
+        InventoryPanel.style.display = "block";
+        var InventoryParent = document.getElementById("Inventory");
+
+        var inventory = await fetch(window.location.origin+'/api/cards/getInventory', {
+            method: 'GET',
+            headers: {
+	    		'Content-Type': 'application/json',
+	    	}
+        });
+        inventory = await inventory.json();
+        if (!document.getElementById("RemoveCard")){
+             var RemoveCard = document.createElement("div");
+             RemoveCard.id = "RemoveCard";
+            InventoryParent.appendChild(RemoveCard);
+            var RemoveButton = document.createElement("div");
+            RemoveCard.appendChild(RemoveButton);
+            
+        }
+        removeAllEventListeners(document.getElementById("RemoveCard"))
+        document.getElementById("RemoveCard").addEventListener("click",()=> {AddToDeck(-1, WhatIndexToReplace);});
+        for (let i = 0; i < inventory.length || i < (InventoryParent.children.length-1); i++) {
+            var CurrentChild;
+            if (i>= (InventoryParent.children.length-1) && i < inventory.length) {
+                CurrentChild = CreateCard(inventory[i].card.Name,inventory[i].card.Description,inventory[i].card.Cost,inventory[i].card.Attack,inventory[i].card.Health,inventory[i].card.Texture);
+                CurrentChild.classList.add("ClicableCard");
+                InventoryParent.appendChild(CurrentChild);
+                (function(index) {
+                    CurrentChild.addEventListener("click", ()=> {
+                    AddToDeck(index, WhatIndexToReplace);
+                });
+                })(i);
+            } else if (i < (InventoryParent.children.length-1) && i < inventory.length) {
+                CurrentChild = removeAllEventListeners(InventoryParent.children[i+1]);
+                CurrentChild.children[0].style.backgroundImage = "url('/images/Cards/"+inventory[i].card.Texture+".png')";
+                CurrentChild.children[2].children[0].innerHTML = inventory[i].card.Attack;
+                CurrentChild.children[3].children[0].innerHTML = inventory[i].card.Health;
+                CurrentChild.children[4].children[0].innerHTML = inventory[i].card.Cost;
+                CurrentChild.children[5].children[0].innerHTML = inventory[i].card.Name;
+                CurrentChild.children[6].children[0].innerHTML = inventory[i].card.Description;
+                (function(index) {
+                    CurrentChild.addEventListener("click", ()=> {
+                    AddToDeck(index, WhatIndexToReplace);
+                });
+                })(i);
+            }
+            if (i>=inventory.length) {
+                InventoryParent.children[i+1].remove();
+                i--;
+            }
+        }
+        
+        SetAllFontSizeInArray(FontSizeAdjusterArray);
+    }
+
+    async function AddToDeck(index, WhatIndexToReplace) {
+        await fetch(window.location.origin+'/api/cards/addToDeck', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                WhatItemIndex:index,
+                WhatIndexToReplace: WhatIndexToReplace
+            })
+        });
+        document.getElementById("InventoryPanel").style.display = "none";
+        ShowDeck();
+    }
+    // Remove all event listeners from an element
+    function removeAllEventListeners(element) {
+        // Clone the element to remove all its events
+        const newElement = element.cloneNode(true);
+        element.parentNode.replaceChild(newElement, element);
+        return newElement;
     }
 
     class Card {

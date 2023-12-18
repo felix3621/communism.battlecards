@@ -125,7 +125,6 @@ class Battle {
     }
     EndTurn() {
         this.turnTime = roundTime;
-        console.log(this.round);
         if (this.currentPlayer == "p1"){
             this.currentPlayer = "p2";
             this.DrawCardsToPlayer(this.p2,2);
@@ -197,12 +196,22 @@ class Battle {
                 AvalebleCards.push(player.Deck[i]);
             }
         }
+        if (AvalebleCards.length==0) {
+            AvalebleCards = player.Deck;
+        }
         for (let i = 0; i < amount; i++) {
             player.Hand.push(AvalebleCards[Math.floor(Math.random() * AvalebleCards.length)]);
         }
     }
     EndGame(looser) {
         console.log("Endgame, Looser:", looser)
+        if (!this.dead) {
+            if (this.p1 && this.p1.UserName == looser && this.p2) {
+                giveRewards(this.p2.UserName)
+            } else if (this.p2 && this.p2.UserName == looser && this.p1) {
+                giveRewards(this.p1.UserName)
+            }
+        }
         this.dead = true;
     }
 }
@@ -299,6 +308,25 @@ class stone {
     }
 }
 
+async function giveRewards(username) {
+    cardID = Math.floor(Math.random() * cards.length);
+
+    let client = await db.connect()
+    let result = await client.db("communism_battlecards").collection("accounts").findOne({username: username})
+    
+    var item = result.inventory.find(obj => obj.card = cardID);
+    if (item) {
+        item.count++;
+    } else {
+        result.inventory.push({card:cardID,count:1});
+    }
+
+
+    await client.db("communism_battlecards").collection("accounts").updateOne({username: username},{$set:result})
+    
+    await client.close()
+}
+
 // Create an HTTP server
 const httpServer = http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
@@ -392,6 +420,7 @@ async function tick() {
             battles.push(new Battle());
             battles[battles.length-1].code = auth.encrypt("game_"+gameID)
             battles[battles.length-1].SetP1(queuedUsers[0].username);
+            gameID++
         }
         battleUsers.push(queuedUsers[0]);
         queuedUsers.splice(0,1);
@@ -431,6 +460,8 @@ webSocketServer.on('connection', async(socket, request) => {
     let username = await authorizeSocket(socket, request);
     if (!username) return;
 
+    const search = (new URL(request.url, 'http://localhost')).searchParams
+
     // if already logged on with same account, kick that account, and take it's place
     let queueUser = queuedUsers.find(obj => obj.username == username)
     if (queueUser) {
@@ -446,10 +477,35 @@ webSocketServer.on('connection', async(socket, request) => {
             if (battleUser.socket) {
                 battleUser.socket.close(1008, 'Another instance logged on')
             }
-            battleUser.socket = socket;
-        } else { 
+            if (!search.get("private") && !search.get("code"))
+                battleUser.socket = socket;
+            else {
+                let game = battles.find(obj => (obj.p1 && obj.p1.UserName == username) || (obj.p2 && obj.p2.UserName == username))
+                if (game)
+                    game.PlayerDisconnected(username)
+            }
+        } else if (!search.get("private") && !search.get("code")) { 
             //add to queue
             queuedUsers.push({username: username, socket: socket, reconnectTime: 30})
+        }
+
+        if (search.get("private")) {
+            battles.push(new Battle());
+            battles[battles.length-1].code = auth.encrypt("game_"+gameID)
+            battleUsers.push({username: username, socket: socket, reconnectTime: 30})
+            battles[battles.length-1].SetP1(username);
+            battles[battles.length-1].private = true;
+            gameID++
+        } else if (search.get("code")) {
+            let battle = battles.find(obj => obj.code == search.get("code"))
+            if (battle) {
+                if (!battle.p2 || battle.p2.UserName == username) {
+                    battleUsers.push({username: username, socket: socket, reconnectTime: 30})
+                    battle.SetP2(username)
+                }
+            } else {
+                socket.close(1008, 'game not found');
+            }
         }
     }
 

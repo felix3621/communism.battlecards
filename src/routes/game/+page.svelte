@@ -281,7 +281,7 @@
 <div id="DraggableParent" style="position: fixed;"></div>
 <div id="TopBar"><h1 style="margin: 0; text-align:center; color:white">Battle!</h1></div>
 <h1 id="DisplayTitle"></h1>
-<h1 id="code"></h1>
+<h1 id="code" style="cursor: pointer" on:click={() => {navigator.clipboard.writeText(document.getElementById("code").innerText)}}></h1>
 
 <script>
     import { onMount } from "svelte";
@@ -313,7 +313,18 @@
     var socket;
 
     function createSocket() {
-        socket = new WebSocket(`wss://${window.location.host}/gamesocket`);
+        let query
+        let search = new URLSearchParams(window.location.search);
+        let privateSearch = search.get("private")
+        if (privateSearch == "true")
+            query = "private=true"
+        else {
+            let codeSearch = search.get("code")
+            if (codeSearch)
+                query = "code="+codeSearch
+        }
+
+        socket = new WebSocket(`wss://${window.location.host}/gamesocket?${query}`);
 
         // Event listener for when the connection is established
         socket.onopen = () => {
@@ -344,7 +355,6 @@
                         } else if (i<data.PlayerInfo.Field.length) {
                             PlayerOnField[i].UpdateVisuals(data.PlayerInfo.Field[i].Attack, data.PlayerInfo.Field[i].Health, data.PlayerInfo.Field[i].Texture, data.PlayerInfo.Field[i].attackCooldown);
                         } else {
-                            console.log(data.PlayerInfo.Field);
                             PlayerOnField[i].Remove();
                             PlayerOnField.splice(i,1);
                         }
@@ -514,7 +524,6 @@
     //Place the stone by the position of the Draggable
     function PlaceStone() {
         if (!yourTurn) {return;}
-        console.log("Place Stone!")
         var PlayerField = document.getElementById("PlayerOnField");
         var LeftSide = PlayerField.getBoundingClientRect().left;
         var whereInDiv = (MouseX-LeftSide)/PlayerField.offsetWidth;

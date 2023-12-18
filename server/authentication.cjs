@@ -81,7 +81,7 @@ auth.checkUser = async(req, res, next) => {
             let base = client.db("communism_battlecards").collection("accounts")
             
             let userCount = await base.countDocuments({testUser: true});
-            await base.insertOne({username: "test_"+userCount, password: "test", display_name: "test "+userCount, avatar: 1, deck: [0,1,2,3,4,5,6,7,8], testUser: true})
+            await base.insertOne({username: "test_"+userCount, password: "test", display_name: "test "+userCount, avatar: 1, deck: [0,1], testUser: true, inventory: []})
             await client.close()
             req.user = {username: "test_"+userCount, display_name: "test "+userCount, testUser: true}
 

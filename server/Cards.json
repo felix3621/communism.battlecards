@@ -3,12 +3,12 @@
         "Name":"Bandit",
         "Description":"A Bandit Ready to kill",
         "Attack":2,
-        "Health":8,
-        "Cost":4,
+        "Health":4,
+        "Cost":3,
         "Texture":"Bandit"
     },
     {
-        "Name":"PinkSlime",
+        "Name":"PurpleSlime",
         "Description":"A wild Slime",
         "Attack":1,
         "Health":1,
@@ -70,5 +70,21 @@
         "Health":3,
         "Cost":3,
         "Texture":"Goblin"
+    },
+    {
+        "Name":"Sand Slime",
+        "Description":"Sandy and Slimy!",
+        "Attack":1,
+        "Health":3,
+        "Cost":2,
+        "Texture":"SandSlime"
+    },
+    {
+        "Name":"Sand Slime Tamer",
+        "Description":"Slimy and sandy tamer!",
+        "Attack":4,
+        "Health":6,
+        "Cost":4,
+        "Texture":"SandSlimeTamer"
     }
 ]

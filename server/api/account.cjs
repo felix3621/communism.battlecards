@@ -16,7 +16,7 @@ router.post('/signup', async(req, res) => {
         let base = client.db("communism_battlecards").collection("accounts")
         let check = await base.findOne({username: username})
         if (!check) {
-            let result = await base.insertOne({username: username, password: password, display_name: display_name, avatar: 0, deck: [0,1]})
+            let result = await base.insertOne({username: username, password: password, display_name: display_name, avatar: 0, deck: [0,1], inventory: []})
 
             let userToken = auth.encrypt(JSON.stringify([auth.encrypt(username), auth.encrypt(password)]))
             res.cookie('userToken', userToken, { httpOnly: true });
@@ -24,6 +24,7 @@ router.post('/signup', async(req, res) => {
         } else {
             res.status(403).send("Username already exists")
         }
+        await client.close()
     } else {
         res.status(500).send("error")
     }
