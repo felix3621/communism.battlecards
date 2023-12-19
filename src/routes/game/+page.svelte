@@ -516,8 +516,14 @@
                 if (!TargetClass) {
                     DraggableSelectTarget.SelectedTarget = "";
                 }
+                if (TargetClass.Health-DraggableSelectTarget.Class.Attack<=0) {
+                    DraggableSelectTarget.TargetIndicator.style.backgroundImage = "url('images/kill.png');";
+                } else {
+                    DraggableSelectTarget.TargetIndicator.style.backgroundImage = "url('images/target.png');";
+                }
             } else {
                 DraggableSelectTarget.SelectedTarget = "";
+                DraggableSelectTarget.TargetIndicator.style.backgroundImage = "url('images/target.png');";
             }
         }
     }

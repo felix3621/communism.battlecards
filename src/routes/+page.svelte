@@ -45,7 +45,7 @@
     }
     #Panel2 {
         position: fixed;
-        right:-25px;
+        right:-7px;
         top:25%;
         width: 100px;
         bottom: 5%;
@@ -74,7 +74,7 @@
         border: 5px rgb(25,25,25) solid;
         
     }
-    #CardDeckPanel, #InvontoryPanel {
+    #CardDeckPanel, #InvontoryPanel, #AvatarPanel {
         position: absolute;
         bottom: 0px;
         top:0px;
@@ -178,7 +178,6 @@
     #joinByCode {
         width: 95%;
         margin-left: 2.5%;
-        margin-top: 2.5%;
         height: 30%;
         transform: translate(0,-37.5px);
         font-size: 200%;
@@ -206,6 +205,11 @@
     }
     #DeckButton {
         background-image: url(images/DeckIcon.png);
+        background-size: cover;
+        cursor:pointer;
+    }
+    #AvatarButton {
+        background-image: url(images/AvatarIcon.png);
         background-size: cover;
         cursor:pointer;
     }
@@ -246,6 +250,29 @@
     :global(.ClicableCard:hover) {
         filter: opacity(0.60);
     }
+    #SelectedAvatar {
+        position: fixed;
+        top:50%;
+        left:25%;
+        transform: translate(-50%,-50%);
+        width: 25%;
+    }
+    #DisplayAllAvatars {
+        position: fixed;
+        top:15%;
+        right:5%;
+        left:50%;
+        bottom:5%;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 0.3fr));
+        grid-template-rows: auto auto auto auto;    
+        grid-gap:10%;
+        overflow-y: auto;
+        overflow-x: hidden;
+        background-color: #414141;
+        outline: 5px rgb(77, 77, 77) solid;
+        border-radius: 25px;
+    }
 </style>
 <h1 class="Title" style="margin: 0px;">Welcome to BattleCards!</h1>
 <div class="EXP_Bar">
@@ -283,6 +310,12 @@
 <!--Select Deck and do other actions whit cards-->
 <div id="Panel2">
     <div class="Icon" id="DeckButton" on:click={()=>{document.getElementById("CardDeckPanel").style.display="block"; ShowDeck();}}></div>
+    <div class="Icon" id="AvatarButton" on:click={()=>{document.getElementById("AvatarPanel").style.display="block"; UpdateAvatarsPanel();}}></div>
+</div>
+<div id="AvatarPanel" style="display:none;">
+    <button style="position: fixed;right:0;top:0;font-size:50px" class="btn" on:click={()=>document.getElementById("AvatarPanel").style.display="none"}>X</button>
+    <div id="SelectedAvatar"></div>
+    <div id="DisplayAllAvatars"></div>
 </div>
 <div id="CardDeckPanel" style="display:none;">
     <button style="position: fixed;right:0;top:0;font-size:50px" class="btn" on:click={()=>document.getElementById("CardDeckPanel").style.display="none"}>X</button>
@@ -299,6 +332,7 @@
     var Level = 1;
     var Exp = 0;
     var FontSizeAdjusterArray = new Array();
+    var SelectedAvatar;
 
     onMount(async() => {
         const user = await fetch(window.location.origin+'/api/account/login', {
@@ -315,6 +349,8 @@
         SetExpFilLevel(100);
         SetAllFontSizeInArray(FontSizeAdjusterArray);
         window.addEventListener('resize', () => SetAllFontSizeInArray(FontSizeAdjusterArray));
+        SelectedAvatar = CreateCharacterStone(0,0,"MissingCharacter");
+        document.getElementById("SelectedAvatar").appendChild(SelectedAvatar);
     })
     
     async function logOut() {
@@ -333,6 +369,37 @@
         for (let i = 0; i < Bar.length; i++) {
             Bar[i].style.width = Level+"%";
         }
+    }
+
+    function CreateCharacterStone(Attack, Health, Texture) {
+        //THE CharacterStone
+        var CharacterStone = document.createElement("div");
+        CharacterStone.classList.add("CharacterStone");
+        CharacterStone.style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
+
+        //DMG
+        var CharacterStoneDMG = document.createElement("div");
+        CharacterStoneDMG.classList.add("CharacterStoneDMG");
+        CharacterStone.appendChild(CharacterStoneDMG);
+
+        //DMG Display
+        var CharacterStoneDMGText = document.createElement("p");
+        CharacterStoneDMGText.innerHTML = Attack;
+        CharacterStoneDMG.appendChild(CharacterStoneDMGText);
+        FontSizeAdjusterArray.push(CharacterStoneDMGText);
+
+        //CardHealth
+        var CharacterStoneHealth = document.createElement("div");
+        CharacterStoneHealth.classList.add("CharacterStoneHealth");
+        CharacterStone.appendChild(CharacterStoneHealth);
+
+        //Health Display
+        var CharacterStoneHealthText = document.createElement("p");
+        CharacterStoneHealthText.innerHTML = Health;
+        CharacterStoneHealth.appendChild(CharacterStoneHealthText);
+        FontSizeAdjusterArray.push(CharacterStoneHealthText);
+
+        return CharacterStone;
     }
 
     function CreateCard(Name, Description, Cost, Attack, Health, Texture) {
@@ -565,37 +632,50 @@
         return newElement;
     }
 
-    class Card {
-        constructor(Name,Description,Cost,Attack,Health,Texture,SpawnDelay=0) {
-            this.Cost = Cost;
-            this.Health = Health;
-            this.Attack = Attack;
-            this.Texture = Texture;
-            this.Name = Name;
-            this.Description = Description;
+    async function UpdateAvatarsPanel() {
+        var Avatars = await fetch(window.location.origin+'/api/avatar/get', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        Avatars = await Avatars.json()
+        console.log(Avatars);
+        UpdateStone(SelectedAvatar,Avatars.selected.Attack,Avatars.selected.Health,Avatars.selected.Texture);
+        var DisplayAllAvatarsParent = document.getElementById("DisplayAllAvatars");
 
-            this.Body = CreateCard(this.Name,this.Description,this.Cost,this.Attack,this.Health,this.Texture);
-        }
-        UpdateVisuals(Name,Description,Cost,Attack,Health,Texture) {
-            this.Cost = Cost;
-            this.Health = Health;
-            this.Attack = Attack;
-            this.Texture = Texture;
-            this.Name = Name;
-            this.Description = Description;
-            if (this.Body) {
-                this.Body.children[0].style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
-                this.Body.children[2].children[0].innerHTML = Attack;
-                this.Body.children[3].children[0].innerHTML = Health;
-                this.Body.children[4].children[0].innerHTML = Cost;
-                this.Body.children[5].children[0].innerHTML = Name;
-                this.Body.children[6].children[0].innerHTML = Description;
-                //SetAllFontSizeInArray(FontSizeAdjusterArray);
+        for (let i = 0; i < Avatars.avatars.length || i < DisplayAllAvatarsParent.children.length; i++) {
+            if (i>= DisplayAllAvatarsParent.children.length && i < Avatars.avatars.length) {
+                var NewAvatar = CreateCharacterStone(Avatars.avatars[i].Attack,Avatars.avatars[i].Health,Avatars.avatars[i].Texture);
+                DisplayAllAvatarsParent.appendChild(NewAvatar);
+                (function(index) {
+                    NewAvatar.addEventListener("click",()=>SetAvatar(index));
+                })(i);
+            } else if (i < Avatars.avatars.length) {
+                UpdateStone(DisplayAllAvatarsParent.children[i], Avatars.avatars[i].Attack,Avatars.avatars[i].Health,Avatars.avatars[i].Texture)
+            } else {
+                DisplayAllAvatarsParent.children[i].remove();
+                i--;
             }
         }
-        Remove() {
-            if (this.Body)
-                this.Body.remove();
-        }
-    } 
+    }
+    async function SetAvatar(index) {
+        console.log("SetAvatar",index);
+        await fetch(window.location.origin+'/api/avatar/select', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                newCard:index
+            })
+        });
+        UpdateAvatarsPanel();
+    }
+
+    function UpdateStone(Stone,Attack,Health,Texture) {
+        Stone.getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = Attack;
+        Stone.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = Health;
+        Stone.style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
+    }
 </script>
