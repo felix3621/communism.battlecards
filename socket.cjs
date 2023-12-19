@@ -10,13 +10,18 @@ const cards = require('./server/Cards.json');
 var queuedUsers = new Array();
 var battleUsers = new Array();
 var battles = new Array();
+var tournaments = new Array();
 
+//Game Memory
 var gameID = 0;
 
-const roundTime = 300
+//Game Settings
+const tickSpeed = 0.1;
+const roundTime = 30/tickSpeed;
 
 class Battle {
-    constructor() {
+    constructor(Tournament = null) {
+        this.Tournament = Tournament;
         this.active = false;
         this.gameData = {};
         this.p1 = null;
@@ -77,7 +82,7 @@ class Battle {
                         Energy:this.p1.Energy,
                         Title:this.p1.title
                     },
-                    TurnTime:Math.round(this.turnTime/10),
+                    TurnTime:Math.round(this.turnTime*tickSpeed),
                     MaxEnergy:this.maxEnergy,
                     round:this.round,
                     yourTurn: this.currentPlayer == "p1"
@@ -308,6 +313,34 @@ class stone {
     }
 }
 
+class Tournament {
+    constructor() {
+        this.Sockets = new Array();
+        this.Battles = new Array();
+    }
+    addSocket(username, socket) {
+        this.Sockets.push({username: username, socket: socket, reconnectTime: 30/tickSpeed, out: false});
+    }
+    Update() {
+
+    }
+    StartBattles() {
+        var PlayerCount = this.Sockets.filter(obj => !obj.out).length;
+        var Count=0;
+        for (let i = 0; i < this.Sockets.length; i++) {
+            if (!this.Sockets.out) {
+                Count++;
+            }
+            if (this.Battles[this.Battles.length-1] && !this.Battles[this.Battles.length-1].active && !this.Battles[this.Battles.length-1].p2) {
+                this.Battles[this.Battles.length-1].SetP2(this.Sockets[i].username);
+            } else if (i != this.Sockets.length && Count != PlayerCount) {
+                this.Battles.push(new Battle(this));
+                this.Battles[this.Battles.length-1].SetP1(this.Sockets[i].username);
+            }
+        }
+    }
+}
+
 async function giveRewards(username) {
     cardID = Math.floor(Math.random() * cards.length);
 
@@ -392,9 +425,9 @@ async function getPlayerInfo(username, player, game) {
 
 async function tick() {
     for (let i = 0; i < battleUsers.length; i++) {
-        //if logged on: ensure disconnectTime is 30, else count-down
+        //if logged on: ensure disconnectTime is 30s, else count-down
         if (battleUsers[i].socket) {
-            battleUsers[i].reconnectTime = 300;
+            battleUsers[i].reconnectTime = 30/tickSpeed;
         } else {
             battleUsers[i].reconnectTime--;
             //if disconnectTime of player hits 0, remove them, and handle that
@@ -452,6 +485,10 @@ async function tick() {
         } else {
             battles[i].Update();
         }
+    }
+
+    for (let i = 0; i < tournaments.length; i++) {
+        tournaments[i].Update()
     }
 }
 
@@ -538,7 +575,7 @@ webSocketServer.on('connection', async(socket, request) => {
     });
 });
 
-setInterval(tick, 100);
+setInterval(tick, 1000*tickSpeed);
 
 // Upgrade the connection to WebSocket when a WebSocket request is received
 httpServer.on('upgrade', (request, socket, head) => {

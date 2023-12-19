@@ -263,6 +263,67 @@
     :global(.OnCooldown) {
         filter: opacity(0.5);
     }
+    #Tournament{
+        position: fixed;
+        left:0;
+        top:40px;
+        right:0;
+        bottom:0;
+        background-color: black;
+        transition-duration: 1s;
+        filter: opacity(1);
+    }
+    #TournamentPlayerList{
+        position: fixed;
+        left:5%;
+        top:10%;
+        bottom: 5%;
+        width: 35%;
+        background-color: rgb(50, 50, 50);
+        border-radius: 25px;
+        outline: 3px rgb(127,127,127) solid;
+        display: grid;
+        grid-template-columns: 100%;
+        grid-template-rows: repeat(auto-fit, 50px);
+        overflow-y: auto;
+        overflow-x: hidden;
+        color: white;
+        padding: 15px;
+    }
+    #TournamentPlayerList h1 {
+        margin: 0;
+    }
+    #TournamentReadyButton {
+        position: fixed;
+        color:white;
+        background-color: black;
+        top:0;
+        right:0;
+    }
+    #TournamentGameList {
+        position: fixed;
+        right:5%;
+        top:10%;
+        bottom: 5%;
+        width: 45%;
+        display: grid;
+        grid-template-columns: 100%;
+        grid-template-rows: repeat(auto-fit, 150px);
+        overflow-y: auto;
+        overflow-x: hidden;
+        color: white;
+        padding: 15px;
+    }
+    :global(#TournamentGameList .Container) {
+        display: grid;
+        grid-template-columns: auto auto auto;
+    }
+    :global(#TournamentGameList h1) {
+        margin:0;
+        height: 100%;
+        font-size: 10vw;
+        text-align: center;
+    }
 </style>
 <hr id="MidleLine">
 <div id="EnemyAvatar"><h1 id="EnemyName">Waiting for Player...</h1></div>
@@ -272,17 +333,20 @@
 <div id="PlayerHand"></div>
 <div id="EnemyOnField"></div>
 <div id="PlayerOnField"></div>
-<div id="DisplayEnergy">
-    <img src="/images/EnergyIcon.png">
-    <img src="/images/EnergyIcon.png">
-</div>
+<div id="DisplayEnergy"></div>
 <button id="EndTurn" on:click={endTurn}>EndTurn</button>
 <h1 id="TimeDisplay">2:00</h1>
 <div id="DraggableParent" style="position: fixed;"></div>
 <div id="TopBar"><h1 style="margin: 0; text-align:center; color:white">Battle!</h1></div>
 <h1 id="DisplayTitle"></h1>
 <h1 id="code" style="cursor: pointer" on:click={() => {navigator.clipboard.writeText(document.getElementById("code").innerText)}}></h1>
-
+<div id="Tournament">
+    <button id="TournamentReadyButton">Ready?</button>
+    <div id="TournamentPlayerList">
+        <h1 style="text-align: center;">Player List (0/16)</h1>
+    </div>
+    <div id="TournamentGameList"></div>
+</div>
 <script>
     import { onMount } from "svelte";
 
@@ -336,11 +400,77 @@
             var data = event.data;
             if (data) {
                 data = JSON.parse(data);
+
+                //Tournament Screen
+                if (data.TournamentScreen) {
+                    document.getElementById("Tournament").style.filter = "opacity(1)";
+                    document.getElementById("Tournament").style.pointerEvents = "";
+                    if (data.TournamentPlayers) {
+                        var TournamentPlayerList = document.getElementById("TournamentPlayerList");
+                        for (let i = 0; i < data.TournamentPlayers.length || i < TournamentPlayerList.children.length-1; i++) {
+                            if (i < data.TournamentPlayers.length && i >= TournamentPlayerList.children.length-1) { // Create
+                                var Temp = document.createElement("h2");
+                                TournamentPlayerList.appendChild(Temp);
+                                Temp.innerHTML = data.TournamentPlayers[i];
+                            } else if (i < data.TournamentPlayers.length) { // Update
+                                TournamentPlayerList.children[i+1].innerHTML = data.TournamentPlayers[i];
+                            } else { // Remove
+                                TournamentPlayerList.children[i+1].remove();
+                            }
+                            TournamentPlayerList.children[0].innerHTML = "Player List ("+i+"/16)";
+                        }
+                    }
+                    //Show all games in Tournament
+                    if (data.TournamentGames) {
+                        var tournamentGameList = document.getElementById("TournamentGameList");
+                        for (let i = 0; i < data.TournamentGames.length || i < tournamentGameList.children.length; i++) {
+                            if (i < data.TournamentGames.length && i >= tournamentGameList.children.length) { // Create
+                                // Create Game Container
+                                var temp = document.createElement("div");
+                                temp.classList.add("Container");
+                                tournamentGameList.appendChild(temp);
+
+                                // player 1 Avatar
+                                var p1 = Stone(data.TournamentGames.p1.Attack,data.TournamentGames.p1.Health,data.TournamentGames.p1.Texture);
+                                p1.classList.add("P1");
+                                temp.appendChild(p1);
+                                // Text in midle that says VS
+                                var VSText = document.createElement("h1");
+                                VSText.innerHTML = "VS";
+                                temp.appendChild(VSText);
+                                // player 1 Avatar
+                                var p2 = Stone(data.TournamentGames.p2.Attack,data.TournamentGames.p2.Health,data.TournamentGames.p2.Texture);
+                                p2.classList.add("P2");
+                                temp.appendChild(p2);
+
+                            } else if (i < data.TournamentGames.length) { // Update
+                                // P1 Update
+                                tournamentGameList.children[i].children[0].getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = data.TournamentGames.p1.Attack;
+                                tournamentGameList.children[i].children[0].getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = data.TournamentGames.p1.Health;
+                                tournamentGameList.children[i].children[0].style.backgroundImage = "url('/images/Cards/"+data.TournamentGames.p1.Texture+".png')";
+
+                                // P2 Update
+                                tournamentGameList.children[i].children[2].getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = data.TournamentGames.p2.Attack;
+                                tournamentGameList.children[i].children[2].getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = data.TournamentGames.p2.Health;
+                                tournamentGameList.children[i].children[2].style.backgroundImage = "url('/images/Cards/"+data.TournamentGames.p2.Texture+".png')";
+                            } else { // Remove
+                                tournamentGameList.children[i].remove();
+                            }
+                        }
+                    }
+                } else {
+                    document.getElementById("Tournament").style.filter = "opacity(0)";
+                    document.getElementById("Tournament").style.pointerEvents = "none";
+                }
+
+                // Normal game logic
                 if (data.TurnTime) {
                     let newTime = Math.trunc(data.TurnTime/60) + ":" + String(data.TurnTime%60).padStart(2,"0");
                     document.getElementById("TimeDisplay").innerHTML = newTime;
                 }
-                yourTurn = data.yourTurn;
+                if (data.yourTurn) {
+                    yourTurn = data.yourTurn;
+                }
                 if (data.PlayerInfo) {
                     PlayerDisplayName = data.PlayerInfo.DisplayName;
                     document.getElementById("PlayerName").innerText = PlayerDisplayName;
@@ -430,7 +560,7 @@
         EnemyAvatar = new Stone(0,0,"MissingCharacter",document.getElementById("EnemyAvatar"))
         PlayerAvatar = new Stone(0,0,"MissingCharacter",document.getElementById("PlayerAvatar"))
 
-        createSocket()
+        //createSocket()
 
         //Actual Commands
         SetAllFontSizeInArray(FontSizeAdjusterArray);
@@ -450,6 +580,23 @@
                 hoveredElement.classList.add('Selected');
             }
         });
+        var tournamentGameList = document.getElementById("TournamentGameList");
+        // Create Game Container
+        var temp = document.createElement("div");
+        temp.classList.add("Container");
+        tournamentGameList.appendChild(temp);
+        // player 1 Avatar
+        var p1 = CreateCharacterStone(0,0,"BOB");
+        p1.classList.add("P1");
+        temp.appendChild(p1);
+        // Text in midle that says VS
+        var VSText = document.createElement("h1");
+        VSText.innerHTML = "VS";
+        temp.appendChild(VSText);
+        // player 1 Avatar
+        var p2 = CreateCharacterStone(0,0,"Felix");
+        p2.classList.add("P2");
+        temp.appendChild(p2);
     })
 
     function endTurn() {
