@@ -98,7 +98,7 @@
     {
         "Name":"HolyBook",
         "Description":"The power of christ compels you!",
-        "Attack":4,
+        "Attack":8,
         "Health":null,
         "Cost":4,
         "Texture":"HolyBook",
@@ -107,9 +107,9 @@
     {
         "Name":"FireBall",
         "Description":"BURN!",
-        "Attack":4,
+        "Attack":3,
         "Health":null,
-        "Cost":4,
+        "Cost":2,
         "Texture":"FireBall",
         "Type":"Projectile"
     }

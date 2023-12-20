@@ -271,8 +271,8 @@ class Player {
             } else {
                 Enemy = this.match.p1;
             }
-            console.log("UseCard!")
             var SelectedCardIndex = input.SelectedCardIndex;
+            if (this.Hand[SelectedCardIndex] && this.Hand[SelectedCardIndex].Cost <= this.Energy)
             if (this.Hand[SelectedCardIndex] && this.Hand[SelectedCardIndex].Type == "Projectile") {
                 var SelectedTargetIndex = input.SelectedTargetIndex;
                 var TargetStone;

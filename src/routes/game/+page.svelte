@@ -328,8 +328,26 @@
     :global(.Projectile) {
         aspect-ratio: 1/1;
         width:100px;
-        transition-duration: 1s;
-
+        transition-duration: 0.9s;
+        position:fixed;
+        transition-timing-function: ease-in;
+        animation: Explode 1.1s forwards;
+        animation-delay: 0.8s;
+        transform: translate(-50%,-50%);
+    }
+    @keyframes Explode {
+        0% {
+            transform: translate(-50%,-50%) scale(1,1);
+            filter: opacity(1);
+        }
+        25% {
+            transform: translate(-50%,-50%) scale(1.5,1.5);
+            filter: opacity(1);
+        }
+        100% {
+            transform: translate(-50%,-50%) scale(0,0);
+            filter: opacity(0);
+        }
     }
 </style>
 <hr id="MidleLine">
@@ -412,6 +430,46 @@
             var data = event.data;
             if (data) {
                 data = JSON.parse(data);
+                //Display Projectiles
+                if (data.Projectiles) {
+                    for (let i = 0; i < data.Projectiles.length; i++) {
+                        data.Projectiles[i].Element = document.createElement("img");
+                        data.Projectiles[i].Element.classList.add("Projectile");
+                        document.body.appendChild(data.Projectiles[i].Element);
+                        if (yourTurn) {
+                            data.Projectiles[i].Element.style.top = "75%";
+                            data.Projectiles[i].Element.style.left = "50%";
+                            var Enemy;
+                            if (data.Projectiles[i].EnemyType == "Avatar") {
+                                Enemy = EnemyAvatar.Body;
+                            } else if (EnemyOnField[data.Projectiles[i].SelectedTargetIndex]) {
+                                Enemy = EnemyOnField[data.Projectiles[i].SelectedTargetIndex].Body;
+
+                            } 
+                            if (Enemy) {
+                                data.Projectiles[i].Element.style.top = (Enemy.getBoundingClientRect().top+(Enemy.getBoundingClientRect().height/2))+"px";
+                                data.Projectiles[i].Element.style.left = (Enemy.getBoundingClientRect().left+(Enemy.getBoundingClientRect().width/2))+"px";
+                                setTimeout(() => {data.Projectiles[i].Element.remove();},1500);
+                            }
+                        } else {
+                            data.Projectiles[i].Element.style.top = "25%";
+                            data.Projectiles[i].Element.style.left = "50%";
+                            var Target;
+                            if (data.Projectiles[i].EnemyType == "Avatar") {
+                                Target = PlayerAvatar.Body;
+                            } else if (PlayerOnField[data.Projectiles[i].SelectedTargetIndex]) {
+                                Target = PlayerOnField[data.Projectiles[i].SelectedTargetIndex].Body;
+
+                            }
+                            if (Target) {
+                                data.Projectiles[i].Element.style.top = (Target.getBoundingClientRect().top+(Target.getBoundingClientRect().height/2))+"px";
+                                data.Projectiles[i].Element.style.left = (Target.getBoundingClientRect().left+(Target.getBoundingClientRect().width/2))+"px";
+                                setTimeout(() => {data.Projectiles[i].Element.remove();},1500);
+                            }
+                        }
+                        data.Projectiles[i].Element.src = "images/Projectiles/"+data.Projectiles[i].Texture+".png";
+                    }
+                }
                 //Tournament Screen
                 if (data.TournamentScreen) {
                     displayTitle = data.TournamentCountDown;
@@ -564,51 +622,6 @@
                     }
                 } else {
                     document.getElementById("code").innerText = "";
-                }
-                if (data.Projectiles) {
-                    for (let i = 0; i < data.Projectiles.length; i++) {
-                        data.Projectiles[i].Element = document.createElement("img");
-                        data.Projectiles[i].Element.classList.add("Projectile");
-                        document.body.appendChild(data.Projectiles[i].Element);
-                        if (yourTurn) {
-                            data.Projectiles[i].Element.style.top = "75%";
-                            data.Projectiles[i].Element.style.left = "50%";
-                            setTimeout(() => {
-                                var Enemy;
-                                if (data.Projectiles[i].EnemyType == "Avatar") {
-                                    Enemy = EnemyAvatar.Body;
-                                } else if (EnemyOnField[data.Projectiles[i].SelectedTargetIndex]) {
-                                    Enemy = EnemyOnField[data.Projectiles[i].SelectedTargetIndex].Body;
-
-                                } 
-                                if (Enemy) {
-                                    data.Projectiles[i].Element.style.top = (Enemy.getBoundingClientRect().top+(Enemy.getBoundingClientRect().height/2))+"px";
-                                    data.Projectiles[i].Element.style.left = (Enemy.getBoundingClientRect().left+(Enemy.getBoundingClientRect().width/2))+"px";
-                                    setTimeout(() => {data.Projectiles[i].Element.remove();},1000);
-                                }
-                                
-                            },1000);
-                        } else {
-                            data.Projectiles[i].Element.style.top = "25%";
-                            data.Projectiles[i].Element.style.left = "50%";
-                            setTimeout(() => {
-                                var Target;
-                                if (data.Projectiles[i].EnemyType == "Avatar") {
-                                    Target = EnemyAvatar.Body;
-                                } else if (PlayerOnField[data.Projectiles[i].SelectedTargetIndex]) {
-                                    Target = PlayerOnField[data.Projectiles[i].SelectedTargetIndex].Body;
-
-                                }
-                                if (Target) {
-                                    data.Projectiles[i].Element.style.top = (Target.getBoundingClientRect().top+(Target.getBoundingClientRect().height/2))+"px";
-                                    data.Projectiles[i].Element.style.left = (Target.getBoundingClientRect().left+(Target.getBoundingClientRect().width/2))+"px";
-                                    setTimeout(() => {data.Projectiles[i].Element.remove();},1000);
-                                }
-                                
-                            },1000);
-                        }
-                        data.Projectiles[i].Element.src = "images/Projectiles/"+data.Projectiles[i].Texture+".png";
-                    }
                 }
             }
             document.getElementById("DisplayTitle").innerText = displayTitle;
