@@ -35,10 +35,10 @@
     }
     #gamePanel {
         position: fixed;
-        left:40%;
+        left:10%;
         top:40%;
-        right:40%;
-        bottom: 40%;
+        right:60%;
+        bottom: 35%;
         background-color: rgb(50, 50, 50);
         border-radius: 25px;
         outline: 5px black solid;
@@ -175,7 +175,7 @@
         font-weight: bolder;
         padding: 0;
     }
-    #joinByCode {
+    .joinByCode {
         width: 95%;
         margin-left: 2.5%;
         height: 30%;
@@ -185,16 +185,16 @@
         padding: 0;
         overflow: hidden;
     }
-    #joinByCode *{
+    .joinByCode *{
         width: 45%;
         height: 100%;
         font-size: 125%;
     }
-    #joinByCode input {
+    .joinByCode input {
         padding: 0;
         border-radius: 0 0 0 25px;
     }
-    #joinByCode button {
+    .joinByCode button {
         position: fixed;
         margin-left: 10%;
         border-radius: 0 0 25px 0;
@@ -221,7 +221,6 @@
         border: 4px black solid;
         border-radius: 15px;
         aspect-ratio: 2.73/3.93;
-        
     }
     :global(#NewCard div) {
         background-image: url(images/plus.png);
@@ -235,7 +234,7 @@
         
     }
     :global(#RemoveCard div) {
-        background-image: url(images/plus.png);
+        background-image: url(images/minus.png);
         background-size: cover;
         aspect-ratio: 1/1;
         width: 50%;
@@ -246,9 +245,15 @@
     }
     :global(#NewCard:hover) {
         filter: opacity(0.5);
+        cursor: pointer;
+    }
+    :global(#RemoveCard:hover) {
+        filter: opacity(0.5);
+        cursor: pointer;
     }
     :global(.ClicableCard:hover) {
         filter: opacity(0.60);
+        cursor: pointer;
     }
     #SelectedAvatar {
         position: fixed;
@@ -273,6 +278,27 @@
         outline: 5px rgb(77, 77, 77) solid;
         border-radius: 25px;
     }
+    #tournamentPanel {
+        position: fixed;
+        left:60%;
+        top:40%;
+        right:10%;
+        bottom: 35%;
+        background-color: rgb(50, 50, 50);
+        border-radius: 25px;
+        outline: 5px black solid;
+    }
+    #createTournament {
+        width: 95%;
+        margin-left: 2.5%;
+        margin-top: 2.5%;
+        height: 30%;
+        transform: translate(0,-37.5px);
+        border-radius: 25px 25px 0 0;
+        font-size: 200%;
+        font-weight: bolder;
+        padding: 0;
+    }
 </style>
 <h1 class="Title" style="margin: 0px;">Welcome to BattleCards!</h1>
 <div class="EXP_Bar">
@@ -296,14 +322,23 @@
     <div class="PlayerProfileImage"></div>
     <div class="PlayerName"><p></p></div>
 </div>
-<!--Select Match and Player Avatar-->
+<!--Select Match-->
 <div id="gamePanel">
     <h1 class="PanelTitle" style="position: relative"><b>Game</b></h1>
     <button id="quickPlay" class="btn" on:click={() => window.location.href = "/game"}>Quick Play</button>
     <button id="privateGame" class="btn" on:click={() => window.location.href = "/game?private=true"}>Private Game</button>
-    <div id="joinByCode">
+    <div class="joinByCode" id="gameCode">
         <input type="text" placeholder="Code">
-        <button class="btn" on:click={() => window.location.href = "/game?code="+document.getElementById("joinByCode").children[0].value}>Join</button>
+        <button class="btn" on:click={() => window.location.href = "/game?code="+encodeURIComponent(document.getElementById("gameCode").children[0].value)}>Join</button>
+    </div>
+</div>
+<!--Select tournament-->
+<div id="tournamentPanel">
+    <h1 class="PanelTitle" style="position: relative"><b>Tournament</b></h1>
+    <button class="btn" id="createTournament" on:click={() => window.location.href = "/game?tournament=new"}>New tournament</button>
+    <div class="joinByCode" style="position: absolute; bottom: -17.5%; " id="tournamentCode">
+        <input type="text" placeholder="Code">
+        <button class="btn" on:click={() => window.location.href = "/game?tournament="+encodeURIComponent(document.getElementById("tournamentCode").children[0].value)}>Join</button>
     </div>
 </div>
 
@@ -606,7 +641,6 @@
                 i--;
             }
         }
-        
         SetAllFontSizeInArray(FontSizeAdjusterArray);
     }
 

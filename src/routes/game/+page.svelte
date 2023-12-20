@@ -271,7 +271,8 @@
         bottom:0;
         background-color: black;
         transition-duration: 1s;
-        filter: opacity(1);
+        filter: opacity(0);
+        pointer-events: none;
     }
     #TournamentPlayerList{
         position: fixed;
@@ -324,6 +325,12 @@
         font-size: 10vw;
         text-align: center;
     }
+    :global(.Projectile) {
+        aspect-ratio: 1/1;
+        width:100px;
+        transition-duration: 1s;
+
+    }
 </style>
 <hr id="MidleLine">
 <div id="EnemyAvatar"><h1 id="EnemyName">Waiting for Player...</h1></div>
@@ -341,7 +348,7 @@
 <h1 id="DisplayTitle"></h1>
 <h1 id="code" style="cursor: pointer" on:click={() => {navigator.clipboard.writeText(document.getElementById("code").innerText)}}></h1>
 <div id="Tournament">
-    <button id="TournamentReadyButton">Ready?</button>
+    <button id="TournamentReadyButton" on:click={() => {socket.send(JSON.stringify({tournamentReady:true}));}}>Ready?</button>
     <div id="TournamentPlayerList">
         <h1 style="text-align: center;">Player List (0/16)</h1>
     </div>
@@ -386,6 +393,11 @@
             let codeSearch = search.get("code")
             if (codeSearch)
                 query = "code="+codeSearch
+            else {
+                let tournamentSearch = search.get("tournament")
+                if (tournamentSearch)
+                query = "tournament="+tournamentSearch
+            }
         }
 
         socket = new WebSocket(`wss://${window.location.host}/gamesocket?${query}`);
@@ -400,60 +412,67 @@
             var data = event.data;
             if (data) {
                 data = JSON.parse(data);
-
                 //Tournament Screen
                 if (data.TournamentScreen) {
+                    displayTitle = data.TournamentCountDown;
                     document.getElementById("Tournament").style.filter = "opacity(1)";
-                    document.getElementById("Tournament").style.pointerEvents = "";
+                    document.getElementById("Tournament").style.pointerEvents = "auto";
                     if (data.TournamentPlayers) {
                         var TournamentPlayerList = document.getElementById("TournamentPlayerList");
                         for (let i = 0; i < data.TournamentPlayers.length || i < TournamentPlayerList.children.length-1; i++) {
                             if (i < data.TournamentPlayers.length && i >= TournamentPlayerList.children.length-1) { // Create
                                 var Temp = document.createElement("h2");
                                 TournamentPlayerList.appendChild(Temp);
-                                Temp.innerHTML = data.TournamentPlayers[i];
+                                Temp.innerHTML = data.TournamentPlayers[i].username;
+                                Temp.style.color = data.TournamentPlayers[i].ready ? "rgb(0,255,0)" : "red";
+                                Temp.style.color = data.TournamentPlayers[i].out ? "rgb(150,150,150)" : Temp.style.color;
                             } else if (i < data.TournamentPlayers.length) { // Update
-                                TournamentPlayerList.children[i+1].innerHTML = data.TournamentPlayers[i];
+                                TournamentPlayerList.children[i+1].innerHTML = data.TournamentPlayers[i].username;
+                                TournamentPlayerList.children[i+1].style.color = data.TournamentPlayers[i].ready ? "rgb(0,255,0)" : "red";
+                                TournamentPlayerList.children[i+1].style.color = data.TournamentPlayers[i].out ? "rgb(150,150,150)" : TournamentPlayerList.children[i+1].style.color;
                             } else { // Remove
                                 TournamentPlayerList.children[i+1].remove();
                             }
-                            TournamentPlayerList.children[0].innerHTML = "Player List ("+i+"/16)";
                         }
+                        TournamentPlayerList.children[0].innerHTML = "Player List ("+data.TournamentPlayers.length+")";
                     }
                     //Show all games in Tournament
                     if (data.TournamentGames) {
                         var tournamentGameList = document.getElementById("TournamentGameList");
                         for (let i = 0; i < data.TournamentGames.length || i < tournamentGameList.children.length; i++) {
-                            if (i < data.TournamentGames.length && i >= tournamentGameList.children.length) { // Create
+                            if (i < data.TournamentGames.length && i >= tournamentGameList.children.length && data.TournamentGames[i].p1 != null && data.TournamentGames[i].p2  != null) { // Create
+                               console.log("Container");
                                 // Create Game Container
-                                var temp = document.createElement("div");
-                                temp.classList.add("Container");
-                                tournamentGameList.appendChild(temp);
+                                var Container = document.createElement("div");
+                                Container.classList.add("Container");
 
                                 // player 1 Avatar
-                                var p1 = Stone(data.TournamentGames.p1.Attack,data.TournamentGames.p1.Health,data.TournamentGames.p1.Texture);
+                                console.log(data.TournamentGames[i].p1);
+                                var p1 = CreateCharacterStone(data.TournamentGames[i].p1.Attack,data.TournamentGames[i].p1.Health,data.TournamentGames[i].p1.Texture);
                                 p1.classList.add("P1");
-                                temp.appendChild(p1);
+                                console.log(p1);
+                                Container.appendChild(p1);
                                 // Text in midle that says VS
                                 var VSText = document.createElement("h1");
                                 VSText.innerHTML = "VS";
-                                temp.appendChild(VSText);
+                                Container.appendChild(VSText);
                                 // player 1 Avatar
-                                var p2 = Stone(data.TournamentGames.p2.Attack,data.TournamentGames.p2.Health,data.TournamentGames.p2.Texture);
+                                var p2 = CreateCharacterStone(data.TournamentGames[i].p2.Attack,data.TournamentGames[i].p2.Health,data.TournamentGames[i].p2.Texture);
                                 p2.classList.add("P2");
-                                temp.appendChild(p2);
-
-                            } else if (i < data.TournamentGames.length) { // Update
+                                Container.appendChild(p2);
+                                tournamentGameList.appendChild(Container);
+                            } else if (i < tournamentGameList.children.length && i < data.TournamentGames.length && data.TournamentGames[i].p1  != null && data.TournamentGames[i].p2  != null) { // Update
                                 // P1 Update
-                                tournamentGameList.children[i].children[0].getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = data.TournamentGames.p1.Attack;
-                                tournamentGameList.children[i].children[0].getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = data.TournamentGames.p1.Health;
-                                tournamentGameList.children[i].children[0].style.backgroundImage = "url('/images/Cards/"+data.TournamentGames.p1.Texture+".png')";
+                                tournamentGameList.children[i].children[0].getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = data.TournamentGames[i].p1.Attack;
+                                tournamentGameList.children[i].children[0].getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = data.TournamentGames[i].p1.Health;
+                                tournamentGameList.children[i].children[0].style.backgroundImage = "url('/images/Cards/"+data.TournamentGames[i].p1.Texture+".png')";
 
                                 // P2 Update
-                                tournamentGameList.children[i].children[2].getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = data.TournamentGames.p2.Attack;
-                                tournamentGameList.children[i].children[2].getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = data.TournamentGames.p2.Health;
-                                tournamentGameList.children[i].children[2].style.backgroundImage = "url('/images/Cards/"+data.TournamentGames.p2.Texture+".png')";
-                            } else { // Remove
+                                tournamentGameList.children[i].children[2].getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = data.TournamentGames[i].p2.Attack;
+                                tournamentGameList.children[i].children[2].getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = data.TournamentGames[i].p2.Health;
+                                tournamentGameList.children[i].children[2].style.backgroundImage = "url('/images/Cards/"+data.TournamentGames[i].p2.Texture+".png')";
+                            } else if (i >= data.TournamentGames.length){ // Remove
+                                console.log("Remove");
                                 tournamentGameList.children[i].remove();
                             }
                         }
@@ -492,10 +511,10 @@
                     var SpawnAmount =0;
                     for (let i = 0; i < data.PlayerInfo.Hand.length || i<PlayerHand.length; i++) {
                         if (i<data.PlayerInfo.Hand.length && i>=PlayerHand.length) {
-                            PlayerHand.push(new Card(data.PlayerInfo.Hand[i].Name, data.PlayerInfo.Hand[i].Description, data.PlayerInfo.Hand[i].Cost, data.PlayerInfo.Hand[i].Attack, data.PlayerInfo.Hand[i].Health, data.PlayerInfo.Hand[i].Texture, SpawnAmount));
+                            PlayerHand.push(new Card(data.PlayerInfo.Hand[i].Name, data.PlayerInfo.Hand[i].Description, data.PlayerInfo.Hand[i].Cost, data.PlayerInfo.Hand[i].Attack, data.PlayerInfo.Hand[i].Health, data.PlayerInfo.Hand[i].Texture, data.PlayerInfo.Hand[i].Type, SpawnAmount));
                             SpawnAmount++;
                         } else if (i<data.PlayerInfo.Hand.length) {
-                            PlayerHand[i].UpdateVisuals(data.PlayerInfo.Hand[i].Name, data.PlayerInfo.Hand[i].Description, data.PlayerInfo.Hand[i].Cost, data.PlayerInfo.Hand[i].Attack, data.PlayerInfo.Hand[i].Health, data.PlayerInfo.Hand[i].Texture);
+                            PlayerHand[i].UpdateVisuals(data.PlayerInfo.Hand[i].Name, data.PlayerInfo.Hand[i].Description, data.PlayerInfo.Hand[i].Cost, data.PlayerInfo.Hand[i].Attack, data.PlayerInfo.Hand[i].Health, data.PlayerInfo.Hand[i].Texture, data.PlayerInfo.Hand[i].Type);
                         } else {
                             PlayerHand[i].Remove();
                             PlayerHand.splice(i,1);
@@ -530,8 +549,66 @@
                 }
                 if (data.code) {
                     document.getElementById("code").innerText = data.code;
+                    if (data.TournamentScreen) {
+                        let currentParams = new URLSearchParams(window.location.search);
+                        let currentRequest = decodeURIComponent(currentParams.get('tournament'))
+                        // Check if the new parameters are different from the current ones
+                        if (currentRequest != data.code) {
+                            let newParams = { tournament: data.code};
+                            let newQueryString = new URLSearchParams(newParams).toString();
+                        
+                            let newUrl = window.location.pathname + '?' + newQueryString;
+                        
+                            history.pushState(newParams, '', newUrl);
+                        }
+                    }
                 } else {
                     document.getElementById("code").innerText = "";
+                }
+                if (data.Projectiles) {
+                    for (let i = 0; i < data.Projectiles.length; i++) {
+                        data.Projectiles[i].Element = document.createElement("img");
+                        data.Projectiles[i].Element.classList.add("Projectile");
+                        document.body.appendChild(data.Projectiles[i].Element);
+                        if (yourTurn) {
+                            data.Projectiles[i].Element.style.top = "75%";
+                            data.Projectiles[i].Element.style.left = "50%";
+                            setTimeout(() => {
+                                var Enemy;
+                                if (data.Projectiles[i].EnemyType == "Avatar") {
+                                    Enemy = EnemyAvatar.Body;
+                                } else if (EnemyOnField[data.Projectiles[i].SelectedTargetIndex]) {
+                                    Enemy = EnemyOnField[data.Projectiles[i].SelectedTargetIndex].Body;
+
+                                } 
+                                if (Enemy) {
+                                    data.Projectiles[i].Element.style.top = (Enemy.getBoundingClientRect().top+(Enemy.getBoundingClientRect().height/2))+"px";
+                                    data.Projectiles[i].Element.style.left = (Enemy.getBoundingClientRect().left+(Enemy.getBoundingClientRect().width/2))+"px";
+                                    setTimeout(() => {data.Projectiles[i].Element.remove();},1000);
+                                }
+                                
+                            },1000);
+                        } else {
+                            data.Projectiles[i].Element.style.top = "25%";
+                            data.Projectiles[i].Element.style.left = "50%";
+                            setTimeout(() => {
+                                var Target;
+                                if (data.Projectiles[i].EnemyType == "Avatar") {
+                                    Target = EnemyAvatar.Body;
+                                } else if (PlayerOnField[data.Projectiles[i].SelectedTargetIndex]) {
+                                    Target = PlayerOnField[data.Projectiles[i].SelectedTargetIndex].Body;
+
+                                }
+                                if (Target) {
+                                    data.Projectiles[i].Element.style.top = (Target.getBoundingClientRect().top+(Target.getBoundingClientRect().height/2))+"px";
+                                    data.Projectiles[i].Element.style.left = (Target.getBoundingClientRect().left+(Target.getBoundingClientRect().width/2))+"px";
+                                    setTimeout(() => {data.Projectiles[i].Element.remove();},1000);
+                                }
+                                
+                            },1000);
+                        }
+                        data.Projectiles[i].Element.src = "images/Projectiles/"+data.Projectiles[i].Texture+".png";
+                    }
                 }
             }
             document.getElementById("DisplayTitle").innerText = displayTitle;
@@ -560,7 +637,7 @@
         EnemyAvatar = new Stone(0,0,"MissingCharacter",document.getElementById("EnemyAvatar"))
         PlayerAvatar = new Stone(0,0,"MissingCharacter",document.getElementById("PlayerAvatar"))
 
-        //createSocket()
+        createSocket()
 
         //Actual Commands
         SetAllFontSizeInArray(FontSizeAdjusterArray);
@@ -580,23 +657,6 @@
                 hoveredElement.classList.add('Selected');
             }
         });
-        var tournamentGameList = document.getElementById("TournamentGameList");
-        // Create Game Container
-        var temp = document.createElement("div");
-        temp.classList.add("Container");
-        tournamentGameList.appendChild(temp);
-        // player 1 Avatar
-        var p1 = CreateCharacterStone(0,0,"BOB");
-        p1.classList.add("P1");
-        temp.appendChild(p1);
-        // Text in midle that says VS
-        var VSText = document.createElement("h1");
-        VSText.innerHTML = "VS";
-        temp.appendChild(VSText);
-        // player 1 Avatar
-        var p2 = CreateCharacterStone(0,0,"Felix");
-        p2.classList.add("P2");
-        temp.appendChild(p2);
     })
 
     function endTurn() {
@@ -613,7 +673,10 @@
             if (!yourTurn) {DropDraggable(); return;}
             if (!DraggableCard.Class) {
                 DropDraggable();
-            } else {
+
+            } else if (DraggableCard.Class.Type == "Projectile") { // Projectile
+
+            } else { // Stone
                 DraggableCard.Draggable.style.left = MouseX+"px";
                 DraggableCard.Draggable.style.top = MouseY+"px";
 
@@ -691,23 +754,33 @@
             DropDraggable();
         }
         if (!yourTurn) {return;}
-        DraggableCard = {Card:Element,Draggable:Element.cloneNode(true),Stone:null,Class:Class};
+        if (Class.Type == "Projectile") {
+            let Draggable = document.createElement("img");
+            Draggable.style = "width:100px:height:100px;background-image:url('images/Projectile/"+Class.Texture+".png')";
+            DraggableCard = {Card:Element,Draggable:Draggable,Class:Class}
+            DraggableCard.Draggable.style.left = 50+"%";
+            DraggableCard.Draggable.style.top = 75+"%";
+
+            //Target Select!
+            var TargetIndicator = document.createElement("img");
+            TargetIndicator.classList.add("TargetIndicator");
+            TargetIndicator.src = "/images/target.png";
+            DraggableSelectTarget = {Class:Class,TargetIndicator:TargetIndicator,SelectedTarget:""}
+            document.getElementById("DraggableParent").appendChild(TargetIndicator);
+            DraggableSelectTarget.TargetIndicator.style.left = MouseX+"px";
+            DraggableSelectTarget.TargetIndicator.style.top = MouseY+"px";
+        } else {
+            DraggableCard = {Card:Element,Draggable:Element.cloneNode(true),Stone:null,Class:Class}
+            DraggableCard.Draggable.classList.add("Draggable");
+            document.getElementById("DraggableParent").appendChild(DraggableCard.Draggable);
+            DraggableCard.Draggable.style.left = MouseX+"px";
+            DraggableCard.Draggable.style.top = MouseY+"px";
+        }
         Element.style.display = "none";
-        DraggableCard.Draggable.classList.add("Draggable");
-        document.getElementById("DraggableParent").appendChild(DraggableCard.Draggable);
-        DraggableCard.Draggable.style.left = MouseX+"px";
-        DraggableCard.Draggable.style.top = MouseY+"px";
+        
     }
 
     function DropDraggable() {
-        if (DraggableCard) {
-            DraggableCard.Card.style.display = "block";
-            DraggableCard.Draggable.remove();
-            if (DraggableCard.Stone) {
-                DraggableCard.Stone.remove();
-            }
-            DraggableCard = null;
-        }
         if (DraggableSelectTarget) {
             if (DraggableSelectTarget.SelectedTarget!="") {
                 var IndexOfStone = PlayerOnField.indexOf(DraggableSelectTarget.Class);
@@ -719,21 +792,43 @@
                 if (DraggableSelectTarget.Class == PlayerAvatar) {
                     Type = "Avatar";
                 }
-                socket.send(JSON.stringify(
-                    {
-                        function:"SelectStoneTarget",
-                        SelectedAttackIndex:AttackIndex,
-                        SelectedStoneIndex:IndexOfStone,
-                        Type:Type,
-                        EnemyType:DraggableSelectTarget.SelectedTarget
-                    }
-                ));
-                console.log({function:"SelectStoneTarget",SelectedAttackIndex:AttackIndex,SelectedStoneIndex:IndexOfStone,Type:Type,EnemyType:DraggableSelectTarget.SelectedTarget});
+                // if player is using a card Projectile to select target
+                if (DraggableCard && DraggableCard.Class.Type == "Projectile") {
+                    
+                    socket.send(JSON.stringify( 
+                        { 
+                            function:"UseCard",
+                            SelectedTargetIndex:AttackIndex,
+                            SelectedCardIndex:PlayerHand.indexOf(DraggableCard.Class),
+                            EnemyType:DraggableSelectTarget.SelectedTarget
+                        }
+                    ));
+                } else { // if player is using a stone to select target
+                    socket.send(JSON.stringify(
+                        {
+                            function:"SelectStoneTarget",
+                            SelectedAttackIndex:AttackIndex,
+                            SelectedStoneIndex:IndexOfStone,
+                            Type:Type,
+                            EnemyType:DraggableSelectTarget.SelectedTarget
+                        }
+                    ));
+                }
             }
             
             DraggableSelectTarget.TargetIndicator.remove();
         }
-        
+        if (DraggableCard) {
+            if (DraggableCard && DraggableCard.Class.Type == "Projectile") {
+
+            }
+            DraggableCard.Card.style.display = "block";
+            DraggableCard.Draggable.remove();
+            if (DraggableCard.Stone) {
+                DraggableCard.Stone.remove();
+            }
+            DraggableCard = null;
+        }
         document.querySelectorAll('.Glow').forEach(function(element) {
                 element.classList.remove('Glow');
             });
@@ -902,25 +997,27 @@
     }
 
     class Card {
-        constructor(Name,Description,Cost,Attack,Health,Texture,SpawnDelay=0) {
+        constructor(Name,Description,Cost,Attack,Health,Texture,Type,SpawnDelay=0) {
             this.Cost = Cost;
             this.Health = Health;
             this.Attack = Attack;
             this.Texture = Texture;
             this.Name = Name;
             this.Description = Description;
+            this.Type = Type;
 
             setTimeout(() => {
                 this.CreateBody();
                 }, SpawnDelay*500);
         }
-        UpdateVisuals(Name,Description,Cost,Attack,Health,Texture) {
+        UpdateVisuals(Name,Description,Cost,Attack,Health,Texture,Type) {
             this.Cost = Cost;
             this.Health = Health;
             this.Attack = Attack;
             this.Texture = Texture;
             this.Name = Name;
             this.Description = Description;
+            this.Type = Type;
             if (this.Body && this.Body.classList.contains("Card")) {
                 this.Body.children[0].style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
                 this.Body.children[2].children[0].innerHTML = Attack;
@@ -928,6 +1025,11 @@
                 this.Body.children[4].children[0].innerHTML = Cost;
                 this.Body.children[5].children[0].innerHTML = Name;
                 this.Body.children[6].children[0].innerHTML = Description;
+                if (Type=="Projectile") {
+                    this.Body.children[3].style.display = "none";
+                } else {
+                    this.Body.children[3].style.display = "block";
+                }
                 //SetAllFontSizeInArray(FontSizeAdjusterArray);
             }
         }
@@ -980,7 +1082,6 @@
             this.Attack = Attack;
             this.Health = Health;
             this.Texture = Texture;
-            console.log(this)
             if (this.AttackCooldown>0) {
                 this.Body.classList.add("OnCooldown");
             } else {

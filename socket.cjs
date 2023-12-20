@@ -14,6 +14,7 @@ var tournaments = new Array();
 
 //Game Memory
 var gameID = 0;
+var tournamentID = 0;
 
 //Game Settings
 const tickSpeed = 0.1;
@@ -34,6 +35,7 @@ class Battle {
         this.private = false;
         this.code = null
         this.dead = false;
+        this.Projectiles = new Array();
     }
     SetP1(userName) {
         this.p1 = new Player(userName,this,"p1");
@@ -71,7 +73,13 @@ class Battle {
         //PlayerInfo: DisplayName, Avatar, Field, Hand, Energy, Title
         //EnemyInfo: DisplayName, Avatar, Field, Hand.length
         if (this.p1 && this.p1.Avatar) {
-            let p1 = battleUsers.find(obj => obj.username == this.p1.UserName)
+            let p1;
+            if (this.Tournament) {
+                p1 = this.Tournament.Sockets.find(obj => obj.username == this.p1.UserName);
+            } else {
+                p1 = battleUsers.find(obj => obj.username == this.p1.UserName);
+            }
+            
             if (p1 && p1.socket) {
                 let rtn = {
                     PlayerInfo: {
@@ -98,11 +106,20 @@ class Battle {
                 if (!this.active) {
                     rtn.code = this.code
                 }
+                rtn.Projectiles = [];
+                for (let i = 0; i < this.Projectiles.length; i++) {
+                    rtn.Projectiles.push(this.Projectiles[i]);
+                }
                 p1.socket.send(JSON.stringify(rtn))
             }
         }
         if (this.p2 && this.p2.Avatar){
-            let p2 = battleUsers.find(obj => obj.username == this.p2.UserName)
+            let p2;
+            if (this.Tournament) {
+                p2 = this.Tournament.Sockets.find(obj => obj.username == this.p2.UserName);
+            } else {
+                p2 = battleUsers.find(obj => obj.username == this.p2.UserName);
+            }
             if (p2 && p2.socket) {
                 let rtn = {
                     PlayerInfo: {
@@ -124,8 +141,15 @@ class Battle {
                     round:this.round,
                     yourTurn: this.currentPlayer == "p2"
                 }
+                rtn.Projectiles = [];
+                for (let i = 0; i < this.Projectiles.length; i++) {
+                    rtn.Projectiles.push(this.Projectiles[i]);
+                }
                 p2.socket.send(JSON.stringify(rtn))
             }
+        }
+        for (let i = 0; i < this.Projectiles.length; i++) {
+            this.Projectiles = new Array();
         }
     }
     EndTurn() {
@@ -210,12 +234,14 @@ class Battle {
     }
     EndGame(looser) {
         console.log("Endgame, Looser:", looser)
-        if (!this.dead) {
+        if (!this.dead && !this.Tournament) {
             if (this.p1 && this.p1.UserName == looser && this.p2) {
                 giveRewards(this.p2.UserName)
             } else if (this.p2 && this.p2.UserName == looser && this.p1) {
                 giveRewards(this.p1.UserName)
             }
+        } else if (this.Tournament) {
+            this.looser = looser;
         }
         this.dead = true;
     }
@@ -237,10 +263,55 @@ class Player {
 
         getPlayerInfo(userName,this, match);
     }
+    UseCard(input) {
+        if (this.match.currentPlayer == this.PlayerType){
+            var Enemy;
+            if (this.PlayerType == "p1") {
+                Enemy = this.match.p2;
+            } else {
+                Enemy = this.match.p1;
+            }
+            console.log("UseCard!")
+            var SelectedCardIndex = input.SelectedCardIndex;
+            if (this.Hand[SelectedCardIndex] && this.Hand[SelectedCardIndex].Type == "Projectile") {
+                var SelectedTargetIndex = input.SelectedTargetIndex;
+                var TargetStone;
+                if (input.EnemyType=="Avatar" && Enemy.Field.length==0) {
+                    TargetStone = Enemy.Avatar;
+                } else if (input.SelectedTargetIndex!=null) {
+                    TargetStone = Enemy.Field[input.SelectedTargetIndex];
+                }
+                if (TargetStone) {
+                    TargetStone.Health -= this.Hand[SelectedCardIndex].Attack;
+                    
+                    this.Energy -= this.Hand[SelectedCardIndex].Cost;
+                    this.match.Projectiles.push({From:this.PlayerType,EnemyType:input.EnemyType,Texture:this.Hand[SelectedCardIndex].Texture,SelectedTargetIndex:SelectedTargetIndex});;
+                    this.Hand.splice(SelectedCardIndex,1);
+                    if (TargetStone.Health<=0) {
+                        if (input.EnemyType=="Avatar") {
+                            this.match.SendInfo();
+                            if (this.match.p1 == this) {
+                                this.match.EndGame(this.match.p2.UserName);
+                            } else {
+                                this.match.EndGame(this.match.p1.UserName);
+                            }
+                        } else {
+                            Enemy.Field.splice(Enemy.Field.indexOf(TargetStone),1);
+                        }
+                    }
+                }
+            } else if (this.Hand[SelectedCardIndex] && this.Hand[SelectedCardIndex].Type == "Consumable") {
+
+            }
+        }
+    }
     PlaceCard(input) {
         if (this.match.currentPlayer == this.PlayerType){
             var SelectedIndex = input.SelectedIndex;
             var SelectedCardIndex = input.SelectedCardIndex;
+            if (this.Hand[SelectedCardIndex].Type && this.Hand[SelectedCardIndex] == "Projectile") {
+                return;
+            }
             if (this.Hand[SelectedCardIndex] && this.Field.length<6 && this.Energy >= this.Hand[SelectedCardIndex].Cost) {
                 var newField = [
                     ...this.Field.slice(0, SelectedIndex),
@@ -317,25 +388,134 @@ class Tournament {
     constructor() {
         this.Sockets = new Array();
         this.Battles = new Array();
+        this.code = null;
+        this.active = false;
+        this.CountDown = "";
+        this.Alive = true;
     }
     addSocket(username, socket) {
-        this.Sockets.push({username: username, socket: socket, reconnectTime: 30/tickSpeed, out: false});
+        this.Sockets.push({username: username, socket: socket, reconnectTime: 30/tickSpeed, out: false, inGame:false, ready: false, wins:0});
     }
     Update() {
+        if (this.CountDown>0) {
+            this.CountDown--;
+        }
+        for (let i = 0; i < this.Sockets.length; i++) {
+            if (this.Sockets[i].socket) {
+                this.Sockets[i].reconnectTime = 30/tickSpeed;
+            } else {
+                this.Sockets[i].reconnectTime--
+                if (this.Sockets[i].reconnectTime <= 0) {
+                    this.Sockets.splice(i,1)
+                    i--;
+                }
+            }
+        }
 
+        let readyPlayers = this.Sockets.filter(obj => !obj.out && !obj.inGame && obj.ready);
+        let totalPlayers = this.Sockets.filter(obj => !obj.out)
+
+        if (readyPlayers.length == totalPlayers.length && this.CountDown<=0) {
+            this.StartBattles();
+        }
+        this.SendTournamentInfoTo();
+        
+        for (let i = 0; i < this.Battles.length; i++) {
+            if (this.Battles[i].dead) {
+                if (this.Battles[i].p1) {
+                    var p1 = this.Sockets.find(obj => obj.username == this.Battles[i].p1.UserName)
+                    p1.inGame = false;
+                    if (this.Battles[i].looser && this.Battles[i].looser == p1.username) {
+                        p1.out = true;
+                    } else {
+                        this.Sockets.find(obj => obj.username == this.Battles[i].p2.UserName).wins++;
+                    }
+                    if (!p1) {
+                        this.Battles[i].EndGame(this.Battles[i].p1.UserName);
+                    }
+                }
+                if (this.Battles[i].p2) {
+                    var p2 = this.Sockets.find(obj => obj.username == this.Battles[i].p2.UserName)
+                    p2.inGame = false;
+                    if (this.Battles[i].looser && this.Battles[i].looser == p2.username) {
+                        p2.out = true;
+                    } else {
+                        this.Sockets.find(obj => obj.username == this.Battles[i].p1.UserName).wins++;
+                    }
+                    if (!p2) {
+                        this.Battles[i].EndGame(this.Battles[i].p2.UserName);
+                    }
+                }
+                this.Battles.splice(i,1);
+                i--;
+                if (this.Battles.length==0) {
+                    var Players = this.Sockets.filter(obj => !obj.out);
+                    if (Players.length<=1) {
+                        //Players@0
+                        if (Players.length) {
+                            giveRewards(Players[0].username);
+                        }
+
+                        while (this.Sockets.length > 0) {
+                            this.Sockets[0].socket.close(1008, 'Tournament Ended');
+                            this.Sockets.splice(0,1);
+                        }
+                        this.Alive = false;
+                    }
+                }
+            } else if (this.CountDown<=0) {
+                this.Battles[i].Update();
+            }
+        }
     }
     StartBattles() {
+        console.log("Start Battles!");
         var PlayerCount = this.Sockets.filter(obj => !obj.out).length;
         var Count=0;
+        this.CountDown = 10/tickSpeed;
+
+        
+        for (let i = this.Sockets.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [this.Sockets[i], this.Sockets[j]] = [this.Sockets[j], this.Sockets[i]]; // Swap elements
+        }
+
         for (let i = 0; i < this.Sockets.length; i++) {
-            if (!this.Sockets.out) {
+            if (!this.Sockets[i].out) {
                 Count++;
             }
-            if (this.Battles[this.Battles.length-1] && !this.Battles[this.Battles.length-1].active && !this.Battles[this.Battles.length-1].p2) {
+            if (this.Battles[this.Battles.length-1] && !this.Battles[this.Battles.length-1].active && !this.Battles[this.Battles.length-1].p2 && !this.Sockets[i].out) {
                 this.Battles[this.Battles.length-1].SetP2(this.Sockets[i].username);
-            } else if (i != this.Sockets.length && Count != PlayerCount) {
+                this.Sockets[i].inGame = true;
+                this.Sockets[i].ready = false;
+            } else if (i != this.Sockets.length && Count != PlayerCount && !this.Sockets[i].out) {
                 this.Battles.push(new Battle(this));
                 this.Battles[this.Battles.length-1].SetP1(this.Sockets[i].username);
+                this.Sockets[i].inGame = true;
+                this.Sockets[i].ready = false;
+            }
+        }
+    }
+    SendTournamentInfoTo() { // Send Info
+        var rtn = {
+            TournamentPlayers: [],
+            TournamentGames: [],
+            TournamentScreen: true,
+            TournamentCountDown: this.CountDown>0 ? Math.floor(this.CountDown*tickSpeed) : ""
+        }
+        if (!this.active) {
+            rtn.code = this.code;
+        }
+        for (let i = 0; i < this.Sockets.length; i++) {
+            rtn.TournamentPlayers.push({username:this.Sockets[i].username,ready:this.Sockets[i].ready,out:this.Sockets[i].out});
+        }
+        for (let i = 0; i < this.Battles.length; i++) {
+            if (this.Battles[i].DataLoaded == 2) 
+                rtn.TournamentGames.push({p1:this.Battles[i].p1.Avatar, p2:this.Battles[i].p2.Avatar});
+        }
+        for (let i = 0; i < this.Sockets.length; i++) {
+            if ((!this.Sockets[i].inGame|| this.CountDown>0) && this.Sockets[i].socket) {
+                this.Sockets[i].socket.send(JSON.stringify(rtn));
             }
         }
     }
@@ -345,9 +525,9 @@ async function giveRewards(username) {
     cardID = Math.floor(Math.random() * cards.length);
 
     let client = await db.connect()
-    let result = await client.db("communism_battlecards").collection("accounts").findOne({username: username})
+    var result = await client.db("communism_battlecards").collection("accounts").findOne({username: username})
     
-    var item = result.inventory.find(obj => obj.card = cardID);
+    var item = result.inventory.find(obj => obj.card == cardID);
     if (item) {
         item.count++;
     } else {
@@ -488,7 +668,12 @@ async function tick() {
     }
 
     for (let i = 0; i < tournaments.length; i++) {
-        tournaments[i].Update()
+        if (tournaments[i].Sockets.length==0 || !tournaments[i].Alive) {
+            tournaments.splice(i,1);
+            i--;
+        } else {
+            tournaments[i].Update()
+        } 
     }
 }
 
@@ -498,62 +683,108 @@ webSocketServer.on('connection', async(socket, request) => {
     if (!username) return;
 
     const search = (new URL(request.url, 'http://localhost')).searchParams
-
-    // if already logged on with same account, kick that account, and take it's place
-    let queueUser = queuedUsers.find(obj => obj.username == username)
-    if (queueUser) {
-        //already in queue
-        if (queueUser.socket) {
-            queueUser.socket.close(1008, 'Another instance logged on')
-        }
-        queueUser.socket = socket;
-    } else {
-        let battleUser = battleUsers.find(obj => obj.username == username)
-        if (battleUser) {
-            //already in battle
-            if (battleUser.socket) {
-                battleUser.socket.close(1008, 'Another instance logged on')
+    
+    if (search.get("tournament") && decodeURIComponent(search.get("tournament")) == "new") {
+        for (let i = 0; i < tournaments.length; i++) {
+            let user = tournaments[i].Sockets.find(obj => obj.username == username)
+            if (user) {
+                user.socket.close(1008, 'Another instance logged on')
+                let index = tournaments[i].Sockets.indexOf(obj => obj.username == username)
+                tournaments[i].Sockets.splice(index, 1)
+                break
             }
-            if (!search.get("private") && !search.get("code"))
-                battleUser.socket = socket;
-            else {
-                let game = battles.find(obj => (obj.p1 && obj.p1.UserName == username) || (obj.p2 && obj.p2.UserName == username))
-                if (game)
-                    game.PlayerDisconnected(username)
-            }
-        } else if (!search.get("private") && !search.get("code")) { 
-            //add to queue
-            queuedUsers.push({username: username, socket: socket, reconnectTime: 30})
         }
-
-        if (search.get("private")) {
-            battles.push(new Battle());
-            battles[battles.length-1].code = auth.encrypt("game_"+gameID)
-            battleUsers.push({username: username, socket: socket, reconnectTime: 30})
-            battles[battles.length-1].SetP1(username);
-            battles[battles.length-1].private = true;
-            gameID++
-        } else if (search.get("code")) {
-            let battle = battles.find(obj => obj.code == search.get("code"))
-            if (battle) {
-                if (!battle.p2 || battle.p2.UserName == username) {
-                    battleUsers.push({username: username, socket: socket, reconnectTime: 30})
-                    battle.SetP2(username)
-                }
+        //new tournament
+        tournaments.push(new Tournament())
+        tournaments[tournaments.length-1].code = auth.encrypt("tournament"+tournamentID);
+        tournamentID++;
+        tournaments[tournaments.length-1].addSocket(username,socket);
+    } else if (search.get("tournament")) {
+        //join tournament
+        let tournamentSearch = tournaments.find(obj => obj.code == decodeURIComponent(search.get("tournament")) && !obj.active)
+        if (tournamentSearch) {
+            let user = tournamentSearch.Sockets.find(obj => obj.username == username)
+            if (user) {
+                if (user.socket)
+                    user.socket.close(1008, 'Another instance logged on')
+                user.socket = socket
             } else {
-                socket.close(1008, 'game not found');
+                tournamentSearch.addSocket(username, socket)
+            }
+        } else 
+            socket.close(1008, 'Game not found')
+    } else {
+        // if already logged on with same account, kick that account, and take it's place
+        let queueUser = queuedUsers.find(obj => obj.username == username)
+        if (queueUser) {
+            //already in queue
+            if (queueUser.socket) {
+                queueUser.socket.close(1008, 'Another instance logged on')
+            }
+            queueUser.socket = socket;
+        } else {
+            let battleUser = battleUsers.find(obj => obj.username == username)
+            if (battleUser) {
+                //already in battle
+                if (battleUser.socket) {
+                    battleUser.socket.close(1008, 'Another instance logged on')
+                }
+                if (!search.get("private") && !search.get("code"))
+                    battleUser.socket = socket;
+                else {
+                    let game = battles.find(obj => (obj.p1 && obj.p1.UserName == username) || (obj.p2 && obj.p2.UserName == username))
+                    if (game)
+                        game.PlayerDisconnected(username)
+                }
+            } else if (!search.get("private") && !search.get("code")) { 
+                //add to queue
+                queuedUsers.push({username: username, socket: socket, reconnectTime: 30})
+            }
+    
+            if (search.get("private")) {
+                battles.push(new Battle());
+                battles[battles.length-1].code = auth.encrypt("game_"+gameID)
+                battleUsers.push({username: username, socket: socket, reconnectTime: 30})
+                battles[battles.length-1].SetP1(username);
+                battles[battles.length-1].private = true;
+                gameID++
+            } else if (search.get("code")) {
+                let battle = battles.find(obj => obj.code == decodeURIComponent(search.get("code")))
+                if (battle) {
+                    if (!battle.p2 || battle.p2.UserName == username) {
+                        battleUsers.push({username: username, socket: socket, reconnectTime: 30})
+                        battle.SetP2(username)
+                    }
+                } else {
+                    socket.close(1008, 'game not found');
+                }
             }
         }
     }
 
     socket.on('message', (message) => {
+        var command = JSON.parse(message)
         //what game are we in?
         let game = battles.find(obj => obj.p1.UserName == username || obj.p2.UserName == username)
         if (game) {
             let p1 = (game.p1.UserName == username)
-            command = JSON.parse(message)
             if (game[p1 ? "p1" : "p2"][command.function])
                 game[p1 ? "p1" : "p2"][command.function](command)
+        }
+        for (let i = 0; i < tournaments.length; i++) {
+            let socketSearch = tournaments[i].Sockets.find(obj => obj.username == username);
+            if (socketSearch) {
+                let game = tournaments[i].Battles.find(obj => obj.p1.UserName == username || obj.p2.UserName == username)
+                if (game) {
+                    let p1 = (game.p1.UserName == username)
+                    if (game[p1 ? "p1" : "p2"][command.function])
+                        game[p1 ? "p1" : "p2"][command.function](command)
+                }
+                if (command.tournamentReady && tournaments[i].Sockets.length>1) {
+                    socketSearch.ready = true;
+                }
+                break;
+            }
         }
     });
 
