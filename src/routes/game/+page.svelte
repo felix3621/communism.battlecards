@@ -349,6 +349,23 @@
             filter: opacity(0);
         }
     }
+    :global(.CharacterName) {
+        position: relative;
+        margin: 0;
+        color: white;
+        text-align: center;
+        left:50%;
+        top: 100%;
+        transform: translate(-50%,-50%);
+        width: fit-content;
+        height: fit-content;
+        -webkit-text-stroke-width: 0.5px;
+        -webkit-text-stroke-color: black;
+        user-select: none;
+        overflow: hidden;
+        white-space: nowrap;
+        pointer-events: none
+    }
 </style>
 <hr id="MidleLine">
 <div id="EnemyAvatar"><h1 id="EnemyName">Waiting for Player...</h1></div>
@@ -481,11 +498,11 @@
                             if (i < data.TournamentPlayers.length && i >= TournamentPlayerList.children.length-1) { // Create
                                 var Temp = document.createElement("h2");
                                 TournamentPlayerList.appendChild(Temp);
-                                Temp.innerHTML = data.TournamentPlayers[i].username;
+                                Temp.innerHTML = data.TournamentPlayers[i].displayName;
                                 Temp.style.color = data.TournamentPlayers[i].ready ? "rgb(0,255,0)" : "red";
                                 Temp.style.color = data.TournamentPlayers[i].out ? "rgb(150,150,150)" : Temp.style.color;
                             } else if (i < data.TournamentPlayers.length) { // Update
-                                TournamentPlayerList.children[i+1].innerHTML = data.TournamentPlayers[i].username;
+                                TournamentPlayerList.children[i+1].innerHTML = data.TournamentPlayers[i].displayName;
                                 TournamentPlayerList.children[i+1].style.color = data.TournamentPlayers[i].ready ? "rgb(0,255,0)" : "red";
                                 TournamentPlayerList.children[i+1].style.color = data.TournamentPlayers[i].out ? "rgb(150,150,150)" : TournamentPlayerList.children[i+1].style.color;
                             } else { // Remove
@@ -506,7 +523,7 @@
 
                                 // player 1 Avatar
                                 console.log(data.TournamentGames[i].p1);
-                                var p1 = CreateCharacterStone(data.TournamentGames[i].p1.Attack,data.TournamentGames[i].p1.Health,data.TournamentGames[i].p1.Texture);
+                                var p1 = CreateCharacterStone(data.TournamentGames[i].p1.Attack,data.TournamentGames[i].p1.Health,data.TournamentGames[i].p1.Texture, data.TournamentGames[i].p1.DisplayName);
                                 p1.classList.add("P1");
                                 console.log(p1);
                                 Container.appendChild(p1);
@@ -515,7 +532,7 @@
                                 VSText.innerHTML = "VS";
                                 Container.appendChild(VSText);
                                 // player 1 Avatar
-                                var p2 = CreateCharacterStone(data.TournamentGames[i].p2.Attack,data.TournamentGames[i].p2.Health,data.TournamentGames[i].p2.Texture);
+                                var p2 = CreateCharacterStone(data.TournamentGames[i].p2.Attack,data.TournamentGames[i].p2.Health,data.TournamentGames[i].p2.Texture, data.TournamentGames[i].p2.DisplayName);
                                 p2.classList.add("P2");
                                 Container.appendChild(p2);
                                 tournamentGameList.appendChild(Container);
@@ -848,11 +865,17 @@
         DraggableSelectTarget = null;
     }
 
-    function CreateCharacterStone(Attack, Health, Texture) {
+    function CreateCharacterStone(Attack, Health, Texture, Name = null) {
         //THE CharacterStone
         var CharacterStone = document.createElement("div");
         CharacterStone.classList.add("CharacterStone");
         CharacterStone.style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
+        if (Name) {
+            var CharacterName = document.createElement("h1");
+            CharacterName.classList.add("StoneName");
+            CharacterName.innerHTML = Name;
+            CharacterStone.appendChild(CharacterName);
+        }
 
         //DMG
         var CharacterStoneDMG = document.createElement("div");

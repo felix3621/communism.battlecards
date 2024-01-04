@@ -3,6 +3,24 @@ const router = express.Router();
 const auth = require('../authentication.cjs');
 const db = require('../database.cjs');
 
+const createTestUsers = false
+
+
+var client;
+async function connectDB() {
+    client = await db.connect();
+}
+connectDB()
+
+
+async function deleteUsers () {
+    if (!createTestUsers) {
+        await client.db("communism_battlecards").collection("accounts").deleteMany({testUser: true})
+        console.log("testusers deleted")
+    }
+}
+setTimeout(deleteUsers,1000);
+
 router.post('/login', auth.checkUser, (req, res) => {
     res.json(req.user)
 })
@@ -12,7 +30,6 @@ router.post('/signup', async(req, res) => {
     let display_name = req.body.display_name;
 
     if (username && password && display_name) {
-        let client = await db.connect()
         let base = client.db("communism_battlecards").collection("accounts")
         let check = await base.findOne({username: username})
         if (!check) {
@@ -24,7 +41,6 @@ router.post('/signup', async(req, res) => {
         } else {
             res.status(403).send("Username already exists")
         }
-        await client.close()
     } else {
         res.status(500).send("error")
     }

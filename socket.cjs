@@ -20,6 +20,13 @@ var tournamentID = 0;
 const tickSpeed = 0.1;
 const roundTime = 30/tickSpeed;
 
+
+var client;
+async function connectDB() {
+    client = await db.connect();
+}
+connectDB()
+
 class Battle {
     constructor(Tournament = null) {
         this.Tournament = Tournament;
@@ -155,7 +162,10 @@ class Battle {
     EndTurn() {
         this.turnTime = roundTime;
         if (this.currentPlayer == "p1"){
+            if (this.maxEnergy < 20)
+                this.maxEnergy++;
             this.currentPlayer = "p2";
+            this.p2.Energy = this.maxEnergy;
             this.DrawCardsToPlayer(this.p2,2);
             if (this.round > 1) {
                 for (let i = 0; i < this.p2.Field.length; i++) {
@@ -166,10 +176,8 @@ class Battle {
                 this.p2.Avatar.attackCooldown = 0;
             }            
         } else {
-            if (this.maxEnergy < 10)
-                this.maxEnergy++;
+            
             this.currentPlayer = "p1";
-            this.p2.Energy = this.maxEnergy;
             this.p1.Energy = this.maxEnergy;
             this.round++;
             this.DrawCardsToPlayer(this.p1,2);
@@ -395,6 +403,7 @@ class Tournament {
     }
     addSocket(username, socket) {
         this.Sockets.push({username: username, socket: socket, reconnectTime: 30/tickSpeed, out: false, inGame:false, ready: false, wins:0});
+        getDisplayName(username, this.Sockets[this.Sockets.length-1]);
     }
     Update() {
         if (this.CountDown>0) {
@@ -454,6 +463,7 @@ class Tournament {
                         //Players@0
                         if (Players.length) {
                             giveRewards(Players[0].username);
+                            console.log("tournament winner:",Players[0].username);
                         }
 
                         while (this.Sockets.length > 0) {
@@ -481,14 +491,17 @@ class Tournament {
         }
 
         for (let i = 0; i < this.Sockets.length; i++) {
+            console.log("bob")
             if (!this.Sockets[i].out) {
                 Count++;
             }
             if (this.Battles[this.Battles.length-1] && !this.Battles[this.Battles.length-1].active && !this.Battles[this.Battles.length-1].p2 && !this.Sockets[i].out) {
+                console.log("a")
                 this.Battles[this.Battles.length-1].SetP2(this.Sockets[i].username);
                 this.Sockets[i].inGame = true;
                 this.Sockets[i].ready = false;
             } else if (i != this.Sockets.length && Count != PlayerCount && !this.Sockets[i].out) {
+                console.log("b")
                 this.Battles.push(new Battle(this));
                 this.Battles[this.Battles.length-1].SetP1(this.Sockets[i].username);
                 this.Sockets[i].inGame = true;
@@ -507,7 +520,7 @@ class Tournament {
             rtn.code = this.code;
         }
         for (let i = 0; i < this.Sockets.length; i++) {
-            rtn.TournamentPlayers.push({username:this.Sockets[i].username,ready:this.Sockets[i].ready,out:this.Sockets[i].out});
+            rtn.TournamentPlayers.push({displayName:this.Sockets[i].displayName, username:this.Sockets[i].username,ready:this.Sockets[i].ready,out:this.Sockets[i].out});
         }
         for (let i = 0; i < this.Battles.length; i++) {
             if (this.Battles[i].DataLoaded == 2) 
@@ -521,10 +534,14 @@ class Tournament {
     }
 }
 
+async function getDisplayName(username, value) {
+    var result = await client.db("communism_battlecards").collection("accounts").findOne({username: username});
+    if (result)
+        value.displayName = result.display_name
+}
+
 async function giveRewards(username) {
     cardID = Math.floor(Math.random() * cards.length);
-
-    let client = await db.connect()
     var result = await client.db("communism_battlecards").collection("accounts").findOne({username: username})
     
     var item = result.inventory.find(obj => obj.card == cardID);
@@ -536,8 +553,6 @@ async function giveRewards(username) {
 
 
     await client.db("communism_battlecards").collection("accounts").updateOne({username: username},{$set:result})
-    
-    await client.close()
 }
 
 // Create an HTTP server
@@ -567,9 +582,7 @@ async function authenticate(cookies) {
     let username = auth.decrypt(token[0])
     let password = auth.decrypt(token[1])
 
-    let client = await db.connect()
     let result = await client.db("communism_battlecards").collection("accounts").findOne({username: username, password: password})
-    await client.close()
     if (result) {
         return username
     }
@@ -590,9 +603,7 @@ async function authorizeSocket(socket, request) {
 }
 
 async function getPlayerInfo(username, player, game) {
-    let client = await db.connect()
     let result = await client.db("communism_battlecards").collection("accounts").findOne({username: username})
-    await client.close()
     
     player.DisplayName = result.display_name
     player.Deck = new Array();
@@ -765,7 +776,7 @@ webSocketServer.on('connection', async(socket, request) => {
     socket.on('message', (message) => {
         var command = JSON.parse(message)
         //what game are we in?
-        let game = battles.find(obj => obj.p1.UserName == username || obj.p2.UserName == username)
+        let game = battles.find(obj => (obj.p1 && obj.p1.UserName == username) || (obj.p2 && obj.p2.UserName == username))
         if (game) {
             let p1 = (game.p1.UserName == username)
             if (game[p1 ? "p1" : "p2"][command.function])

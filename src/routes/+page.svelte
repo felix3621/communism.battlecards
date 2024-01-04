@@ -306,7 +306,6 @@
 </div>
 <div id="SettingsMenu">
     <div id="SettingsDropDown" style="display: none;">
-        <a href="/settings">Settings</a>
         <a on:click={() => logOut()}>Logout</a>
     </div>
     <div id="SettingsCog" on:click={() => {

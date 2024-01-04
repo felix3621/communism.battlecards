@@ -1,17 +1,11 @@
 const db = require("./database.cjs");
 const CryptoJS = require('crypto-js');
 
-const createTestUsers = true
-
-async function deleteUsers () {
-    if (!createTestUsers) {
-        let client = await db.connect()
-        await client.db("communism_battlecards").collection("accounts").remove({testUser: true})
-        await client.close()
-    }
+var client;
+async function connectDB() {
+    client = await db.connect();
 }
-
-deleteUsers()
+connectDB()
 
 let auth = {}
 
@@ -24,10 +18,8 @@ auth.decrypt = (data) => {
 };
 
 async function checkUser(username, password) {
-    let client = await db.connect()
     let base = client.db("communism_battlecards").collection("accounts")
     let result = await base.findOne({username: username, password: password})
-        await client.close()
     if (result) {
         return {username: result.username, display_name: result.display_name}
     }
@@ -77,12 +69,9 @@ auth.checkUser = async(req, res, next) => {
         }
     } else {
         if (createTestUsers && req.body.createTestUser == null || req.body.createTestUser == true) {
-            let client = await db.connect()
             let base = client.db("communism_battlecards").collection("accounts")
             
             let userCount = await base.countDocuments({testUser: true});
-            await base.insertOne({username: "test_"+userCount, password: "test", display_name: "test "+userCount, avatar: 1, deck: [0,1], testUser: true, inventory: []})
-            await client.close()
             req.user = {username: "test_"+userCount, display_name: "test "+userCount, testUser: true}
 
             let userToken = auth.encrypt(JSON.stringify([auth.encrypt("test_"+userCount), auth.encrypt("test"), auth.encrypt("true")]))

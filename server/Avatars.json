@@ -18,8 +18,8 @@
     {
         "Name":"FixFox",
         "Description":"Oh no Fix Is Angry and is burning shit again",
-        "Attack":6,
-        "Health":5,
+        "Attack":8,
+        "Health":15,
         "Cost":5,
         "Texture":"FixFox"
     },
@@ -34,8 +34,8 @@
     {
         "Name":"Professor Hornung",
         "Description":"Professor Horning -Adrian",
-        "Attack":2,
-        "Health":5,
+        "Attack":3,
+        "Health":25,
         "Cost":4,
         "Texture":"Professor Hornung"
     }

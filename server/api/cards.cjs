@@ -5,10 +5,15 @@ const db = require('../database.cjs');
 const cards = require('../Cards.json');
 
 
+var client;
+async function connectDB() {
+    client = await db.connect();
+}
+connectDB()
+
+
 router.get('/getDeck', auth.checkUser, async (req, res) => {
-    let client = await db.connect()
     let result = await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username})
-    await client.close()
 
     let deck = new Array()
 
@@ -19,9 +24,7 @@ router.get('/getDeck', auth.checkUser, async (req, res) => {
     res.json(deck)
 })
 router.get('/getInventory', auth.checkUser, async (req, res) => {
-    let client = await db.connect()
     let result = await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username})
-    await client.close()
 
 
 
@@ -35,7 +38,6 @@ router.get('/getInventory', auth.checkUser, async (req, res) => {
 
 router.post('/addToDeck', auth.checkUser, async (req, res) => {
     //Database
-    let client = await db.connect()
     let result = await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username})
     if (result.inventory[req.body.WhatItemIndex]) { // Check if item exsist
         if (result.deck[req.body.WhatIndexToReplace]>=0&&result.deck.length>req.body.WhatIndexToReplace) { // check if card exsist in deck
@@ -70,7 +72,6 @@ router.post('/addToDeck', auth.checkUser, async (req, res) => {
     await client.db("communism_battlecards").collection("accounts").updateOne({username: req.user.username},{$set:result})
 
 
-    await client.close()
     res.json({deck: result.deck, inventory: result.inventory})
 }) 
 
