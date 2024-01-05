@@ -461,7 +461,6 @@
                                 Enemy = EnemyAvatar.Body;
                             } else if (EnemyOnField[data.Projectiles[i].SelectedTargetIndex]) {
                                 Enemy = EnemyOnField[data.Projectiles[i].SelectedTargetIndex].Body;
-
                             } 
                             if (Enemy) {
                                 data.Projectiles[i].Element.style.top = (Enemy.getBoundingClientRect().top+(Enemy.getBoundingClientRect().height/2))+"px";
@@ -523,7 +522,7 @@
 
                                 // player 1 Avatar
                                 console.log(data.TournamentGames[i].p1);
-                                var p1 = CreateCharacterStone(data.TournamentGames[i].p1.Attack,data.TournamentGames[i].p1.Health,data.TournamentGames[i].p1.Texture, data.TournamentGames[i].p1.DisplayName);
+                                var p1 = CreateCharacterStone(data.TournamentGames[i].p1.Attack,data.TournamentGames[i].p1.Health,data.TournamentGames[i].p1.Texture, data.TournamentGames[i].p1.DisplayName, "Tank");
                                 p1.classList.add("P1");
                                 console.log(p1);
                                 Container.appendChild(p1);
@@ -532,7 +531,7 @@
                                 VSText.innerHTML = "VS";
                                 Container.appendChild(VSText);
                                 // player 1 Avatar
-                                var p2 = CreateCharacterStone(data.TournamentGames[i].p2.Attack,data.TournamentGames[i].p2.Health,data.TournamentGames[i].p2.Texture, data.TournamentGames[i].p2.DisplayName);
+                                var p2 = CreateCharacterStone(data.TournamentGames[i].p2.Attack,data.TournamentGames[i].p2.Health,data.TournamentGames[i].p2.Texture, data.TournamentGames[i].p2.DisplayName, "Tank");
                                 p2.classList.add("P2");
                                 Container.appendChild(p2);
                                 tournamentGameList.appendChild(Container);
@@ -540,12 +539,12 @@
                                 // P1 Update
                                 tournamentGameList.children[i].children[0].getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = data.TournamentGames[i].p1.Attack;
                                 tournamentGameList.children[i].children[0].getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = data.TournamentGames[i].p1.Health;
-                                tournamentGameList.children[i].children[0].style.backgroundImage = "url('/images/Cards/"+data.TournamentGames[i].p1.Texture+".png')";
+                                tournamentGameList.children[i].children[0].style.backgroundImage = "url('/images/Cards/"+data.TournamentGames[i].p1.Texture+".png'), url('/images/shield.png')";
 
                                 // P2 Update
                                 tournamentGameList.children[i].children[2].getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = data.TournamentGames[i].p2.Attack;
                                 tournamentGameList.children[i].children[2].getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = data.TournamentGames[i].p2.Health;
-                                tournamentGameList.children[i].children[2].style.backgroundImage = "url('/images/Cards/"+data.TournamentGames[i].p2.Texture+".png')";
+                                tournamentGameList.children[i].children[2].style.backgroundImage = "url('/images/Cards/"+data.TournamentGames[i].p2.Texture+".png'), url('/images/shield.png')";
                             } else if (i >= data.TournamentGames.length){ // Remove
                                 console.log("Remove");
                                 tournamentGameList.children[i].remove();
@@ -568,16 +567,16 @@
                 if (data.PlayerInfo) {
                     PlayerDisplayName = data.PlayerInfo.DisplayName;
                     document.getElementById("PlayerName").innerText = PlayerDisplayName;
-                    PlayerAvatar.UpdateVisuals(data.PlayerInfo.Avatar.Attack,data.PlayerInfo.Avatar.Health,data.PlayerInfo.Avatar.Texture, data.PlayerInfo.Avatar.attackCooldown);
+                    PlayerAvatar.UpdateVisuals(data.PlayerInfo.Avatar.Attack,data.PlayerInfo.Avatar.Health,data.PlayerInfo.Avatar.Texture, data.PlayerInfo.Avatar.attackCooldown,"","Tank");
                     PlayerEnergy = data.PlayerInfo.Energy;
                     PlayerMaxEnergy = data.MaxEnergy;
                     UpdateEnergy();
                     displayTitle = data.PlayerInfo.Title
                     for (let i = 0; i < data.PlayerInfo.Field.length || i<PlayerOnField.length; i++) {
                         if (i<data.PlayerInfo.Field.length && i>=PlayerOnField.length) {
-                            PlayerOnField.push(new Stone(data.PlayerInfo.Field[i].Attack, data.PlayerInfo.Field[i].Health, data.PlayerInfo.Field[i].Texture, document.getElementById("PlayerOnField")));
+                            PlayerOnField.push(new Stone(data.PlayerInfo.Field[i].Attack, data.PlayerInfo.Field[i].Health, data.PlayerInfo.Field[i].Texture, document.getElementById("PlayerOnField"),data.PlayerInfo.Field[i].Type));
                         } else if (i<data.PlayerInfo.Field.length) {
-                            PlayerOnField[i].UpdateVisuals(data.PlayerInfo.Field[i].Attack, data.PlayerInfo.Field[i].Health, data.PlayerInfo.Field[i].Texture, data.PlayerInfo.Field[i].attackCooldown);
+                            PlayerOnField[i].UpdateVisuals(data.PlayerInfo.Field[i].Attack, data.PlayerInfo.Field[i].Health, data.PlayerInfo.Field[i].Texture, data.PlayerInfo.Field[i].attackCooldown, data.PlayerInfo.Field[i].Type);
                         } else {
                             PlayerOnField[i].Remove();
                             PlayerOnField.splice(i,1);
@@ -599,13 +598,13 @@
                 if (data.EnemyInfo) {
                     EnemyDisplayName = data.EnemyInfo.DisplayName;
                     document.getElementById("EnemyName").innerText = EnemyDisplayName;
-                    EnemyAvatar.UpdateVisuals(data.EnemyInfo.Avatar.Attack, data.EnemyInfo.Avatar.Health, data.EnemyInfo.Avatar.Texture, data.EnemyInfo.Avatar.attackCooldown, "Avatar");
+                    EnemyAvatar.UpdateVisuals(data.EnemyInfo.Avatar.Attack, data.EnemyInfo.Avatar.Health, data.EnemyInfo.Avatar.Texture, data.EnemyInfo.Avatar.attackCooldown, "Avatar", "Tank");
                 
                     for (let i = 0; i < data.EnemyInfo.Field.length || i<EnemyOnField.length; i++) {
                         if (i<data.EnemyInfo.Field.length && i>= EnemyOnField.length) {
-                            EnemyOnField.push(new Stone(data.EnemyInfo.Field[i].Attack, data.EnemyInfo.Field[i].Health, data.EnemyInfo.Field[i].Texture, document.getElementById("EnemyOnField")));
+                            EnemyOnField.push(new Stone(data.EnemyInfo.Field[i].Attack, data.EnemyInfo.Field[i].Health, data.EnemyInfo.Field[i].Texture, document.getElementById("EnemyOnField"),data.EnemyInfo.Field[i].Type));
                         } else if (i<data.EnemyInfo.Field.length) {
-                            EnemyOnField[i].UpdateVisuals(data.EnemyInfo.Field[i].Attack, data.EnemyInfo.Field[i].Health, data.EnemyInfo.Field[i].Texture, data.EnemyInfo.Field[i].attackCooldown, i.toString());
+                            EnemyOnField[i].UpdateVisuals(data.EnemyInfo.Field[i].Attack, data.EnemyInfo.Field[i].Health, data.EnemyInfo.Field[i].Texture, data.EnemyInfo.Field[i].attackCooldown, i.toString(), data.EnemyInfo.Field[i].Type);
                         } else {
                             EnemyOnField[i].Remove();
                             EnemyOnField.splice(i,1);
@@ -664,8 +663,8 @@
     }
     
     onMount(() => {
-        EnemyAvatar = new Stone(0,0,"MissingCharacter",document.getElementById("EnemyAvatar"))
-        PlayerAvatar = new Stone(0,0,"MissingCharacter",document.getElementById("PlayerAvatar"))
+        EnemyAvatar = new Stone(0,0,"MissingCharacter",document.getElementById("EnemyAvatar"),"","Tank");
+        PlayerAvatar = new Stone(0,0,"MissingCharacter",document.getElementById("PlayerAvatar"),"","Tank");
 
         createSocket()
 
@@ -718,15 +717,15 @@
                     DraggableCard.InArea = true;
                     if (!DraggableCard.Stone) {
                         console.log("Create Stone")
-                        DraggableCard.Stone = CreateCharacterStone(DraggableCard.Class.Attack,DraggableCard.Class.Health,DraggableCard.Class.Texture);
+                        DraggableCard.Stone = CreateCharacterStone(DraggableCard.Class.Attack,DraggableCard.Class.Health,DraggableCard.Class.Texture,"",DraggableCard.Class.Type);
                         DraggableCard.Stone.classList.add("Draggable");
                         document.getElementById("DraggableParent").appendChild(DraggableCard.Stone);
                         DraggableCard.Stone.addEventListener('mouseup', ()=>PlaceStone());
                     }   
-                        DraggableCard.Stone.style.display = "block";
-                        DraggableCard.Stone.style.left = MouseX+"px";
-                        DraggableCard.Stone.style.top = MouseY+"px";
-                        SetEnergyLevel(PlayerEnergy-DraggableCard.Class.Cost);
+                    DraggableCard.Stone.style.display = "block";
+                    DraggableCard.Stone.style.left = MouseX+"px";
+                    DraggableCard.Stone.style.top = MouseY+"px";
+                    SetEnergyLevel(PlayerEnergy-DraggableCard.Class.Cost);
                 } else if (DraggableCard.Stone) {
                     DraggableCard.Stone.style.display = "none";
                     DraggableCard.Draggable.style.display = "block";
@@ -756,7 +755,7 @@
                 if (!TargetClass) {
                     DraggableSelectTarget.SelectedTarget = "";
                 }
-                if (TargetClass.Health-DraggableSelectTarget.Class.Attack<=0) {
+                if (TargetClass && TargetClass.Health-DraggableSelectTarget.Class.Attack<=0) {
                     DraggableSelectTarget.TargetIndicator.style.backgroundImage = "url('images/kill.png');";
                 } else {
                     DraggableSelectTarget.TargetIndicator.style.backgroundImage = "url('images/target.png');";
@@ -774,6 +773,7 @@
         var LeftSide = PlayerField.getBoundingClientRect().left;
         var whereInDiv = (MouseX-LeftSide)/PlayerField.offsetWidth;
         var WhatToSend = Math.floor(whereInDiv*(PlayerOnField.length+1));
+        console.log({function:"PlaceCard",SelectedIndex:WhatToSend,SelectedCardIndex:PlayerHand.indexOf(DraggableCard.Class)});
         socket.send(JSON.stringify({function:"PlaceCard",SelectedIndex:WhatToSend,SelectedCardIndex:PlayerHand.indexOf(DraggableCard.Class)}));
         DropDraggable();
     }
@@ -865,11 +865,14 @@
         DraggableSelectTarget = null;
     }
 
-    function CreateCharacterStone(Attack, Health, Texture, Name = null) {
+    function CreateCharacterStone(Attack, Health, Texture, Name = null, Type = null) {
         //THE CharacterStone
         var CharacterStone = document.createElement("div");
         CharacterStone.classList.add("CharacterStone");
-        CharacterStone.style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
+        if (Type != null && Type == "Tank") {
+            CharacterStone.style.backgroundImage = "url('/images/Cards/"+Texture+".png'), url('/images/shield.png')";
+        } else 
+            CharacterStone.style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
         if (Name) {
             var CharacterName = document.createElement("h1");
             CharacterName.classList.add("StoneName");
@@ -1090,18 +1093,19 @@
         }
     } 
     class Stone {
-        constructor(Attack,Health,Texture, ParentNode) {
+        constructor(Attack,Health,Texture, ParentNode, Type) {
             this.Health = Health;
             this.Attack = Attack;
             this.Texture = Texture;
             this.AttackCooldown = 1;
+            this.Type = Type;
 
-            this.Body = CreateCharacterStone(Attack,Health,Texture);
+            this.Body = CreateCharacterStone(Attack,Health,Texture,"",Type);
             this.Body.classList.add("Selectable");
             this.Body.addEventListener("mousedown", ()=>this.SelectAttackingStone());
             ParentNode.appendChild(this.Body);
         }
-        UpdateVisuals(Attack = this.Attack, Health = this.Health, Texture=this.Texture, AttackCooldown=this.AttackCooldown, WhatAmI = "") {
+        UpdateVisuals(Attack = this.Attack, Health = this.Health, Texture=this.Texture, AttackCooldown=this.AttackCooldown, WhatAmI = "", Type=null) {
             if (DraggableSelectTarget && DraggableSelectTarget.SelectedTarget == WhatAmI && WhatAmI!="") {
                 this.Body.getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = Attack;
                 this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = Health-DraggableSelectTarget.Class.Attack;
@@ -1111,8 +1115,10 @@
                 this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = Health;
                 this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].style.color = "black";
             }
-            
-            this.Body.style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
+            if (Type != null && Type == "Tank") {
+                this.Body.style.backgroundImage = "url('/images/Cards/"+Texture+".png'), url('/images/shield.png')";
+            } else 
+                this.Body.style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
             this.AttackCooldown = AttackCooldown;
 
             this.Attack = Attack;

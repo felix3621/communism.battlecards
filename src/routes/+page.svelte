@@ -1,37 +1,35 @@
 <style>
-    .Title {
+    #logo {
         position: fixed;
-        left:50%;
-        transform: translate(-50%,0);
+        top:0;
+        left:0;
         background-color: rgb(50, 50, 50);
-        color: white;
-        top:-25px;
-        padding:35px 15px 15px 15px;
-        border-radius: 25px;
+        border-radius: 0 0 25px 0;
         outline: 5px black solid;
-        -webkit-text-stroke-width: 0.75px;
-        -webkit-text-stroke-color: black;
+        max-height: 10%;
+        padding: 0 10px 10px 0;
     }
-    .EXP_Bar{
+    #EXP_Bar{
         position: fixed;
-        left:50%;
-        transform: translate(-50%,0);
+        left:0;
+        transform: translate(0,0);
         background-color: rgb(50, 50, 50);
         color: white;
-        top:68px;
+        top:110px;
         height:15px;
-        width:325px;
+        width:350px;
         outline: 2px black solid;
-        border-radius: 25px;
+        border-radius: 0 0 25px 0;
     }
-    .EXP_FilLevel {
+    #EXP_FilLevel {
         position: fixed;
         width:0%;
         float:left;
         height: 100%;
-        border-radius: 25px;
+        border-radius: 0 0 25px 0;
         background-color: rgb(50,150,255);
         transition: 2s;
+        opacity: 0.85;
     }
     #gamePanel {
         position: fixed;
@@ -303,10 +301,39 @@
         display: grid;
         grid-template-columns: repeat(auto, 100%);
     }
+    :global(.ToolTip) {
+        position: fixed;
+        z-index: 100;
+        width: fit-content;
+        max-width: 400px;
+        background-color: black;
+        outline: 2px gray solid;
+        color: white;
+        padding: 0 8px 5px 0;
+        border-radius: 10px;
+        display: flex;
+    }
+    :global(.ToolTip div) {
+        flex: 1;
+    }
+    :global(.ToolTip h1, .ToolTip p) {
+        margin: 0;
+        margin-left: 8px;
+    }
+    :global(.ToolTip h1) {
+        white-space: nowrap;
+    }
+    :global(.ToolTip img) {
+        width: 40px;
+        background-color: rgb(50,50,50);
+        border: 2px black solid;
+        border-radius: 5px;
+        float: left;
+    }
 </style>
-<h1 class="Title" style="margin: 0px;">Welcome to BattleCards!</h1>
-<div class="EXP_Bar">
-    <div class="EXP_FilLevel"></div>
+<img id="logo" src="images/BattlecardsLogo.png">
+<div id="EXP_Bar">
+    <div id="EXP_FilLevel"></div>
 </div>
 <div id="SettingsMenu">
     <div id="SettingsDropDown" style="display: none;">
@@ -332,7 +359,7 @@
     <button id="privateGame" class="btn" on:click={() => window.location.href = "/game?private=true"}>Private Game</button>
     <div class="joinByCode" id="gameCode">
         <input type="text" placeholder="Code">
-        <button class="btn" on:click={() => window.location.href = "/game?code="+encodeURIComponent(document.getElementById("gameCode").children[0].value)}>Join</button>
+        <button id="JoinByCodeBtn" class="btn" on:click={() => window.location.href = "/game?code="+encodeURIComponent(document.getElementById("gameCode").children[0].value)}>Join</button>
     </div>
 </div>
 <!--Select tournament-->
@@ -341,7 +368,7 @@
     <button class="btn" id="createTournament" on:click={() => window.location.href = "/game?tournament=new"}>New tournament</button>
     <div class="joinByCode" style="position: absolute; bottom: -17.5%; " id="tournamentCode">
         <input type="text" placeholder="Code">
-        <button class="btn" on:click={() => window.location.href = "/game?tournament="+encodeURIComponent(document.getElementById("tournamentCode").children[0].value)}>Join</button>
+        <button id="JoinTournamentCodeBtn" class="btn" on:click={() => window.location.href = "/game?tournament="+encodeURIComponent(document.getElementById("tournamentCode").children[0].value)}>Join</button>
     </div>
 </div>
 
@@ -351,16 +378,16 @@
     <div class="Icon" id="AvatarButton" on:click={()=>{document.getElementById("AvatarPanel").style.display="block"; UpdateAvatarsPanel();}}></div>
 </div>
 <div id="AvatarPanel" style="display:none;">
-    <button style="position: fixed;right:0;top:0;font-size:50px" class="btn" on:click={()=>document.getElementById("AvatarPanel").style.display="none"}>X</button>
+    <button style="position: fixed;right:0;top:0;font-size:50px" class="btn" on:click={()=>document.getElementById("AvatarPanel").style.display="none"}>Back</button>
     <div id="SelectedAvatar"></div>
     <div id="DisplayAllAvatars"></div>
 </div>
 <div id="CardDeckPanel" style="display:none;">
-    <button style="position: fixed;right:0;top:0;font-size:50px" class="btn" on:click={()=>document.getElementById("CardDeckPanel").style.display="none"}>X</button>
+    <button style="position: fixed;right:0;top:0;font-size:50px" class="btn" on:click={()=>document.getElementById("CardDeckPanel").style.display="none"}>Back</button>
     <div id="CardDeck"></div>
 </div>
 <div id="InventoryPanel" style="display:none;">
-    <button style="position: fixed;right:0;top:0;font-size:50px" class="btn" on:click={()=>document.getElementById("InventoryPanel").style.display="none"}>X</button>
+    <button style="position: fixed;right:0;top:0;font-size:50px" class="btn" on:click={()=>document.getElementById("InventoryPanel").style.display="none"}>Back</button>
     <div id="Inventory"></div>
 </div>
 
@@ -395,6 +422,16 @@
         window.addEventListener('resize', () => SetAllFontSizeInArray(FontSizeAdjusterArray));
         SelectedAvatar = CreateCharacterStone(0,0,"MissingCharacter");
         document.getElementById("SelectedAvatar").appendChild(SelectedAvatar);
+
+        // Set ToolTips
+        CreateTooltipEvent(document.getElementById("DeckButton"),"Set Deck", "Create Your Battle Ready Deck");
+        CreateTooltipEvent(document.getElementById("AvatarButton"),"Select Avatar", "Select Avatar to Use");
+        CreateTooltipEvent(document.getElementById("quickPlay"),"Quick Play", "Play Against Random People");
+        CreateTooltipEvent(document.getElementById("privateGame"),"Create A Private Mtach", "Create A Private Match That People Have To Join Using A Game Code");
+        CreateTooltipEvent(document.getElementById("JoinByCodeBtn"),"Join Private Battle", "Join Private Battle Using Game Code");
+        CreateTooltipEvent(document.getElementById("createTournament"),"Create Tournament", "Create A Tournament That Can Be Joined By Using A Code");
+        CreateTooltipEvent(document.getElementById("createTournament"),"Create Tournament", "Create A Tournament That Can Be Joined By Using A Code");
+        CreateTooltipEvent(document.getElementById("JoinTournamentCodeBtn"),"Join Tournament", "Join Tournament And Have FUN");
     })
     
     async function logOut() {
@@ -409,17 +446,18 @@
     }
 
     function SetExpFilLevel(Level) {
-        var Bar = document.getElementsByClassName("EXP_FilLevel");
-        for (let i = 0; i < Bar.length; i++) {
-            Bar[i].style.width = Level+"%";
-        }
+        var Bar = document.getElementById("EXP_FilLevel");
+        Bar.style.width = Level+"%";
     }
 
-    function CreateCharacterStone(Attack, Health, Texture) {
+    function CreateCharacterStone(Attack, Health, Texture, Type = null) {
         //THE CharacterStone
         var CharacterStone = document.createElement("div");
         CharacterStone.classList.add("CharacterStone");
-        CharacterStone.style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
+        if (Type != null && Type == "Tank") {
+            CharacterStone.style.backgroundImage = "url('/images/Cards/"+Texture+".png'), url('/images/shield.png')";
+        } else 
+            CharacterStone.style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
 
         //DMG
         var CharacterStoneDMG = document.createElement("div");
@@ -548,7 +586,6 @@
 	    	}
         });
         var Deck = await deck.json();
-        console.log(Deck);
 
         //Remove the add new card from the end if it exsist
         var newCardElementToRemove = document.getElementById("NewCard");
@@ -559,22 +596,31 @@
         for (let i = 0; i < Deck.length || i < DeckParent.children.length; i++) {
             var CurrentChild;
             if (i>= DeckParent.children.length && i < Deck.length) {
+                console.log(Deck[i].Type);
                 CurrentChild = CreateCard(Deck[i].Name,Deck[i].Description,Deck[i].Cost,Deck[i].Attack,Deck[i].Health,Deck[i].Texture);
                 CurrentChild.classList.add("ClicableCard");
                 DeckParent.appendChild(CurrentChild);
                 (function(index) {
                     CurrentChild.addEventListener("click", ()=> {
                         GetCardFromInventory(index);
-                });
+                    });
+                    CreateTooltipEvent(CurrentChild, Deck[i].Name, Deck[i].Description+"<br>Cost: "+Deck[i].Cost);
                 })(i);
             } else if (i < Deck.length && i < DeckParent.children.length) {
                 CurrentChild = DeckParent.children[i];
-                CurrentChild.children[0].style.backgroundImage = "url('/images/Cards/"+Deck[i].Texture+".png')";
+                CurrentChild.children[0].style.backgroundImage = "url(/images/Cards/"+Deck[i].Texture+".png)";
                 CurrentChild.children[2].children[0].innerHTML = Deck[i].Attack;
                 CurrentChild.children[3].children[0].innerHTML = Deck[i].Health;
                 CurrentChild.children[4].children[0].innerHTML = Deck[i].Cost;
                 CurrentChild.children[5].children[0].innerHTML = Deck[i].Name;
                 CurrentChild.children[6].children[0].innerHTML = Deck[i].Description;
+                CurrentChild = removeAllEventListeners(CurrentChild);
+                (function(index) {
+                    CurrentChild.addEventListener("click", ()=> {
+                        GetCardFromInventory(index);
+                    });
+                    CreateTooltipEvent(CurrentChild, Deck[i].Name, Deck[i].Description+"<br>Cost: "+Deck[i].Cost);
+                })(i);
             }
             if (i>=Deck.length) {
                 DeckParent.children[i].remove();
@@ -584,7 +630,6 @@
 
         //Re add it if it suld exsist
         if (Deck.length<20) {
-            console.log(document.getElementById("NewCard"));
             if (!document.getElementById("NewCard")){
                 var AddNewCard = document.createElement("div");
                 AddNewCard.id = "NewCard";
@@ -592,11 +637,12 @@
                 var AddButton = document.createElement("div");
                 AddNewCard.appendChild(AddButton);
                 AddNewCard.addEventListener("click",()=> {GetCardFromInventory(-1)});
+                CreateTooltipEvent(AddNewCard,"Add A New Card","Add A New Card From Inventory To Deck");
             }
         }
         SetAllFontSizeInArray(FontSizeAdjusterArray);
     }
-
+    var RemoveCard;
     //GetFromInventory 
     async function GetCardFromInventory(WhatIndexToReplace) {
         var InventoryPanel = document.getElementById("InventoryPanel");
@@ -610,16 +656,24 @@
 	    	}
         });
         inventory = await inventory.json();
-        if (!document.getElementById("RemoveCard")){
-             var RemoveCard = document.createElement("div");
-             RemoveCard.id = "RemoveCard";
+        if (!document.getElementById("RemoveCard") && WhatIndexToReplace != -1){
+            RemoveCard = document.createElement("div");
+            RemoveCard.id = "RemoveCard";
             InventoryParent.appendChild(RemoveCard);
             var RemoveButton = document.createElement("div");
             RemoveCard.appendChild(RemoveButton);
-            
+            console.log("Add")
         }
-        removeAllEventListeners(document.getElementById("RemoveCard"))
-        document.getElementById("RemoveCard").addEventListener("click",()=> {AddToDeck(-1, WhatIndexToReplace);});
+        if (WhatIndexToReplace != -1) {
+            RemoveCard.style.display="block";
+            removeAllEventListeners(RemoveCard);
+            document.getElementById("RemoveCard").addEventListener("click",()=> {AddToDeck(-1, WhatIndexToReplace);});
+            CreateTooltipEvent(RemoveCard,"Remove Current Card");
+        } else if (RemoveCard != null) {
+            console.log("RemoveDisplay")
+            RemoveCard.style.display="none";
+        }
+        
         for (let i = 0; i < inventory.length || i < (InventoryParent.children.length-1); i++) {
             var CurrentChild;
             if (i>= (InventoryParent.children.length-1) && i < inventory.length) {
@@ -629,6 +683,7 @@
                 (function(index) {
                     CurrentChild.addEventListener("click", ()=> {
                     AddToDeck(index, WhatIndexToReplace);
+                    CreateTooltipEvent(CurrentChild, inventory[i].card.Name,inventory[i].card.Description+"<br>Cost: "+inventory[i].card.Cost);
                 });
                 })(i);
             } else if (i < (InventoryParent.children.length-1) && i < inventory.length) {
@@ -642,6 +697,7 @@
                 (function(index) {
                     CurrentChild.addEventListener("click", ()=> {
                     AddToDeck(index, WhatIndexToReplace);
+                    CreateTooltipEvent(CurrentChild, inventory[i].card.Name,inventory[i].card.Description+"<br>Cost: "+inventory[i].card.Cost);
                 });
                 })(i);
             }
@@ -684,18 +740,24 @@
         });
         Avatars = await Avatars.json()
         console.log(Avatars);
+        SelectedAvatar = removeAllEventListeners(SelectedAvatar);
         UpdateStone(SelectedAvatar,Avatars.selected.Attack,Avatars.selected.Health,Avatars.selected.Texture);
+        CreateTooltipEvent(SelectedAvatar,Avatars.selected.Name,Avatars.selected.Description)
         var DisplayAllAvatarsParent = document.getElementById("DisplayAllAvatars");
 
         for (let i = 0; i < Avatars.avatars.length || i < DisplayAllAvatarsParent.children.length; i++) {
             if (i>= DisplayAllAvatarsParent.children.length && i < Avatars.avatars.length) {
-                var NewAvatar = CreateCharacterStone(Avatars.avatars[i].Attack,Avatars.avatars[i].Health,Avatars.avatars[i].Texture);
+                var NewAvatar = CreateCharacterStone(Avatars.avatars[i].Attack,Avatars.avatars[i].Health,Avatars.avatars[i].Texture, "Tank");
                 DisplayAllAvatarsParent.appendChild(NewAvatar);
                 (function(index) {
                     NewAvatar.addEventListener("click",()=>SetAvatar(index));
                 })(i);
+                (function(index, NewAvatar) {
+                    CreateTooltipEvent(NewAvatar,Avatars.avatars[i].Name,Avatars.avatars[i].Description)
+                })(i, NewAvatar)
+                
             } else if (i < Avatars.avatars.length) {
-                UpdateStone(DisplayAllAvatarsParent.children[i], Avatars.avatars[i].Attack,Avatars.avatars[i].Health,Avatars.avatars[i].Texture)
+                UpdateStone(DisplayAllAvatarsParent.children[i], Avatars.avatars[i].Attack,Avatars.avatars[i].Health,Avatars.avatars[i].Texture, "Tank")
             } else {
                 DisplayAllAvatarsParent.children[i].remove();
                 i--;
@@ -716,9 +778,70 @@
         UpdateAvatarsPanel();
     }
 
-    function UpdateStone(Stone,Attack,Health,Texture) {
+    function UpdateStone(Stone,Attack,Health,Texture, Type = null) {
         Stone.getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = Attack;
         Stone.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = Health;
-        Stone.style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
+        if (Type != null && Type == "Tank") {
+            Stone.style.backgroundImage = "url('/images/Cards/"+Texture+".png'), url(images/shield.png)";
+        } else 
+            Stone.style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
+    }
+    // Show ToolTip
+    function ToolTip(Element, Title, Text, DisplayImagePath = null) {
+        CloseAllToolTips();
+        var ToolTip = document.createElement("div");
+        ToolTip.classList.add("ToolTip");
+
+        if (DisplayImagePath!=null) {
+            // Flex Container
+            var FlexContainerImage = document.createElement("div");
+            FlexContainerImage.style.order = 1;
+            ToolTip.appendChild(FlexContainerImage);
+            var Image = document.createElement("img");
+            Image.src = DisplayImagePath;
+            FlexContainerImage.appendChild(Image);
+        }
+        // Flex Container
+        var FlexContainer = document.createElement("div");
+        FlexContainer.style.order = 2;
+        ToolTip.appendChild(FlexContainer);
+
+        // Title
+        var TitleElement = document.createElement("h1");
+        TitleElement.innerHTML = Title;
+        FlexContainer.appendChild(TitleElement);
+        //Text
+        var TextElement = document.createElement("p");
+        TextElement.innerHTML = Text;
+        FlexContainer.appendChild(TextElement);
+
+        document.body.appendChild(ToolTip);
+
+        // Set Pos
+        let BoundRec = Element.getBoundingClientRect();
+        if (BoundRec.top<ToolTip.offsetHeight) { // Down
+            ToolTip.style.top = BoundRec.bottom + "px";
+        } else { // Place Above
+            ToolTip.style.top = BoundRec.top-ToolTip.offsetHeight-8 + "px";
+        }
+        if (BoundRec.right>document.body.offsetWidth) { // Move right 0
+            ToolTip.style.left = document.body.offsetWidth - ToolTip.offsetWidth +"px";
+        } else if (BoundRec.left+(BoundRec.right-BoundRec.left)/2<ToolTip.offsetWidth) { // Move Left 0
+            ToolTip.style.left = "0px";
+        } else { // Center Left
+            ToolTip.style.left = BoundRec.left+(BoundRec.right-BoundRec.left)/2 - ToolTip.offsetWidth/2 + "px";
+        }
+    }
+    // Remove All ToolTips
+    function CloseAllToolTips() {
+        var ToolTips = document.getElementsByClassName("ToolTip");
+        for (let i = 0; i < ToolTips.length; i++) {
+            ToolTips[i].remove();
+        }
+    }
+    // Add Tooltip Event To Element
+    function CreateTooltipEvent(Element, Title, Text, DisplayImagePath = null) {
+        Element.addEventListener("mouseover",()=> {ToolTip(Element,Title,Text, DisplayImagePath);});
+        Element.addEventListener("mouseout",()=> {CloseAllToolTips();});
     }
 </script>

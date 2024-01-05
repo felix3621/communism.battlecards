@@ -2,10 +2,11 @@
     {
         "Name":"Bandit",
         "Description":"A Bandit Ready to kill",
-        "Attack":3,
-        "Health":3,
+        "Attack":2,
+        "Health":4,
         "Cost":3,
-        "Texture":"Bandit"
+        "Texture":"Bandit",
+        "Type":"Tank"
     },
     {
         "Name":"PurpleSlime",

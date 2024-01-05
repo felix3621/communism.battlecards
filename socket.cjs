@@ -326,7 +326,7 @@ class Player {
             if (this.Hand[SelectedCardIndex] && this.Field.length<6 && this.Energy >= this.Hand[SelectedCardIndex].Cost) {
                 var newField = [
                     ...this.Field.slice(0, SelectedIndex),
-                    new stone(this.Hand[SelectedCardIndex].Attack,this.Hand[SelectedCardIndex].Health,this.Hand[SelectedCardIndex].Texture,1),
+                    new stone(this.Hand[SelectedCardIndex].Attack,this.Hand[SelectedCardIndex].Health,this.Hand[SelectedCardIndex].Texture,1,this.Hand[SelectedCardIndex].Type),
                     ...this.Field.slice(SelectedIndex) 
                 ];
                 this.Field = newField;
@@ -387,11 +387,12 @@ class Player {
 }
 
 class stone {
-    constructor(Attack, Health, Texture, attackCooldown) {
+    constructor(Attack, Health, Texture, attackCooldown, Type=null) {
         this.Attack = Attack;
         this.Health = Health;
         this.Texture = Texture;
         this.attackCooldown = attackCooldown;
+        this.Type = Type;
     }
 }
 
@@ -723,7 +724,46 @@ async function tick() {
     }
 
     for (let i = 0; i < viewer.length; i++) {
-        viewer[i].socket.send(JSON.stringify(mainData))
+        if (viewer[i].view) {
+            if (viewer[i].view.type == "battle") {
+                let game = battles.find(obj => obj.code == viewer[i].view.code)
+                if (game) {
+                    gameData = {
+                        type: "battle",
+                        turnTime: Math.round(game.turnTime*tickSpeed),
+                        maxEnergy: game.maxEnergy,
+                        currentPlayer: game.currentPlayer,
+                        round: game.round,
+                        private: game.private,
+                        code: game.code
+                    }
+                    if (game.p1) {
+                        gameData.p1 = {
+                            username: game.p1.UserName,
+                            avatar: game.p1.Avatar,
+                            handCount: game.p1.Hand.length,
+                            field: game.p1.Field,
+                            energy: game.p1.Energy
+                        }
+                    }
+                    if (game.p2) {
+                        gameData.p2 = {
+                            username: game.p2.UserName,
+                            avatar: game.p2.Avatar,
+                            handCount: game.p2.Hand.length,
+                            field: game.p2.Field,
+                            energy: game.p2.Energy
+                        }
+                    }
+                    viewer[i].socket.send(JSON.stringify({...mainData, selected: {...gameData}}))
+                } else {
+                    delete viewer[i].view
+                }
+            }
+            //view: { type: 'battle', code: 'Z2FtZV8xMg==' }
+        } else {
+            viewer[i].socket.send(JSON.stringify(mainData))
+        }
     }
 }
 
@@ -739,7 +779,6 @@ webSocketServer.on('connection', async(socket, request) => {
         if (!privileged)
             socket.close(1008, 'Admin required');
         viewer.push({username: username, socket: socket})
-        this.viewer = true;
     } else if (search.get("tournament") && decodeURIComponent(search.get("tournament")) == "new") {
         for (let i = 0; i < tournaments.length; i++) {
             let user = tournaments[i].Sockets.find(obj => obj.username == username)
@@ -819,10 +858,17 @@ webSocketServer.on('connection', async(socket, request) => {
     }
 
     socket.on('message', (message) => {
-        if (this.viewer) {
-
+        console.log(JSON.parse(message))
+        if (viewer.find(obj => obj.username == username)) {
+            var msg = JSON.parse(message);
+            if ((msg.type == "battle" || msg.type == "tournament") && msg.code) {
+                let usr = viewer.find(obj => obj.username == username)
+                if (!usr)
+                    return //should not execute, but safety is important
+                usr.view = {type: msg.type, code: msg.code}
+            }
         } else {
-            var command = JSON.parse(message)
+            var command = JSON.parse(message);
             //what game are we in?
             let game = battles.find(obj => (obj.p1 && obj.p1.UserName == username) || (obj.p2 && obj.p2.UserName == username))
             if (game) {
@@ -842,6 +888,7 @@ webSocketServer.on('connection', async(socket, request) => {
                     if (command.tournamentReady && tournaments[i].Sockets.length>1) {
                         socketSearch.ready = true;
                     }
+                    
                     break;
                 }
             }
