@@ -3,23 +3,11 @@ const router = express.Router();
 const auth = require('../authentication.cjs');
 const db = require('../database.cjs');
 
-const createTestUsers = false
-
-
 var client;
 async function connectDB() {
     client = await db.connect();
 }
 connectDB()
-
-
-async function deleteUsers () {
-    if (!createTestUsers) {
-        await client.db("communism_battlecards").collection("accounts").deleteMany({testUser: true})
-        console.log("testusers deleted")
-    }
-}
-setTimeout(deleteUsers,1000);
 
 router.post('/login', auth.checkUser, (req, res) => {
     res.json(req.user)

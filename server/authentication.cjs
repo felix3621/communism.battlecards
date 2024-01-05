@@ -1,5 +1,15 @@
 const db = require("./database.cjs");
 const CryptoJS = require('crypto-js');
+const createTestUsers = false
+
+
+async function deleteUsers () {
+    if (!createTestUsers) {
+        await client.db("communism_battlecards").collection("accounts").deleteMany({testUser: true})
+        console.log("testusers deleted")
+    }
+}
+setTimeout(deleteUsers,1000);
 
 var client;
 async function connectDB() {
