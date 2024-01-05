@@ -18,6 +18,7 @@ router.post('/signup', async(req, res) => {
     let display_name = req.body.display_name;
 
     if (username && password && display_name) {
+        password = auth.encrypt(password)
         let base = client.db("communism_battlecards").collection("accounts")
         let check = await base.findOne({username: username})
         if (!check) {

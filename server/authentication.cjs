@@ -28,10 +28,15 @@ auth.decrypt = (data) => {
 };
 
 async function checkUser(username, password) {
+    password = auth.encrypt(password);
+    
     let base = client.db("communism_battlecards").collection("accounts")
     let result = await base.findOne({username: username, password: password})
     if (result) {
-        return {username: result.username, display_name: result.display_name}
+        let rtn = {username: result.username, display_name: result.display_name}
+        if (result.admin == true)
+            rtn.admin = true
+        return rtn;
     }
     return null;
 }
@@ -41,7 +46,7 @@ auth.checkUser = async(req, res, next) => {
         let user = await checkUser(req.body.username, req.body.password)
         if (user) {
             req.user = user
-            let userToken = auth.encrypt(JSON.stringify([auth.encrypt(req.body.username), auth.encrypt(req.body.password)]))
+            let userToken = auth.encrypt(JSON.stringify([auth.encrypt(req.body.username), auth.encrypt(auth.encrypt(req.body.password))]))
             res.cookie('userToken', userToken, { httpOnly: true });
             return next()
         } else {
@@ -50,7 +55,7 @@ auth.checkUser = async(req, res, next) => {
     } else if (req.cookies && req.cookies.userToken) {
         let token = JSON.parse(auth.decrypt(req.cookies.userToken))
         let username = auth.decrypt(token[0])
-        let password = auth.decrypt(token[1])
+        let password = auth.decrypt(auth.decrypt(token[1]))
         
         if (token[2] && auth.decrypt(token[2]) == "true") {
             if (createTestUsers) {
@@ -80,11 +85,13 @@ auth.checkUser = async(req, res, next) => {
     } else {
         if (createTestUsers && req.body.createTestUser == null || req.body.createTestUser == true) {
             let base = client.db("communism_battlecards").collection("accounts")
+
+            let testpsw = auth.encrypt("test")
             
             let userCount = await base.countDocuments({testUser: true});
-            req.user = {username: "test_"+userCount, display_name: "test "+userCount, testUser: true}
+            req.user = {username: "test_"+userCount, display_name: "test "+userCount, testUser: true, password: auth.encrypt(testpsw)}
 
-            let userToken = auth.encrypt(JSON.stringify([auth.encrypt("test_"+userCount), auth.encrypt("test"), auth.encrypt("true")]))
+            let userToken = auth.encrypt(JSON.stringify([auth.encrypt("test_"+userCount), auth.encrypt(testpsw), auth.encrypt("true")]))
             res.cookie('userToken', userToken, { httpOnly: true })
             return next()
         }

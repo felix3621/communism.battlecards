@@ -6,6 +6,9 @@ const db = require('./server/database.cjs');
 const avatar = require('./server/Avatars.json')
 const cards = require('./server/Cards.json');
 
+//admin
+var viewer = new Array();
+
 //Game Info
 var queuedUsers = new Array();
 var battleUsers = new Array();
@@ -409,10 +412,13 @@ class Tournament {
         if (this.CountDown>0) {
             this.CountDown--;
         }
+        var playersAlive = false;
         for (let i = 0; i < this.Sockets.length; i++) {
             if (this.Sockets[i].socket) {
                 this.Sockets[i].reconnectTime = 30/tickSpeed;
+                playersAlive = true;
             } else {
+                
                 this.Sockets[i].reconnectTime--
                 if (this.Sockets[i].reconnectTime <= 0) {
                     this.Sockets.splice(i,1)
@@ -420,6 +426,7 @@ class Tournament {
                 }
             }
         }
+        if (!playersAlive) {this.Alive = false;}
 
         let readyPlayers = this.Sockets.filter(obj => !obj.out && !obj.inGame && obj.ready);
         let totalPlayers = this.Sockets.filter(obj => !obj.out)
@@ -602,6 +609,13 @@ async function authorizeSocket(socket, request) {
     return username
 }
 
+async function isAdmin(username) {
+    var data = await client.db("communism_battlecards").collection("accounts").findOne({username: username})
+    if (data.admin == true)
+        return true
+    return false
+}
+
 async function getPlayerInfo(username, player, game) {
     let result = await client.db("communism_battlecards").collection("accounts").findOne({username: username})
     
@@ -683,8 +697,33 @@ async function tick() {
             tournaments.splice(i,1);
             i--;
         } else {
-            tournaments[i].Update()
+            tournaments[i].Update();
         } 
+    }
+
+    //battles Player list
+    let mainData = {};
+    mainData.battles = [];
+    for (let i = 0; i < battles.length; i++) {
+        let code = battles[i].code;
+        let p1 = battles[i].p1.UserName;
+        let p2 = battles[i].p2 ? battles[i].p2.UserName : "";
+        mainData.battles.push({code: code, p1: p1, p2: p2});
+    }
+    // Tournaments Player List
+    mainData.tournaments = [];
+    for (let i = 0; i < tournaments.length; i++) {
+        let code = tournaments[i].code;
+        let userList = [];
+        for (let j = 0; j < tournaments[i].Sockets.length; j++) { // Get all usernames from Sockets (if they are alive)
+            if (!tournaments[i].Sockets[j].out)
+                userList.push(tournaments[i].Sockets[j].username);
+        }
+        mainData.tournaments.push({code: code, userList: userList});
+    }
+
+    for (let i = 0; i < viewer.length; i++) {
+        viewer[i].socket.send(JSON.stringify(mainData))
     }
 }
 
@@ -694,8 +733,14 @@ webSocketServer.on('connection', async(socket, request) => {
     if (!username) return;
 
     const search = (new URL(request.url, 'http://localhost')).searchParams
-    
-    if (search.get("tournament") && decodeURIComponent(search.get("tournament")) == "new") {
+
+    if (search.get("admin") && decodeURIComponent(search.get("admin")) == "true") {
+        var privileged = await isAdmin(username)
+        if (!privileged)
+            socket.close(1008, 'Admin required');
+        viewer.push({username: username, socket: socket})
+        this.viewer = true;
+    } else if (search.get("tournament") && decodeURIComponent(search.get("tournament")) == "new") {
         for (let i = 0; i < tournaments.length; i++) {
             let user = tournaments[i].Sockets.find(obj => obj.username == username)
             if (user) {
@@ -774,27 +819,31 @@ webSocketServer.on('connection', async(socket, request) => {
     }
 
     socket.on('message', (message) => {
-        var command = JSON.parse(message)
-        //what game are we in?
-        let game = battles.find(obj => (obj.p1 && obj.p1.UserName == username) || (obj.p2 && obj.p2.UserName == username))
-        if (game) {
-            let p1 = (game.p1.UserName == username)
-            if (game[p1 ? "p1" : "p2"][command.function])
-                game[p1 ? "p1" : "p2"][command.function](command)
-        }
-        for (let i = 0; i < tournaments.length; i++) {
-            let socketSearch = tournaments[i].Sockets.find(obj => obj.username == username);
-            if (socketSearch) {
-                let game = tournaments[i].Battles.find(obj => obj.p1.UserName == username || obj.p2.UserName == username)
-                if (game) {
-                    let p1 = (game.p1.UserName == username)
-                    if (game[p1 ? "p1" : "p2"][command.function])
-                        game[p1 ? "p1" : "p2"][command.function](command)
+        if (this.viewer) {
+
+        } else {
+            var command = JSON.parse(message)
+            //what game are we in?
+            let game = battles.find(obj => (obj.p1 && obj.p1.UserName == username) || (obj.p2 && obj.p2.UserName == username))
+            if (game) {
+                let p1 = (game.p1.UserName == username)
+                if (game[p1 ? "p1" : "p2"][command.function])
+                    game[p1 ? "p1" : "p2"][command.function](command)
+            }
+            for (let i = 0; i < tournaments.length; i++) {
+                let socketSearch = tournaments[i].Sockets.find(obj => obj.username == username);
+                if (socketSearch) {
+                    let game = tournaments[i].Battles.find(obj => obj.p1.UserName == username || obj.p2.UserName == username)
+                    if (game) {
+                        let p1 = (game.p1.UserName == username)
+                        if (game[p1 ? "p1" : "p2"][command.function])
+                            game[p1 ? "p1" : "p2"][command.function](command)
+                    }
+                    if (command.tournamentReady && tournaments[i].Sockets.length>1) {
+                        socketSearch.ready = true;
+                    }
+                    break;
                 }
-                if (command.tournamentReady && tournaments[i].Sockets.length>1) {
-                    socketSearch.ready = true;
-                }
-                break;
             }
         }
     });
@@ -812,6 +861,21 @@ webSocketServer.on('connection', async(socket, request) => {
             let battleUser = battleUsers.find(obj => obj.username == username)
             if (battleUser) {
                 battleUser.socket = null;
+            }
+
+            let tournamentUser;
+            for (let i = 0; i < tournaments.length; i++) {
+                tournamentUser = tournaments[i].Sockets.find(obj => obj.username == username)
+                if (tournamentUser) {
+                    tournamentUser.socket = null
+                    break;
+                }
+            }
+
+            //was player a viewer, then kick them
+            let viewerUser = viewer.findIndex(obj => obj.username == username)
+            if (viewerUser != -1) {
+                viewer.splice(viewerUser,1)
             }
         }
     });

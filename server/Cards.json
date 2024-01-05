@@ -37,7 +37,9 @@
         "Attack":2,
         "Health":2,
         "Cost":2,
-        "Texture":"Bloob"
+        "Texture":"Bloob",
+        "AttackType":"Burst",
+        "TargetType":"Enemy"
     },
     {
         "Name":"Biden",

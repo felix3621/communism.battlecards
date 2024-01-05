@@ -131,15 +131,15 @@
         filter: opacity(0.5);
     }
 
-    #SettingsMenu a {
+    :global(#SettingsMenu a) {
         color: white;
         cursor: pointer;
         text-decoration: none;
     }
-    #SettingsMenu a:hover {
+    :global(#SettingsMenu a:hover) {
         color: rgb(150, 150, 150);
     }
-    #SettingsMenu a:active {
+    :global(#SettingsMenu a:active) {
         color: rgb(175, 175, 175);
     }
     .btn {
@@ -299,6 +299,10 @@
         font-weight: bolder;
         padding: 0;
     }
+    :global(#SettingsDropDown) {
+        display: grid;
+        grid-template-columns: repeat(auto, 100%);
+    }
 </style>
 <h1 class="Title" style="margin: 0px;">Welcome to BattleCards!</h1>
 <div class="EXP_Bar">
@@ -310,7 +314,7 @@
     </div>
     <div id="SettingsCog" on:click={() => {
         if(document.getElementById("SettingsDropDown").style.display=="none"){
-            document.getElementById("SettingsDropDown").style.display="block";
+            document.getElementById("SettingsDropDown").style.display="grid";
         } else{
             document.getElementById("SettingsDropDown").style.display="none";
         }
@@ -376,7 +380,13 @@
 	    	}
         });
         if (user.ok) {
-            console.log(await user.json());
+            let ud = await user.json()
+            if (ud.admin) {
+                let adminLink = document.createElement("a");
+                adminLink.setAttribute("href","admin");
+                adminLink.innerText = "Admin"
+                document.getElementById("SettingsDropDown").appendChild(adminLink);
+            }
         } else {
             window.location.href = '/login';
         }

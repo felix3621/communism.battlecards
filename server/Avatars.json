@@ -2,41 +2,79 @@
     {
         "Name":"BOB",
         "Description":"Oh no the BOB has descended and is here to kill uss all!",
-        "Attack":6,
+        "Attack":5,
         "Health":15,
-        "Cost":8,
-        "Texture":"BOB"
+        "Texture":"BOB",
+        "SpecialAbility":{
+            "Name":"Wind Blade",
+            "Attack":4,
+            "Texture":"WindBlade",
+            "Cost":2,
+            "Type":"Projectile"
+        }
     },
     {
         "Name":"Felix",
         "Description":"A furry that has to much free time",
-        "Attack":6,
+        "Attack":5,
         "Health":15,
         "Cost":8,
-        "Texture":"Felix"
+        "Texture":"Felix",
+        "AttackType":"Burst",
+        "TargetType":"Enemy",
+        "SpecialAbility":{
+            "Name":"Bite",
+            "Attack":4,
+            "Texture":"Bite",
+            "Cost":2
+        }
     },
     {
         "Name":"FixFox",
         "Description":"Oh no Fix Is Angry and is burning shit again",
         "Attack":8,
-        "Health":15,
+        "Health":12,
         "Cost":5,
-        "Texture":"FixFox"
+        "Texture":"FixFox",
+        "SpecialAbility":{
+            "Name":"Fire Ball",
+            "Attack":4,
+            "Texture":"FireBall",
+            "Cost":2,
+            "Type":"Projectile"
+        }
     },
     {
         "Name":"Ian",
         "Description":"Mr Purple man is here and throws purple slime...",
-        "Attack":7,
-        "Health":10,
+        "Attack":5,
+        "Health":15,
         "Cost":5,
-        "Texture":"Ian"
+        "Texture":"Ian",
+        "AttackType":"Burst",
+        "TargetType":"Enemy",
+        "SpecialAbility":{
+            "Name":"Pirate Slime",
+            "Attack":4,
+            "Texture":"PirateSlime",
+            "Cost":2
+        }
     },
     {
         "Name":"Professor Hornung",
         "Description":"Professor Horning -Adrian",
-        "Attack":3,
-        "Health":25,
+        "Attack":2,
+        "Health":18,
         "Cost":4,
-        "Texture":"Professor Hornung"
+        "Texture":"Professor Hornung",
+        "AttackType":"Burst",
+        "TargetType":"Enemy",
+        "SpecialAbility":{
+            "Name":"Wisdom Book",
+            "Attack":4,
+            "Texture":"Book",
+            "Cost":2,
+            "Type":"Projectile"
+        }
     }
 ]
