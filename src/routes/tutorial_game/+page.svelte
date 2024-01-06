@@ -366,11 +366,47 @@
         white-space: nowrap;
         pointer-events: none
     }
+    :global(.ToolTip) {
+        position: fixed;
+        z-index: 100;
+        width: fit-content;
+        max-width: 400px;
+        background-color: black;
+        outline: 2px gray solid;
+        color: white;
+        padding: 0 8px 5px 0;
+        border-radius: 10px;
+        display: flex;
+    }
+    :global(.ToolTip div) {
+        flex: 1;
+    }
+    :global(.ToolTip h1, .ToolTip p) {
+        margin: 0;
+        margin-left: 8px;
+    }
+    :global(.ToolTip h1) {
+        white-space: nowrap;
+    }
+    :global(.ToolTip img) {
+        width: 40px;
+        background-color: rgb(50,50,50);
+        border: 2px black solid;
+        border-radius: 5px;
+        float: left;
+    }
+    :global(.TextBoble) {
+        position: fixed;
+        color: white;
+        background-color: black;
+        padding: 5px;
+        outline: 5px gray solid;
+    }
 </style>
 <hr id="MidleLine">
-<div id="EnemyAvatar"><h1 id="EnemyName">Waiting for Player...</h1></div>
+<div id="EnemyAvatar"><h1 id="EnemyName">Runar</h1></div>
 
-<div id="PlayerAvatar"><h1 id="PlayerName"></h1></div>
+<div id="PlayerAvatar"><h1 id="PlayerName">You</h1></div>
 <div id="EnemyHand"></div>
 <div id="PlayerHand"></div>
 <div id="EnemyOnField"></div>
@@ -392,6 +428,76 @@
 <script>
     import { onMount } from "svelte";
 
+    // Tutorial Values
+    var Tutorial = {
+        Stage:0,
+        Stages: [
+            {
+                Text:"Oh Hello There!",
+                Sender:"Runar",
+                GamePause: true,
+                Duration:5
+            },
+            {
+                Text:"Welcome To Battle Cards.<br>Let Me Show You Haw To Play.<br>Let Me Just End My Turn.",
+                Sender:"Runar",
+                GamePause: true,
+                Duration:5
+            },
+            {
+                Text:"There You Go",
+                Sender:"Runar",
+                GamePause: true,
+                Duration:5,
+                Function:{Function:"StartGame"}
+            },
+            {
+                Text:"Place Out A Card",
+                Sender:"Runar",
+                GamePause: false,
+                Duration:5,
+                Objective:{Title:"Place Card", Description:"Drag Your Card Out To You Play Field", CompletionTrigger:"PlayerOnField.length>0"}
+            },
+            {
+                Text:"Dide You See That It Used Up Some Energy When You Placed It Down (right Corner)",
+                Sender:"Runar",
+                GamePause: true,
+                Duration:5,
+                Function:{Function:"ShowEnergy",Value:5}
+            },
+            {
+                Text:"Now Attack My Minion",
+                Sender:"Runar",
+                GamePause: false,
+                Duration:5,
+                Invoke:"EnemyOnField.push(new Stone(1,1,'Goblin',document.getElementById('EnemyOnField'))",
+                Objective:{Title:"Attack", Description:"Hold Down On Your Placed Stone And Move The Target Indicator To The Goblin And Let Go.",CompletionTrigger:"EnemyOnField.length==0"}
+            },
+            {
+                Text:"Now Attack Me Using Your Avatar And Minion.<br>Ps Here Are Some Energy And Cards",
+                Sender:"Runar",
+                GamePause: false,
+                Duration:5,
+                EnemyAi:true,
+                Invoke:"MaxEnergy = 10;PlayerEnergy = 10; GiveCards('p1',5)",
+                AttackCooldown: 0,
+                Objective:{Title:"Kill Runar", Description:"Use Your Cards And Destroy Runar ",CompletionTrigger:"EnemyAvatar.Health<=0"}
+            },
+            {
+                Text:"Congratulations Tutorial Done",
+                Sender:"Runar",
+                GamePause: true,
+                Duration:5,
+                EnemyAi:false,
+                Invoke:"window.location.href='/'"
+            }
+        ]
+    }
+    var Objectives = new Array();
+    var TextBobles = new Array();
+
+    // Game Variables
+    var Pause = false;
     var EnemyAvatar;
     var PlayerAvatar;
     var EnemyHand = new Array();
@@ -416,9 +522,53 @@
 
     var yourTurn;
 
-    var socket;
+    let lastFrameTime = performance.now();
+    function Update() {
+        const currentTime = performance.now();
+        const deltaTime = (currentTime - lastFrameTime)/1000;
+        lastFrameTime = currentTime;
 
-    function createSocket() {
+        // Text Bobles
+        for (let i = 0; i < TextBobles.length; i++) {
+            TextBobles[i].LifeTime -= deltaTime;
+            if (TextBobles[i].LifeTime<=0) {
+                TextBobles[i].Element.remove();
+                TextBobles.splice(i,1);
+                i--;
+            }
+        }
+        // Quests
+
+        // Tutorial
+        if(Tutorial != null && Tutorial.Stage<Tutorial.Stages.length) {
+            // Text Boble + Objective
+            if (!Tutorial.Stages[Tutorial.Stage].Started) {
+                if (Tutorial.Stages[Tutorial.Stage].Text) { // Text Boble
+                    console.log("Create Boble")
+                    let X = Tutorial.Stages[Tutorial.Stage].Sender == "Runar" ? document.getElementById("EnemyAvatar").getBoundingClientRect().right : (Tutorial.Stages[Tutorial.Stage].Sender == "You" ? document.getElementById("PlayerAvatar").getBoundingClientRect().right : 10);
+                    let Y = Tutorial.Stages[Tutorial.Stage].Sender == "Runar" ? document.getElementById("EnemyAvatar").getBoundingClientRect().bottom : (Tutorial.Stages[Tutorial.Stage].Sender == "You" ? document.getElementById("PlayerAvatar").getBoundingClientRect().top : 10);
+                    CreateTextBoble(X,Y,Tutorial.Stages[Tutorial.Stage].Text,Tutorial.Stages[Tutorial.Stage].Duration);
+                }
+                Tutorial.Stages[Tutorial.Stage].Started = true;
+            }
+
+
+            // Duration
+            if (Tutorial.Stages[Tutorial.Stage].Duration>0) {
+                Tutorial.Stages[Tutorial.Stage].Duration-=deltaTime;
+            } else if (Tutorial.Stages[Tutorial.Stage].Duration<=0 && !Tutorial.Stages[Tutorial.Stage].Objective){
+                Tutorial.Stage++;
+            }
+        }
+
+
+
+        // Game Logic
+
+        requestAnimationFrame(Update);
+    }
+
+    /*function createSocket() {
         let query
         let search = new URLSearchParams(window.location.search);
         let privateSearch = search.get("private")
@@ -661,14 +811,15 @@
         socket.onerror = (error) => {
             console.error('WebSocket error:', error);
         };
-    }
+    }*/
     
     onMount(() => {
-        EnemyAvatar = new Stone(0,0,"MissingCharacter",document.getElementById("EnemyAvatar"),"","Tank");
-        PlayerAvatar = new Stone(0,0,"MissingCharacter",document.getElementById("PlayerAvatar"),"","Tank");
+        EnemyAvatar = new Stone(0,5,"Runar",document.getElementById("EnemyAvatar"),"Avatar","Tank");
+        PlayerAvatar = new Stone(5,15,"BOB",document.getElementById("PlayerAvatar"),"","Tank");
 
-        createSocket()
+        //createSocket()
 
+        Update();
         //Actual Commands
         SetAllFontSizeInArray(FontSizeAdjusterArray);
         window.addEventListener('resize', () => SetAllFontSizeInArray(FontSizeAdjusterArray));
@@ -690,7 +841,7 @@
     })
 
     function endTurn() {
-        socket.send(JSON.stringify({function:"EndTurn"}));
+        //socket.send(JSON.stringify({function:"EndTurn"}));
     }
 
     // Function to handle mousemove events
@@ -774,8 +925,8 @@
         var LeftSide = PlayerField.getBoundingClientRect().left;
         var whereInDiv = (MouseX-LeftSide)/PlayerField.offsetWidth;
         var WhatToSend = Math.floor(whereInDiv*(PlayerOnField.length+1));
-        console.log({function:"PlaceCard",SelectedIndex:WhatToSend,SelectedCardIndex:PlayerHand.indexOf(DraggableCard.Class)});
-        socket.send(JSON.stringify({function:"PlaceCard",SelectedIndex:WhatToSend,SelectedCardIndex:PlayerHand.indexOf(DraggableCard.Class)}));
+        //TODO: FIX THIS
+        //socket.send(JSON.stringify({function:"PlaceCard",SelectedIndex:WhatToSend,SelectedCardIndex:PlayerHand.indexOf(DraggableCard.Class)}));
         DropDraggable();
     }
 
@@ -825,17 +976,18 @@
                 }
                 // if player is using a card Projectile to select target
                 if (DraggableCard && DraggableCard.Class.Type == "Projectile") {
-                    
-                    socket.send(JSON.stringify( 
+                    //TODO: Use Card ON CLIENT
+                    /*socket.send(JSON.stringify( 
                         { 
                             function:"UseCard",
                             SelectedTargetIndex:AttackIndex,
                             SelectedCardIndex:PlayerHand.indexOf(DraggableCard.Class),
                             EnemyType:DraggableSelectTarget.SelectedTarget
                         }
-                    ));
+                    ));*/
                 } else { // if player is using a stone to select target
-                    socket.send(JSON.stringify(
+                    //TODO:
+                    /*socket.send(JSON.stringify(
                         {
                             function:"SelectStoneTarget",
                             SelectedAttackIndex:AttackIndex,
@@ -843,7 +995,7 @@
                             Type:Type,
                             EnemyType:DraggableSelectTarget.SelectedTarget
                         }
-                    ));
+                    ));*/
                 }
             }
             
@@ -874,8 +1026,7 @@
             CharacterStone.style.backgroundImage = "url('/images/Cards/"+Texture+".png'), url('/images/shield.png')";
         } else 
             CharacterStone.style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
-        if (Name != null) {
-            console.log(Name)
+        if (Name != null && Name != "") {
             var CharacterName = document.createElement("h1");
             CharacterName.classList.add("StoneName");
             CharacterName.innerHTML = Name;
@@ -1165,5 +1316,76 @@
             document.getElementById("EnemyHand").appendChild(this.Body);
             this.Body.classList.add("EnemyCardAnimation");
         }
+    }
+    // Text Boble 
+    function CreateTextBoble(X,Y, Text, LifeTime) {
+        var Boble = document.createElement("div");
+        Boble.classList.add("TextBoble");
+        Boble.innerHTML = Text;
+        Boble.style.left = X + "px";
+        Boble.style.top = Y + "px";
+
+        TextBobles.push({Element:Boble,Text:Text,LifeTime:LifeTime});
+        document.body.appendChild(Boble);
+    }
+    // Show ToolTip
+    function ToolTip(Element, Title, Text, DisplayImagePath = null) {
+        CloseAllToolTips();
+        var ToolTip = document.createElement("div");
+        ToolTip.classList.add("ToolTip");
+
+        if (DisplayImagePath!=null) {
+            // Flex Container
+            var FlexContainerImage = document.createElement("div");
+            FlexContainerImage.style.order = 1;
+            FlexContainerImage.style.width = "40px";
+            ToolTip.appendChild(FlexContainerImage);
+            var Image = document.createElement("img");
+            Image.style.width = "40px";
+            Image.src = DisplayImagePath;
+            FlexContainerImage.appendChild(Image);
+        }
+        // Flex Container
+        var FlexContainer = document.createElement("div");
+        FlexContainer.style.order = 2;
+        ToolTip.appendChild(FlexContainer);
+
+        // Title
+        var TitleElement = document.createElement("h1");
+        TitleElement.innerHTML = Title;
+        FlexContainer.appendChild(TitleElement);
+        //Text
+        var TextElement = document.createElement("p");
+        TextElement.innerHTML = Text;
+        FlexContainer.appendChild(TextElement);
+
+        document.body.appendChild(ToolTip);
+
+        // Set Pos
+        let BoundRec = Element.getBoundingClientRect();
+        if (BoundRec.top<ToolTip.offsetHeight) { // Down
+            ToolTip.style.top = BoundRec.bottom + "px";
+        } else { // Place Above
+            ToolTip.style.top = BoundRec.top-ToolTip.offsetHeight-8 + "px";
+        }
+        if (BoundRec.right>document.body.offsetWidth) { // Move right 0
+            ToolTip.style.left = document.body.offsetWidth - ToolTip.offsetWidth +"px";
+        } else if (BoundRec.left+(BoundRec.right-BoundRec.left)/2<ToolTip.offsetWidth) { // Move Left 0
+            ToolTip.style.left = "0px";
+        } else { // Center Left
+            ToolTip.style.left = BoundRec.left+(BoundRec.right-BoundRec.left)/2 - ToolTip.offsetWidth/2 + "px";
+        }
+    }
+    // Remove All ToolTips
+    function CloseAllToolTips() {
+        var ToolTips = document.getElementsByClassName("ToolTip");
+        for (let i = 0; i < ToolTips.length; i++) {
+            ToolTips[i].remove();
+        }
+    }
+    // Add Tooltip Event To Element
+    function CreateTooltipEvent(Element, Title, Text, DisplayImagePath = null) {
+        Element.addEventListener("mouseover",()=> {ToolTip(Element,Title,Text, DisplayImagePath);});
+        Element.addEventListener("mouseout",()=> {CloseAllToolTips();});
     }
 </script>

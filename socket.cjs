@@ -169,6 +169,7 @@ class Battle {
                 this.maxEnergy++;
             this.currentPlayer = "p2";
             this.p2.Energy = this.maxEnergy;
+            this.p1.Energy = 0;
             this.DrawCardsToPlayer(this.p2,2);
             if (this.round > 1) {
                 for (let i = 0; i < this.p2.Field.length; i++) {
@@ -182,6 +183,7 @@ class Battle {
             
             this.currentPlayer = "p1";
             this.p1.Energy = this.maxEnergy;
+            this.p2.Energy = 0;
             this.round++;
             this.DrawCardsToPlayer(this.p1,2);
             for (let i = 0; i < this.p1.Field.length; i++) {
@@ -359,7 +361,7 @@ class Player {
             }
             if (AttackingStone && !AttackingStone.attackCooldown) {AttackingStone.attackCooldown = 0;}
             if (AttackingStone && TargetStone && AttackingStone.attackCooldown<=0) {
-                TargetStone.Health -= AttackingStone.Attack;
+                TargetStone.Health -= TargetStone.Type&&TargetStone.Type=="Tank"?AttackingStone.Attack/2:AttackingStone.Attack;
                 AttackingStone.attackCooldown++;
                 if (TargetStone.Health<=0) {
                     if (input.EnemyType=="Avatar") {
@@ -419,10 +421,15 @@ class Tournament {
                 this.Sockets[i].reconnectTime = 30/tickSpeed;
                 playersAlive = true;
             } else {
-                
                 this.Sockets[i].reconnectTime--
                 if (this.Sockets[i].reconnectTime <= 0) {
-                    this.Sockets.splice(i,1)
+                    //remove from game, if in one
+                    for (let j = 0; j < this.Battles.length; j++) {
+                        if ((this.Battles[j].p1 && this.Battles[j].p1.UserName == this.Sockets[i].username) || (this.Battles[j].p2 && this.Battles[j].p2.UserName == this.Sockets[i].username)) {
+                            this.Battles[j].EndGame(this.Sockets[i].username);
+                        }
+                    }
+                    this.Sockets.splice(i,1);
                     i--;
                 }
             }
@@ -491,7 +498,6 @@ class Tournament {
         var PlayerCount = this.Sockets.filter(obj => !obj.out).length;
         var Count=0;
         this.CountDown = 10/tickSpeed;
-
         
         for (let i = this.Sockets.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -532,7 +538,7 @@ class Tournament {
         }
         for (let i = 0; i < this.Battles.length; i++) {
             if (this.Battles[i].DataLoaded == 2) 
-                rtn.TournamentGames.push({p1:this.Battles[i].p1.Avatar, p2:this.Battles[i].p2.Avatar});
+                rtn.TournamentGames.push({p1:this.Battles[i].p1.Avatar, p1Name:this.Battles[i].p1.DisplayName, p2:this.Battles[i].p2.Avatar, p2Name:this.Battles[i].p2.DisplayName});
         }
         for (let i = 0; i < this.Sockets.length; i++) {
             if ((!this.Sockets[i].inGame|| this.CountDown>0) && this.Sockets[i].socket) {
@@ -759,8 +765,71 @@ async function tick() {
                 } else {
                     delete viewer[i].view
                 }
+            } else if (viewer[i].view.type == "tournament") {
+                let tournament = tournaments.find(obj => obj.code == viewer[i].view.code)
+                if (tournament) {
+                    let tournamentData = {
+                        type: "tournament",
+                        code: tournament.code,
+                        active: tournament.active,
+                        countdown: Math.round(tournament.CountDown*tickSpeed),
+                        users: [],
+                        battles: []
+                    }
+                    for (let i = 0; i < tournament.Sockets.length; i++) {
+                        tournamentData.users.push({
+                            username: tournament.Sockets[i].username,
+                            out: tournament.Sockets[i].out,
+                            inGame: tournament.Sockets[i].inGame,
+                            ready: tournament.Sockets[i].ready,
+                            wins: tournament.Sockets[i].wins
+                        })
+                    }
+                    for (let i = 0; i < tournament.Battles.length; i++) {
+                        tournamentData.battles.push({
+                            p1: tournament.Battles[i].p1.UserName,
+                            p2: tournament.Battles[i].p2.UserName
+                        })
+                    }
+                    if (viewer[i].specific) {
+                        let specific = tournament.Battles.find(obj => obj.p1.UserName == viewer[i].specific.p1 && obj.p2.UserName == viewer[i].specific.p2)
+                        if (specific) {
+                            specificGameData = {
+                                type: "battle",
+                                turnTime: Math.round(specific.turnTime*tickSpeed),
+                                maxEnergy: specific.maxEnergy,
+                                currentPlayer: specific.currentPlayer,
+                                round: specific.round
+                            }
+                            if (specific.p1) {
+                                specificGameData.p1 = {
+                                    username: specific.p1.UserName,
+                                    avatar: specific.p1.Avatar,
+                                    handCount: specific.p1.Hand.length,
+                                    field: specific.p1.Field,
+                                    energy: specific.p1.Energy
+                                }
+                            }
+                            if (specific.p2) {
+                                specificGameData.p2 = {
+                                    username: specific.p2.UserName,
+                                    avatar: specific.p2.Avatar,
+                                    handCount: specific.p2.Hand.length,
+                                    field: specific.p2.Field,
+                                    energy: specific.p2.Energy
+                                }
+                            }
+                            viewer[i].socket.send(JSON.stringify({...mainData, selected: {...tournamentData}, specific: {...specificGameData}}))
+                        } else {
+                            delete viewer[i].specific
+                        }
+                    } else {
+                        viewer[i].socket.send(JSON.stringify({...mainData, selected: {...tournamentData}}))
+                    }
+                } else {
+                    delete viewer[i].view
+                }
             }
-            //view: { type: 'battle', code: 'Z2FtZV8xMg==' }
         } else {
             viewer[i].socket.send(JSON.stringify(mainData))
         }
@@ -778,6 +847,10 @@ webSocketServer.on('connection', async(socket, request) => {
         var privileged = await isAdmin(username)
         if (!privileged)
             socket.close(1008, 'Admin required');
+        let old = viewer.find(obj => obj.username == username)
+        if (old) {
+            old.socket.close(1008, "another instance logged on")
+        }
         viewer.push({username: username, socket: socket})
     } else if (search.get("tournament") && decodeURIComponent(search.get("tournament")) == "new") {
         for (let i = 0; i < tournaments.length; i++) {
@@ -858,14 +931,14 @@ webSocketServer.on('connection', async(socket, request) => {
     }
 
     socket.on('message', (message) => {
-        console.log(JSON.parse(message))
-        if (viewer.find(obj => obj.username == username)) {
+        let viewerUser = viewer.find(obj => obj.username == username)
+        if (viewerUser) {
             var msg = JSON.parse(message);
             if ((msg.type == "battle" || msg.type == "tournament") && msg.code) {
-                let usr = viewer.find(obj => obj.username == username)
-                if (!usr)
-                    return //should not execute, but safety is important
-                usr.view = {type: msg.type, code: msg.code}
+                viewerUser.view = {type: msg.type, code: msg.code}
+            }
+            if (msg.tournamentSpecific && msg.tournamentSpecific.p1 && msg.tournamentSpecific.p2) {
+                viewerUser.specific = {p1: msg.tournamentSpecific.p1, p2: msg.tournamentSpecific.p2}
             }
         } else {
             var command = JSON.parse(message);
@@ -918,12 +991,12 @@ webSocketServer.on('connection', async(socket, request) => {
                     break;
                 }
             }
+        }
 
-            //was player a viewer, then kick them
-            let viewerUser = viewer.findIndex(obj => obj.username == username)
-            if (viewerUser != -1) {
-                viewer.splice(viewerUser,1)
-            }
+        //was player a viewer, then kick them
+        let viewerUser = viewer.findIndex(obj => obj.username == username)
+        if (viewerUser != -1) {
+            viewer.splice(viewerUser,1)
         }
     });
 });

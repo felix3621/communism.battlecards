@@ -260,6 +260,39 @@
         transform: translate(-50%,-50%);
         width: 25%;
     }
+    #AvatarAbility {
+        position: fixed;
+        top:90%;
+        left:25%;
+        transform: translate(-50%,-50%);
+        width: 10%;
+        aspect-ratio: 1/1;
+        background-color: #1f1e1e;
+        border-radius: 50%;
+        outline: 3px gray solid;
+        background-size: cover;
+    }
+    #AvatarAbility div {
+        position: absolute;
+        top:0;
+        right:0;
+        aspect-ratio: 1/1;
+        background-image: url('/images/EnergyIcon.png');
+        transform: translate(30%,-50%);
+        width: 50%;
+        background-size: cover;
+    }
+    #AvatarAbility p {
+        position: relative;
+        width: fit-content;
+        height: fit-content;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%,-50%);
+        margin: 0;
+        color: black;
+        text-align: center;
+    }
     #DisplayAllAvatars {
         position: fixed;
         top:15%;
@@ -268,8 +301,8 @@
         bottom:5%;
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(100px, 0.3fr));
-        grid-template-rows: auto auto auto auto;    
-        grid-gap:10%;
+        grid-template-rows: repeat(auto-fit, minmax(100px, 0.3fr));   
+        grid-gap:10px;
         overflow-y: auto;
         overflow-x: hidden;
         background-color: #414141;
@@ -380,6 +413,7 @@
 <div id="AvatarPanel" style="display:none;">
     <button style="position: fixed;right:0;top:0;font-size:50px" class="btn" on:click={()=>document.getElementById("AvatarPanel").style.display="none"}>Back</button>
     <div id="SelectedAvatar"></div>
+    <div id="AvatarAbility"><div><p>0</p></div></div>
     <div id="DisplayAllAvatars"></div>
 </div>
 <div id="CardDeckPanel" style="display:none;">
@@ -418,6 +452,7 @@
             window.location.href = '/login';
         }
         SetExpFilLevel(100);
+        
         SetAllFontSizeInArray(FontSizeAdjusterArray);
         window.addEventListener('resize', () => SetAllFontSizeInArray(FontSizeAdjusterArray));
         SelectedAvatar = CreateCharacterStone(0,0,"MissingCharacter");
@@ -558,6 +593,7 @@
 
         return Card;
     }
+    // Adjust All Font-Sizes in Array To Fit
     function SetAllFontSizeInArray(Array) {
         for (var i = 0; i < Array.length; i++) {
             const Element = Array[i];
@@ -565,16 +601,13 @@
             var containerHeight = Element.parentNode.clientHeight;
             var textHeight = Element.scrollHeight;
 
-            //if Number(Element.style.fontSize) > 0 then use else 1, then multiply with fontSize
+            var scaleFactor = (containerHeight*0.50) / textHeight;
 
-            var scaleFactor = (containerHeight-5) / textHeight;
+            let fontSize = Number(Element.style.fontSize.slice(0, -3));
 
-            let fs = Number(Element.style.fontSize.slice(0, -3));
-
-            var fontSize = (fs > 0) ? fs : 1;
-            
-            fontSize = fontSize * (scaleFactor * 0.575);
+            fontSize = (fontSize>0)?fontSize * (scaleFactor):scaleFactor;
             Element.style.fontSize = `${fontSize}rem`;
+
         }
     }
 
@@ -645,10 +678,10 @@
     var RemoveCard;
     //GetFromInventory 
     async function GetCardFromInventory(WhatIndexToReplace) {
+        //Get Info
         var InventoryPanel = document.getElementById("InventoryPanel");
         InventoryPanel.style.display = "block";
         var InventoryParent = document.getElementById("Inventory");
-
         var inventory = await fetch(window.location.origin+'/api/cards/getInventory', {
             method: 'GET',
             headers: {
@@ -656,24 +689,24 @@
 	    	}
         });
         inventory = await inventory.json();
-        if (!document.getElementById("RemoveCard") && WhatIndexToReplace != -1){
+        //Remove The Current Card From Deck Element
+        if (RemoveCard == null){
             RemoveCard = document.createElement("div");
             RemoveCard.id = "RemoveCard";
             InventoryParent.appendChild(RemoveCard);
             var RemoveButton = document.createElement("div");
             RemoveCard.appendChild(RemoveButton);
-            console.log("Add")
         }
+        // Shuld The Remove Card be Visable
         if (WhatIndexToReplace != -1) {
             RemoveCard.style.display="block";
-            removeAllEventListeners(RemoveCard);
+            RemoveCard = removeAllEventListeners(RemoveCard);
             document.getElementById("RemoveCard").addEventListener("click",()=> {AddToDeck(-1, WhatIndexToReplace);});
             CreateTooltipEvent(RemoveCard,"Remove Current Card");
         } else if (RemoveCard != null) {
-            console.log("RemoveDisplay")
             RemoveCard.style.display="none";
         }
-        
+        // Card Update / Create Loop
         for (let i = 0; i < inventory.length || i < (InventoryParent.children.length-1); i++) {
             var CurrentChild;
             if (i>= (InventoryParent.children.length-1) && i < inventory.length) {
@@ -682,11 +715,12 @@
                 InventoryParent.appendChild(CurrentChild);
                 (function(index) {
                     CurrentChild.addEventListener("click", ()=> {
-                    AddToDeck(index, WhatIndexToReplace);
+                        AddToDeck(index, WhatIndexToReplace);
+                    });
                     CreateTooltipEvent(CurrentChild, inventory[i].card.Name,inventory[i].card.Description+"<br>Cost: "+inventory[i].card.Cost);
-                });
                 })(i);
             } else if (i < (InventoryParent.children.length-1) && i < inventory.length) {
+                RemoveAllRefensesFromArray(InventoryParent.children[i+1],FontSizeAdjusterArray);
                 CurrentChild = removeAllEventListeners(InventoryParent.children[i+1]);
                 CurrentChild.children[0].style.backgroundImage = "url('/images/Cards/"+inventory[i].card.Texture+".png')";
                 CurrentChild.children[2].children[0].innerHTML = inventory[i].card.Attack;
@@ -694,12 +728,15 @@
                 CurrentChild.children[4].children[0].innerHTML = inventory[i].card.Cost;
                 CurrentChild.children[5].children[0].innerHTML = inventory[i].card.Name;
                 CurrentChild.children[6].children[0].innerHTML = inventory[i].card.Description;
+                
                 (function(index) {
                     CurrentChild.addEventListener("click", ()=> {
-                    AddToDeck(index, WhatIndexToReplace);
-                    CreateTooltipEvent(CurrentChild, inventory[i].card.Name,inventory[i].card.Description+"<br>Cost: "+inventory[i].card.Cost);
-                });
+                        AddToDeck(index, WhatIndexToReplace);
+                    });
+                    CreateTooltipEvent(CurrentChild, inventory[index].card.Name,inventory[index].card.Description+"<br>Cost: "+inventory[index].card.Cost);
                 })(i);
+                AddAllOfElementTypeToArray(CurrentChild, "p",FontSizeAdjusterArray);
+                AddAllOfElementTypeToArray(CurrentChild, "p1",FontSizeAdjusterArray);
             }
             if (i>=inventory.length) {
                 InventoryParent.children[i+1].remove();
@@ -730,19 +767,53 @@
         element.parentNode.replaceChild(newElement, element);
         return newElement;
     }
+    function RemoveAllRefensesFromArray(Element, Array) {
+        if (Array.indexOf(Element)!=-1) {
+            Array.splice(Array.indexOf(Element),1);
+        }
+        for (let i = 0; i < Element.children.length; i++) {
+            RemoveAllRefensesFromArray(Element.children[i], Array);
+        }
+    }
+    function AddAllOfElementTypeToArray(Element, ElementType, Array) {
+        if (Element.tagName.toLowerCase() === ElementType) {
+            Array.push(Element);
+        }
+        for (let i = 0; i < Element.children.length; i++) {
+            AddAllOfElementTypeToArray(Element.children[i],ElementType, Array);
+        }
+    }
 
     async function UpdateAvatarsPanel() {
+        // Get All Avatars And The Players Avatar
         var Avatars = await fetch(window.location.origin+'/api/avatar/get', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
             }
         });
-        Avatars = await Avatars.json()
-        console.log(Avatars);
+        SetAllFontSizeInArray(FontSizeAdjusterArray);
+        Avatars = await Avatars.json();
+        // Update The Avatar Display
+        RemoveAllRefensesFromArray(SelectedAvatar,FontSizeAdjusterArray);
         SelectedAvatar = removeAllEventListeners(SelectedAvatar);
-        UpdateStone(SelectedAvatar,Avatars.selected.Attack,Avatars.selected.Health,Avatars.selected.Texture);
-        CreateTooltipEvent(SelectedAvatar,Avatars.selected.Name,Avatars.selected.Description)
+        UpdateStone(SelectedAvatar,Avatars.selected.Attack,Avatars.selected.Health,Avatars.selected.Texture,"Tank");
+        CreateTooltipEvent(SelectedAvatar,Avatars.selected.Name,Avatars.selected.Description);
+        AddAllOfElementTypeToArray(SelectedAvatar,"p",FontSizeAdjusterArray)
+        // Update The Ability Stone
+        if (Avatars.selected.AbilityStone) {
+            document.getElementById("AvatarAbility").style.opacity = 1;
+            RemoveAllRefensesFromArray(document.getElementById("AvatarAbility"),FontSizeAdjusterArray);
+            removeAllEventListeners(document.getElementById("AvatarAbility"));
+            document.getElementById("AvatarAbility").style.backgroundImage = "url('/images/Ability/"+Avatars.selected.AbilityStone.Texture+".png')";
+            CreateTooltipEvent(document.getElementById("AvatarAbility"),Avatars.selected.AbilityStone.Name,Avatars.selected.AbilityStone.Description+"<br>Cost: "+Avatars.selected.AbilityStone.Cost,"/images/Ability/"+Avatars.selected.AbilityStone.Texture+".png");
+            AddAllOfElementTypeToArray(document.getElementById("AvatarAbility"),"p",FontSizeAdjusterArray);
+            document.getElementById("AvatarAbility").children[0].children[0].innerHTML = Avatars.selected.AbilityStone.Cost;
+        } else {
+            document.getElementById("AvatarAbility").style.opacity = 0;
+        }
+
+
         var DisplayAllAvatarsParent = document.getElementById("DisplayAllAvatars");
 
         for (let i = 0; i < Avatars.avatars.length || i < DisplayAllAvatarsParent.children.length; i++) {
@@ -796,8 +867,10 @@
             // Flex Container
             var FlexContainerImage = document.createElement("div");
             FlexContainerImage.style.order = 1;
+            FlexContainerImage.style.width = "40px";
             ToolTip.appendChild(FlexContainerImage);
             var Image = document.createElement("img");
+            Image.style.width = "40px";
             Image.src = DisplayImagePath;
             FlexContainerImage.appendChild(Image);
         }

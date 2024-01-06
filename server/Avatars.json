@@ -5,8 +5,9 @@
         "Attack":5,
         "Health":15,
         "Texture":"BOB",
-        "SpecialAbility":{
+        "AbilityStone":{
             "Name":"Wind Blade",
+            "Description":"A Blade Off Wind<br>DMG: 4",
             "Attack":4,
             "Texture":"WindBlade",
             "Cost":2,
@@ -22,10 +23,11 @@
         "Texture":"Felix",
         "AttackType":"Burst",
         "TargetType":"Enemy",
-        "SpecialAbility":{
+        "AbilityStone":{
             "Name":"Bite",
+            "Description":"A Weird Furry Attack <br>DMG: 4",
             "Attack":4,
-            "Texture":"Bite",
+            "Texture":"bite",
             "Cost":2
         }
     },
@@ -36,8 +38,9 @@
         "Health":12,
         "Cost":5,
         "Texture":"FixFox",
-        "SpecialAbility":{
+        "AbilityStone":{
             "Name":"Fire Ball",
+            "Description":"I Choose FIRE BALL -Wizard (D&D) <br>DMG: 4",
             "Attack":4,
             "Texture":"FireBall",
             "Cost":2,
@@ -53,10 +56,11 @@
         "Texture":"Ian",
         "AttackType":"Burst",
         "TargetType":"Enemy",
-        "SpecialAbility":{
+        "AbilityStone":{
             "Name":"Pirate Slime",
+            "Description":"Slimes...<br>DMG: 4",
             "Attack":4,
-            "Texture":"PirateSlime",
+            "Texture":"SlimeShip",
             "Cost":2
         }
     },
@@ -69,10 +73,11 @@
         "Texture":"Professor Hornung",
         "AttackType":"Burst",
         "TargetType":"Enemy",
-        "SpecialAbility":{
+        "AbilityStone":{
             "Name":"Wisdom Book",
+            "Description":"Take A Book Idiot",
             "Attack":4,
-            "Texture":"Book",
+            "Texture":"book",
             "Cost":2,
             "Type":"Projectile"
         }

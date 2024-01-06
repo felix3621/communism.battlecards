@@ -66,23 +66,30 @@
         grid-template-rows: repeat(2,50%);
         border-bottom: 5px solid black;
     }
+    :global(#tournament_top) {
+        width: 100%;
+        height: calc(5% - 5px);
+        display: grid;
+        grid-template-columns: repeat(2,50%);
+        grid-template-rows: repeat(2,50%);
+        border-bottom: 5px solid black;
+    }
     :global(#battle_slot_p1) {
         height: calc(95% - 5px);
         width: calc(50% - 5px);
-        border-right: 5px solid black;
         float: left;
+        overflow: auto;
     }
     :global(#battle_slot_p2) {
         height: calc(95% - 5px);
         width: calc(50% - 5px);
-        border-left: 5px solid black;
         float: left;
         direction: rtl;
+        overflow: auto;
     }
     :global(.battle_container) {
         height: 100%;
         width: 100%;
-        overflow: auto;
         direction: ltr;
     }
     :global(.battle_container > *) {
@@ -111,6 +118,58 @@
     }
     :global(.battle_player_field) {
         border-top: 5px solid black;
+        display: grid;
+        grid-template-columns: repeat(auto-fit,calc(100% / 3));
+    }
+    :global(.currentPlayer) {
+        background-color: rgb(75, 75, 75);
+    }
+    :global(#tournament_playerCount) {
+        border-bottom: 5px solid black;
+        border-top: 5px solid black;
+        height: calc(4% - 10px);
+    }
+    :global(#tournament_playerList) {
+        border-bottom: 5px solid black;
+        border-top: 5px solid black;
+        height: calc(15% - 10px);
+        overflow: auto;
+    }
+    :global(#tournament_playerList > div) {
+        width: 100%;
+    }
+    :global(#tournament_playerList > div > div) {
+        width: 50%;
+        float: left;
+    }
+    :global(#tournament_battleList) {
+        border-bottom: 5px solid black;
+        border-top: 5px solid black;
+        height: calc(10% - 10px);
+        overflow: auto;
+    }
+    :global(#tournament_battleList *) {
+        cursor: pointer;
+    }
+    :global(#tournament_battleDisplay) {
+        width: 100%;
+        height: 66%;
+    }
+    :global(#tournament_battleDisplay_round, #tournament_battleDisplay_timer) {
+        width: 50%;
+        float: left;
+        height: calc(6% - 10px);
+        border-bottom: 5px solid black;
+        border-top: 5px solid black;
+    }
+    :global(#tournament_battleDisplay_slot_p1, #tournament_battleDisplay_slot_p2) {
+        width: 50%;
+        float: left;
+        height: 94%;
+        overflow: auto;
+    }
+    :global(#tournament_battleDisplay_slot_p2) {
+        direction: rtl;
     }
 </style>
 <img id="logo" src="images/BattlecardsLogo.png" on:click={()=>window.location.href="/"}>
@@ -185,28 +244,14 @@
             UpdateTournamentList(data.tournaments)
     }
 
-    function updatePlayer(div, data, playerData) {
+    function updateGamePlayer(div, data, playerData) {
         if (div.children.length > 0) {
             //username
-            div.getElementsByClassName("battle_player_username")[0].innerHTML = "<p>"+playerData.username+"</p>"
+            div.getElementsByClassName("battle_player_username")[0].innerText = playerData.username
 
             //energy
             let energyDiv = div.getElementsByClassName("battle_player_energy")[0]
-            if (energyDiv.children.length != data.selected.maxEnergy) {
-                energyDiv.innerHTML = ""
-                for (let i = 0; i < data.selected.maxEnergy; i++) {
-                    let img = document.createElement("img")
-                    img.setAttribute("src", "/images/EnergyIcon.png")
-                    energyDiv.appendChild(img)
-                }
-            }
-            for (let i = 0; i < data.selected.maxEnergy; i++) {
-                if (playerData.energy < data.selected.maxEnergy-i) {
-                    energyDiv.children[i].style.filter = "grayscale(1)"
-                } else {
-                    energyDiv.children[i].style.filter = ""
-                }
-            }
+            energyDiv.innerText = "Energy: " + playerData.energy + "/" + data.maxEnergy
 
             //avatar
             let avatarDiv = div.getElementsByClassName("battle_player_avatar")[0]
@@ -218,24 +263,17 @@
 
             //hand
             let handDiv = div.getElementsByClassName("battle_player_hand")[0]
-            if (handDiv.children.length != playerData.handCount) {
-                handDiv.innerHTML = ""
-                for (let i = 0; i < playerData.handCount; i++) {
-                    let img = document.createElement("img")
-                    img.setAttribute("src", "/images/EmptyCard.png")
-                    handDiv.appendChild(img)
-                }
-            }
+            handDiv.innerHTML = "<img src=\"/images/EmptyCard.png\"> X " + playerData.handCount
 
-            //TODO: fixme
-            for (let i = 0; i < data.PlayerInfo.Field.length || i<PlayerOnField.length; i++) {
-                if (i<data.PlayerInfo.Field.length && i>=PlayerOnField.length) {
-                    PlayerOnField.push(new Stone(data.PlayerInfo.Field[i].Attack, data.PlayerInfo.Field[i].Health, data.PlayerInfo.Field[i].Texture, document.getElementById("PlayerOnField"),data.PlayerInfo.Field[i].Type));
-                } else if (i<data.PlayerInfo.Field.length) {
-                    PlayerOnField[i].UpdateVisuals(data.PlayerInfo.Field[i].Attack, data.PlayerInfo.Field[i].Health, data.PlayerInfo.Field[i].Texture, data.PlayerInfo.Field[i].attackCooldown, data.PlayerInfo.Field[i].Type);
+            let fieldDiv = div.getElementsByClassName("battle_player_field")[0]
+            for (let i = 0; i < playerData.field.length || i<fieldDiv.children.length; i++) {
+                if (i<playerData.field.length && i>=fieldDiv.children.length) {
+                    fieldDiv.appendChild(CreateCharacterStone(playerData.field[i].Attack, playerData.field[i].Health, playerData.field[i].Texture, playerData.field[i].Type));
+                } else if (i<playerData.field.length && i < fieldDiv.children.length) {
+                    UpdateStone(fieldDiv.children[i],playerData.field[i].Attack, playerData.field[i].Health, playerData.field[i].Texture, playerData.field[i].Type);
                 } else {
-                    PlayerOnField[i].Remove();
-                    PlayerOnField.splice(i,1);
+                    fieldDiv.children[i].remove();
+                    i--;
                 }
             }
             
@@ -276,11 +314,21 @@
 
                     //p1
                     let p1 = document.getElementById("battle_slot_p1")
-                    updatePlayer(p1, data, data.selected.p1)
+                    if (data.selected.currentPlayer == "p1" && !p1.classList.contains("currentPlayer")) {
+                        p1.classList.add("currentPlayer")
+                    } else if (!(data.selected.currentPlayer == "p1") && p1.classList.contains("currentPlayer")) {
+                        p1.classList.remove("currentPlayer")
+                    }
+                    updateGamePlayer(p1, data.selected, data.selected.p1)
 
                     //p2
                     let p2 = document.getElementById("battle_slot_p2")
-                    updatePlayer(p2, data, data.selected.p2)
+                    if (data.selected.currentPlayer == "p2" && !p2.classList.contains("currentPlayer")) {
+                        p2.classList.add("currentPlayer")
+                    } else if (!(data.selected.currentPlayer == "p2") && p2.classList.contains("currentPlayer")) {
+                        p2.classList.remove("currentPlayer")
+                    }
+                    updateGamePlayer(p2, data.selected, data.selected.p2)
                 } else {
                     //create base
                     let top = document.createElement("div");
@@ -311,10 +359,149 @@
                     parent.setAttribute("selectedType", "battle")
                 }
                 return
+            } else if (data.selected.type == "tournament") {
+                if (parent.getAttribute("selectedType") == "tournament") {
+                    //top
+                    document.getElementById("tournament_top_type").innerText = "Tournament"
+                    document.getElementById("tournament_top_code").innerText = data.selected.code
+                    document.getElementById("tournament_top_active").innerText = data.selected.active ? "Active" : "Not started"
+                    document.getElementById("tournament_top_countdown").innerText = data.selected.countdown
+
+                    document.getElementById("tournament_playerCount").innerText = data.selected.users.length + " players"
+
+                    let playerList = document.getElementById("tournament_playerList")
+                    for (let i = 0; i < playerList.children.length || i < data.selected.users.length; i++) {
+                        if (i < data.selected.users.length && i < playerList.children.length) {
+                            playerList.children[i].children[0].innerText = data.selected.users[i].username
+                            
+                            if (data.selected.users[i].inGame) {
+                                playerList.children[i].children[1].innerText = "In Game"
+                            } else if (data.selected.users[i].out) {
+                                playerList.children[i].children[1].innerText = "Out"
+                            } else if (data.selected.users[i].ready) {
+                                playerList.children[i].children[1].innerText = "Ready"
+                            } else {
+                                playerList.children[i].children[1].innerText = "&nbsp;"
+                            }
+                        } else if (i < data.selected.users.length && i >= playerList.children.length) {
+                            let main = document.createElement("div")
+                            main.appendChild(document.createElement("div"))
+                            main.appendChild(document.createElement("div"))
+                            playerList.appendChild(main)
+                        } else {
+                            playerList.children[i].remove();
+                            i--;
+                        }
+                    }
+
+                    let battleList = document.getElementById("tournament_battleList")
+                    for (let i = 0; i < battleList.children.length || i < data.selected.battles.length; i++) {
+                        if (i < data.selected.battles.length && i < battleList.children.length) {
+                            battleList.children[i].innerText = data.selected.battles[i].p1 + " vs " + data.selected.battles[i].p2
+                            battleList.children[i].onclick = () => socket.send(JSON.stringify({tournamentSpecific: {p1: data.selected.battles[i].p1, p2: data.selected.battles[i].p2}}))
+                        } else if (i < data.selected.battles.length && i >= battleList.children.length) {
+                            battleList.appendChild(document.createElement("div"))
+                        } else {
+                            battleList.children[i].remove();
+                            i--;
+                        }
+                    }
+
+                    let p1 = document.getElementById("tournament_battleDisplay_slot_p1")
+                    let p2 = document.getElementById("tournament_battleDisplay_slot_p2")
+                    if (data.specific) {
+                        document.getElementById("tournament_battleDisplay_round").innerText = data.specific.round
+                        document.getElementById("tournament_battleDisplay_timer").innerText = Math.floor(data.specific.turnTime/60) + ":" + String(data.specific.turnTime%60).padStart(2,"0")
+                        
+                        //p1
+                        if (data.specific.currentPlayer == "p1" && !p1.classList.contains("currentPlayer")) {
+                            p1.classList.add("currentPlayer")
+                        } else if (!(data.specific.currentPlayer == "p1") && p1.classList.contains("currentPlayer")) {
+                            p1.classList.remove("currentPlayer")
+                        }
+                        updateGamePlayer(p1, data.specific, data.specific.p1)
+
+                        //p2
+                        if (data.specific.currentPlayer == "p2" && !p2.classList.contains("currentPlayer")) {
+                            p2.classList.add("currentPlayer")
+                        } else if (!(data.specific.currentPlayer == "p2") && p2.classList.contains("currentPlayer")) {
+                            p2.classList.remove("currentPlayer")
+                        }
+                        updateGamePlayer(p2, data.specific, data.specific.p2)
+                    } else {
+                        document.getElementById("tournament_battleDisplay_round").innerText = ""
+                        document.getElementById("tournament_battleDisplay_timer").innerText = ""
+
+                        p1.innerHTML = ""
+                        if (p1.classList.contains("currentPlayer")) {
+                            p1.classList.remove("currentPlayer")
+                        }
+                        p2.innerHTML = ""
+                        if (p2.classList.contains("currentPlayer")) {
+                            p2.classList.remove("currentPlayer")
+                        }
+                    }
+                } else {
+                    //create base
+                    let top = document.createElement("div");
+                    top.id = "tournament_top"
+
+                    let gameType = document.createElement("div");
+                    gameType.id = "tournament_top_type"
+                    top.appendChild(gameType)
+                    let code = document.createElement("div");
+                    code.id = "tournament_top_code"
+                    top.appendChild(code)
+                    let active = document.createElement("div");
+                    active.id = "tournament_top_active"
+                    top.appendChild(active)
+                    let countdown = document.createElement("div");
+                    countdown.id = "tournament_top_countdown"
+                    top.appendChild(countdown)
+
+                    parent.appendChild(top)
+
+                    let playerCount  = document.createElement("div");
+                    playerCount.id = "tournament_playerCount"
+                    parent.appendChild(playerCount)
+
+                    let playerList  = document.createElement("div");
+                    playerList.id = "tournament_playerList"
+                    parent.appendChild(playerList)
+
+                    let battleList  = document.createElement("div");
+                    battleList.id = "tournament_battleList"
+                    parent.appendChild(battleList)
+
+                    let battleDisplay = document.createElement("div");
+                    battleDisplay.id = "tournament_battleDisplay"
+
+                    let battleRound = document.createElement("div");
+                    battleRound.id = "tournament_battleDisplay_round"
+                    battleDisplay.appendChild(battleRound)
+
+                    let battleTimer = document.createElement("div");
+                    battleTimer.id = "tournament_battleDisplay_timer"
+                    battleDisplay.appendChild(battleTimer)
+
+                    let battleSlotP1 = document.createElement("div");
+                    battleSlotP1.id = "tournament_battleDisplay_slot_p1"
+                    battleDisplay.appendChild(battleSlotP1)
+
+                    let battleSlotP2 = document.createElement("div");
+                    battleSlotP2.id = "tournament_battleDisplay_slot_p2"
+                    battleDisplay.appendChild(battleSlotP2)
+
+                    parent.appendChild(battleDisplay)
+
+                    parent.setAttribute("selectedType", "tournament")
+                }
+                return
             }
         }
 
         parent.innerHTML = "";
+        parent.setAttribute("selectedType", "")
     }
 
     function UpdateGameList(GameList) {
@@ -391,48 +578,12 @@
 
         return CharacterStone;
     }
-
-    //TODO: FIXME
-    class Stone {
-        constructor(Attack,Health,Texture, ParentNode, Type) {
-            this.Health = Health;
-            this.Attack = Attack;
-            this.Texture = Texture;
-            this.AttackCooldown = 1;
-            this.Type = Type;
-
-            this.Body = CreateCharacterStone(Attack,Health,Texture,"",Type);
-            this.Body.classList.add("Selectable");
-            this.Body.addEventListener("mousedown", ()=>this.SelectAttackingStone());
-            ParentNode.appendChild(this.Body);
-        }
-        UpdateVisuals(Attack = this.Attack, Health = this.Health, Texture=this.Texture, AttackCooldown=this.AttackCooldown, WhatAmI = "", Type=null) {
-            if (DraggableSelectTarget && DraggableSelectTarget.SelectedTarget == WhatAmI && WhatAmI!="") {
-                this.Body.getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = Attack;
-                this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = Health-DraggableSelectTarget.Class.Attack;
-                this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].style.color = "blue";
-            } else {
-                this.Body.getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = Attack;
-                this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = Health;
-                this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].style.color = "black";
-            }
-            if (Type != null && Type == "Tank") {
-                this.Body.style.backgroundImage = "url('/images/Cards/"+Texture+".png'), url('/images/shield.png')";
-            } else 
-                this.Body.style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
-            this.AttackCooldown = AttackCooldown;
-
-            this.Attack = Attack;
-            this.Health = Health;
-            this.Texture = Texture;
-            if (this.AttackCooldown>0) {
-                this.Body.classList.add("OnCooldown");
-            } else {
-                this.Body.classList.remove("OnCooldown");
-            }
-        }
-        Remove() {
-            this.Body.remove();
-        }
+    function UpdateStone(Stone,Attack,Health,Texture, Type = null) {
+        Stone.getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = Attack;
+        Stone.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = Health;
+        if (Type != null && Type == "Tank") {
+            Stone.style.backgroundImage = "url('/images/Cards/"+Texture+".png'), url(images/shield.png)";
+        } else 
+            Stone.style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
     }
 </script>
