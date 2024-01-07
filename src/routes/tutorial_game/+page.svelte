@@ -494,34 +494,40 @@
         ]
     }
     var Objectives = new Array();
+    var ObjectiveTrigger = new Array();
     var TextBobles = new Array();
+    var EnemyAi = true;
 
-    // Game Variables
-    var Pause = false;
+    //Game Memory;
     var EnemyAvatar;
     var PlayerAvatar;
     var EnemyHand = new Array();
     var PlayerHand = new Array();
     var EnemyOnField = new Array();
     var PlayerOnField = new Array();
-    var EnemyDisplayName;
-    var PlayerDisplayName;
-
+    var EnemyEnergy = 4;
     var PlayerEnergy = 4;
-    var PlayerMaxEnergy = 4;
-
-    var displayTitle = "";
-
-    var FontSizeAdjusterArray = new Array();
-
+    var EnemyDeck = new Array();
+    var PlayerDeck = new Array();
     var DraggableCard;
     var DraggableSelectTarget;
-
     var MouseX;
     var MouseY;
+    var yourTurn=true;
+    var FontSizeAdjusterArray = new Array();
+    var TurnTime = 30;
+    var GameStarted = false;
+    var DeckImported = false;
+    var Round = 0;
 
-    var yourTurn;
+    //GameSettings
+    var MaxEnergy = 4;
+    var GiveCardsAuto = true;
+    var GiveCardAmount = 2;
+    var Pause = false;
+    var RoundTime = 30;
 
+    //Update Loop
     let lastFrameTime = performance.now();
     function Update() {
         const currentTime = performance.now();
@@ -560,264 +566,98 @@
                 Tutorial.Stage++;
             }
         }
+        if (!GameStarted && DeckImported) {
+            StartGame();
+            GameStarted = true;
+        }
 
-
-
+        
+        //Update Visuals
+        EnemyAvatar.UpdateVisuals();
+        PlayerAvatar.UpdateVisuals();
+        for (let i = 0; i < EnemyOnField.length; i++) {
+            EnemyOnField[i].UpdateVisuals();
+            if (EnemyOnField[i].Health<=0) {
+                EnemyOnField[i].Remove();
+                EnemyOnField.splice(i,1);
+                i--;
+            }
+        }
+        for (let i = 0; i < PlayerOnField.length; i++) {
+            PlayerOnField[i].UpdateVisuals();
+            if (PlayerOnField[i].Health<=0) {
+                PlayerOnField[i].Remove();
+                PlayerOnField.splice(i,1);
+                i--;
+            }
+        }
         // Game Logic
+        if (yourTurn) {
+            UpdateEnergy();
+        } else {
+            var ActionsLeftPosable = 0;
+            var ImagenEnergy = EnemyEnergy+0;
+            if (EnemyAi && EnemyOnField.length<6) {
+                for (let i = 0; i < EnemyHand.length; i++) {
+                    if (EnemyHand[i].Cost<=ImagenEnergy && EnemyOnField.length<6) {
+                        ActionsLeftPosable++;
+                        ImagenEnergy-=EnemyHand[i].Cost;
+                    }
+                    if (EnemyHand[i].AnimationDone&&EnemyHand[i].Cost<=EnemyEnergy&& EnemyOnField.length<6) {
 
+                        EnemyOnField.push(new Stone(EnemyHand[i].Attack,EnemyHand[i].Health,EnemyHand[i].Texture,document.getElementById("EnemyOnField"),EnemyHand[i].Type,EnemyHand[i].AttackType))
+                        
+                        EnemyEnergy -= EnemyHand[i].Cost;
+                        EnemyHand[i].Remove();
+                        EnemyHand.splice(i,1);
+                    }
+                }
+            }
+            if (EnemyAi) {
+                for (let i = 0; i < EnemyOnField.length; i++) {
+                    if (EnemyOnField[i].AttackCooldown<=0) {
+                        var TargetStone = PlayerAvatar;
+                        if (PlayerOnField.length>0) {
+                            TargetStone = PlayerOnField[Math.floor(Math.random()*PlayerOnField.length)];
+                        }
+                        console.log(TargetStone, );
+                        TargetStone.Health -= TargetStone==PlayerAvatar||TargetStone.Type == "Tank"?EnemyOnField[i].Attack/2:EnemyOnField[i].Attack;
+                        EnemyOnField[i].AttackCooldown++;
+                    }
+                }
+                if (EnemyAvatar.AttackCooldown<=0) {
+                    var TargetStone = PlayerAvatar;
+                    if (PlayerOnField.length>0) {
+                        TargetStone = PlayerOnField[Math.floor(Math.random()*PlayerOnField.length)];
+                    }
+                    TargetStone.Health -= TargetStone==PlayerAvatar||TargetStone.Type == "Tank"?EnemyAvatar.Attack/2:EnemyAvatar.Attack;
+                    EnemyAvatar.AttackCooldown++;
+                    if (PlayerAvatar.Health<=0) {
+                        //TODO: Player Death
+                    }
+                }
+                if (ActionsLeftPosable==0) {
+                    endTurn(true);
+                }
+                
+            }
+        }
+        //Time 
+        document.getElementById("TimeDisplay").innerHTML = Math.trunc(Math.floor(TurnTime)/60) + ":" + String(Math.floor(TurnTime)%60).padStart(2,"0");
+        if (!Pause) {TurnTime -= deltaTime;}
+        if (TurnTime<=0) {
+            endTurn(true);
+        }
         requestAnimationFrame(Update);
     }
 
-    /*function createSocket() {
-        let query
-        let search = new URLSearchParams(window.location.search);
-        let privateSearch = search.get("private")
-        if (privateSearch == "true")
-            query = "private=true"
-        else {
-            let codeSearch = search.get("code")
-            if (codeSearch)
-                query = "code="+codeSearch
-            else {
-                let tournamentSearch = search.get("tournament")
-                if (tournamentSearch)
-                query = "tournament="+tournamentSearch
-            }
-        }
 
-        socket = new WebSocket(`wss://${window.location.host}/gamesocket?${query}`);
-
-        // Event listener for when the connection is established
-        socket.onopen = () => {
-            console.log('Connected to server');
-        };
-
-        // Event listener for incoming messages from the server
-        socket.onmessage = (event) => {
-            var data = event.data;
-            if (data) {
-                data = JSON.parse(data);
-                if (data.yourTurn) {
-                    yourTurn = data.yourTurn;
-                }
-                //Display Projectiles
-                if (data.Projectiles) {
-                    for (let i = 0; i < data.Projectiles.length; i++) {
-                        data.Projectiles[i].Element = document.createElement("img");
-                        data.Projectiles[i].Element.classList.add("Projectile");
-                        document.body.appendChild(data.Projectiles[i].Element);
-                        if (yourTurn) {
-                            console.log("My Turn")
-                            data.Projectiles[i].Element.style.top = "75%";
-                            data.Projectiles[i].Element.style.left = "50%";
-                            var Enemy;
-                            if (data.Projectiles[i].EnemyType == "Avatar") {
-                                Enemy = EnemyAvatar.Body;
-                            } else if (EnemyOnField[data.Projectiles[i].SelectedTargetIndex]) {
-                                Enemy = EnemyOnField[data.Projectiles[i].SelectedTargetIndex].Body;
-                            } 
-                            if (Enemy) {
-                                data.Projectiles[i].Element.style.top = (Enemy.getBoundingClientRect().top+(Enemy.getBoundingClientRect().height/2))+"px";
-                                data.Projectiles[i].Element.style.left = (Enemy.getBoundingClientRect().left+(Enemy.getBoundingClientRect().width/2))+"px";
-                                setTimeout(() => {data.Projectiles[i].Element.remove();},1500);
-                            }
-                        } else {
-                            console.log("Not My Turn")
-                            data.Projectiles[i].Element.style.top = "25%";
-                            data.Projectiles[i].Element.style.left = "50%";
-                            var Target;
-                            if (data.Projectiles[i].EnemyType == "Avatar") {
-                                Target = PlayerAvatar.Body;
-                            } else if (PlayerOnField[data.Projectiles[i].SelectedTargetIndex]) {
-                                Target = PlayerOnField[data.Projectiles[i].SelectedTargetIndex].Body;
-
-                            }
-                            if (Target) {
-                                data.Projectiles[i].Element.style.top = (Target.getBoundingClientRect().top+(Target.getBoundingClientRect().height/2))+"px";
-                                data.Projectiles[i].Element.style.left = (Target.getBoundingClientRect().left+(Target.getBoundingClientRect().width/2))+"px";
-                                setTimeout(() => {data.Projectiles[i].Element.remove();},1500);
-                            }
-                        }
-                        data.Projectiles[i].Element.src = "images/Projectiles/"+data.Projectiles[i].Texture+".png";
-                    }
-                }
-                //Tournament Screen
-                if (data.TournamentScreen) {
-                    displayTitle = data.TournamentCountDown;
-                    document.getElementById("Tournament").style.filter = "opacity(1)";
-                    document.getElementById("Tournament").style.pointerEvents = "auto";
-                    if (data.TournamentPlayers) {
-                        var TournamentPlayerList = document.getElementById("TournamentPlayerList");
-                        for (let i = 0; i < data.TournamentPlayers.length || i < TournamentPlayerList.children.length-1; i++) {
-                            if (i < data.TournamentPlayers.length && i >= TournamentPlayerList.children.length-1) { // Create
-                                var Temp = document.createElement("h2");
-                                TournamentPlayerList.appendChild(Temp);
-                                Temp.innerHTML = data.TournamentPlayers[i].displayName;
-                                Temp.style.color = data.TournamentPlayers[i].ready ? "rgb(0,255,0)" : "red";
-                                Temp.style.color = data.TournamentPlayers[i].out ? "rgb(150,150,150)" : Temp.style.color;
-                            } else if (i < data.TournamentPlayers.length) { // Update
-                                TournamentPlayerList.children[i+1].innerHTML = data.TournamentPlayers[i].displayName;
-                                TournamentPlayerList.children[i+1].style.color = data.TournamentPlayers[i].ready ? "rgb(0,255,0)" : "red";
-                                TournamentPlayerList.children[i+1].style.color = data.TournamentPlayers[i].out ? "rgb(150,150,150)" : TournamentPlayerList.children[i+1].style.color;
-                            } else { // Remove
-                                TournamentPlayerList.children[i+1].remove();
-                            }
-                        }
-                        TournamentPlayerList.children[0].innerHTML = "Player List ("+data.TournamentPlayers.length+")";
-                    }
-                    //Show all games in Tournament
-                    if (data.TournamentGames) {
-                        var tournamentGameList = document.getElementById("TournamentGameList");
-                        for (let i = 0; i < data.TournamentGames.length || i < tournamentGameList.children.length; i++) {
-                            if (i < data.TournamentGames.length && i >= tournamentGameList.children.length && data.TournamentGames[i].p1 != null && data.TournamentGames[i].p2  != null) { // Create
-                               console.log("Container");
-                                // Create Game Container
-                                var Container = document.createElement("div");
-                                Container.classList.add("Container");
-
-                                // player 1 Avatar
-                                var p1 = CreateCharacterStone(data.TournamentGames[i].p1.Attack,data.TournamentGames[i].p1.Health,data.TournamentGames[i].p1.Texture, data.TournamentGames[i].p1Name, "Tank");
-                                p1.classList.add("P1");
-                                console.log(p1);
-                                Container.appendChild(p1);
-                                // Text in midle that says VS
-                                var VSText = document.createElement("h1");
-                                VSText.innerHTML = "VS";
-                                Container.appendChild(VSText);
-                                // player 1 Avatar
-                                var p2 = CreateCharacterStone(data.TournamentGames[i].p2.Attack,data.TournamentGames[i].p2.Health,data.TournamentGames[i].p2.Texture, data.TournamentGames[i].p2Name, "Tank");
-                                p2.classList.add("P2");
-                                Container.appendChild(p2);
-                                tournamentGameList.appendChild(Container);
-                            } else if (i < tournamentGameList.children.length && i < data.TournamentGames.length && data.TournamentGames[i].p1  != null && data.TournamentGames[i].p2  != null) { // Update
-                                // P1 Update
-                                tournamentGameList.children[i].children[0].getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = data.TournamentGames[i].p1.Attack;
-                                tournamentGameList.children[i].children[0].getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = data.TournamentGames[i].p1.Health;
-                                tournamentGameList.children[i].children[0].style.backgroundImage = "url('/images/Cards/"+data.TournamentGames[i].p1.Texture+".png'), url('/images/shield.png')";
-
-                                // P2 Update
-                                tournamentGameList.children[i].children[2].getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = data.TournamentGames[i].p2.Attack;
-                                tournamentGameList.children[i].children[2].getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = data.TournamentGames[i].p2.Health;
-                                tournamentGameList.children[i].children[2].style.backgroundImage = "url('/images/Cards/"+data.TournamentGames[i].p2.Texture+".png'), url('/images/shield.png')";
-                            } else if (i >= data.TournamentGames.length){ // Remove
-                                console.log("Remove");
-                                tournamentGameList.children[i].remove();
-                            }
-                        }
-                    }
-                } else {
-                    document.getElementById("Tournament").style.filter = "opacity(0)";
-                    document.getElementById("Tournament").style.pointerEvents = "none";
-                }
-
-                // Normal game logic
-                if (data.TurnTime) {
-                    let newTime = Math.trunc(data.TurnTime/60) + ":" + String(data.TurnTime%60).padStart(2,"0");
-                    document.getElementById("TimeDisplay").innerHTML = newTime;
-                }
-                if (data.PlayerInfo) {
-                    PlayerDisplayName = data.PlayerInfo.DisplayName;
-                    document.getElementById("PlayerName").innerText = PlayerDisplayName;
-                    PlayerAvatar.UpdateVisuals(data.PlayerInfo.Avatar.Attack,data.PlayerInfo.Avatar.Health,data.PlayerInfo.Avatar.Texture, data.PlayerInfo.Avatar.attackCooldown,"","Tank");
-                    PlayerEnergy = data.PlayerInfo.Energy;
-                    PlayerMaxEnergy = data.MaxEnergy;
-                    UpdateEnergy();
-                    displayTitle = data.PlayerInfo.Title
-                    for (let i = 0; i < data.PlayerInfo.Field.length || i<PlayerOnField.length; i++) {
-                        if (i<data.PlayerInfo.Field.length && i>=PlayerOnField.length) {
-                            PlayerOnField.push(new Stone(data.PlayerInfo.Field[i].Attack, data.PlayerInfo.Field[i].Health, data.PlayerInfo.Field[i].Texture, document.getElementById("PlayerOnField"), data.PlayerInfo.Field[i].Type));
-                        } else if (i<data.PlayerInfo.Field.length) {
-                            PlayerOnField[i].UpdateVisuals(data.PlayerInfo.Field[i].Attack, data.PlayerInfo.Field[i].Health, data.PlayerInfo.Field[i].Texture, data.PlayerInfo.Field[i].attackCooldown, "", data.PlayerInfo.Field[i].Type);
-                        } else {
-                            PlayerOnField[i].Remove();
-                            PlayerOnField.splice(i,1);
-                        }
-                    }
-                    var SpawnAmount =0;
-                    for (let i = 0; i < data.PlayerInfo.Hand.length || i<PlayerHand.length; i++) {
-                        if (i<data.PlayerInfo.Hand.length && i>=PlayerHand.length) {
-                            PlayerHand.push(new Card(data.PlayerInfo.Hand[i].Name, data.PlayerInfo.Hand[i].Description, data.PlayerInfo.Hand[i].Cost, data.PlayerInfo.Hand[i].Attack, data.PlayerInfo.Hand[i].Health, data.PlayerInfo.Hand[i].Texture, data.PlayerInfo.Hand[i].Type, SpawnAmount));
-                            SpawnAmount++;
-                        } else if (i<data.PlayerInfo.Hand.length) {
-                            PlayerHand[i].UpdateVisuals(data.PlayerInfo.Hand[i].Name, data.PlayerInfo.Hand[i].Description, data.PlayerInfo.Hand[i].Cost, data.PlayerInfo.Hand[i].Attack, data.PlayerInfo.Hand[i].Health, data.PlayerInfo.Hand[i].Texture, data.PlayerInfo.Hand[i].Type);
-                        } else {
-                            PlayerHand[i].Remove();
-                            PlayerHand.splice(i,1);
-                        }
-                    }
-                }
-                if (data.EnemyInfo) {
-                    EnemyDisplayName = data.EnemyInfo.DisplayName;
-                    document.getElementById("EnemyName").innerText = EnemyDisplayName;
-                    EnemyAvatar.UpdateVisuals(data.EnemyInfo.Avatar.Attack, data.EnemyInfo.Avatar.Health, data.EnemyInfo.Avatar.Texture, data.EnemyInfo.Avatar.attackCooldown, "Avatar", "Tank");
-                
-                    for (let i = 0; i < data.EnemyInfo.Field.length || i<EnemyOnField.length; i++) {
-                        if (i<data.EnemyInfo.Field.length && i>= EnemyOnField.length) {
-                            EnemyOnField.push(new Stone(data.EnemyInfo.Field[i].Attack, data.EnemyInfo.Field[i].Health, data.EnemyInfo.Field[i].Texture, document.getElementById("EnemyOnField"), data.EnemyInfo.Field[i].Type));
-                        } else if (i<data.EnemyInfo.Field.length) {
-                            EnemyOnField[i].UpdateVisuals(data.EnemyInfo.Field[i].Attack, data.EnemyInfo.Field[i].Health, data.EnemyInfo.Field[i].Texture, data.EnemyInfo.Field[i].attackCooldown, i.toString(), data.EnemyInfo.Field[i].Type);
-                        } else {
-                            EnemyOnField[i].Remove();
-                            EnemyOnField.splice(i,1);
-                        }
-                    }
-                    var SpawnAmount = 0;
-                    for (let i = 0; i < data.EnemyInfo.Hand || i < EnemyHand.length; i++) {
-                        if (i<data.EnemyInfo.Hand && i>=EnemyHand.length) {
-                            EnemyHand.push(new EnemyCard(SpawnAmount));
-                            SpawnAmount++;
-                        } else if (i>=data.EnemyInfo.Hand) {
-                            EnemyHand[i].Remove();
-                            EnemyHand.splice(i,1);
-                        }
-                    }
-                }
-                if (data.code) {
-                    document.getElementById("code").innerText = data.code;
-                    if (data.TournamentScreen) {
-                        let currentParams = new URLSearchParams(window.location.search);
-                        let currentRequest = decodeURIComponent(currentParams.get('tournament'))
-                        // Check if the new parameters are different from the current ones
-                        if (currentRequest != data.code) {
-                            let newParams = { tournament: data.code};
-                            let newQueryString = new URLSearchParams(newParams).toString();
-                        
-                            let newUrl = window.location.pathname + '?' + newQueryString;
-                        
-                            history.pushState(newParams, '', newUrl);
-                        }
-                    }
-                } else {
-                    document.getElementById("code").innerText = "";
-                }
-            }
-            document.getElementById("DisplayTitle").innerText = displayTitle;
-
-            // Add a listener for the mousemove event
-            document.addEventListener('mousemove', handleMouseMove);
-        };
-
-        // Event listener for when the connection is closed
-        socket.onclose = (event) => {
-            console.log('Connection closed', event);
-            if (event.code == 1008) {
-                setTimeout(() => {window.location.href = "/"},1000)
-            } else {
-                setTimeout(createSocket, 1000)
-            }
-        };
-
-        // Event listener for errors
-        socket.onerror = (error) => {
-            console.error('WebSocket error:', error);
-        };
-    }*/
     
     onMount(() => {
         EnemyAvatar = new Stone(0,5,"Runar",document.getElementById("EnemyAvatar"),"Avatar","Tank");
         PlayerAvatar = new Stone(5,15,"BOB",document.getElementById("PlayerAvatar"),"","Tank");
 
-        //createSocket()
+        GetDeck();
 
         Update();
         //Actual Commands
@@ -838,10 +678,113 @@
                 hoveredElement.classList.add('Selected');
             }
         });
+        // Add a listener for the mousemove event
+        document.addEventListener('mousemove', handleMouseMove);
     })
+    function StartGame() {
+        TurnTime = RoundTime;
+        if (GiveCardsAuto) {
+            if (yourTurn) {
+                GiveRandomCard(PlayerDeck,MaxEnergy,GiveCardAmount);
+                UpdateEnergy();
+            } else {
+                GiveRandomCard(EnemyDeck,MaxEnergy,GiveCardAmount,true);
+            }
+        }
+    }
+    function endTurn(Teacher=false) {
+        if (Teacher==true||yourTurn){
+            TurnTime = RoundTime;
+            yourTurn = !yourTurn;
+            if (yourTurn) {
+                Round++;
+                if (MaxEnergy<10) 
+                    MaxEnergy++;
+                PlayerEnergy = MaxEnergy;
+                UpdateEnergy();
+                if (Round >0) {
+                    PlayerAvatar.AttackCooldown-=PlayerAvatar.AttackCooldown>0?1:0;
+                    for (let i = 0; i < PlayerOnField.length; i++) {
+                        PlayerOnField[i].AttackCooldown-=PlayerOnField[i].AttackCooldown>0?1:0;
+                    }
+                }
+            } else {
+                PlayerEnergy = 0;
+                UpdateEnergy();
+                EnemyEnergy = MaxEnergy;
+                if (Round >0) {
+                    EnemyAvatar.AttackCooldown-=EnemyAvatar.AttackCooldown>0?1:0;
+                    for (let i = 0; i < EnemyOnField.length; i++) {
+                        EnemyOnField[i].AttackCooldown-=EnemyOnField[i].AttackCooldown>0?1:0;
+                    }
+                }
+            }
 
-    function endTurn() {
-        //socket.send(JSON.stringify({function:"EndTurn"}));
+            if (GiveCardsAuto) {
+                if (yourTurn) {
+                    GiveRandomCard(PlayerDeck,MaxEnergy,GiveCardAmount);
+                } else {
+                    GiveRandomCard(EnemyDeck,MaxEnergy,GiveCardAmount,true);
+                }
+            }
+        }
+    }
+    // Give Random Card Function
+    function GiveRandomCard(Deck,MaxEnergy,Amount,Enemy=false) {
+        var Hand = PlayerHand;
+        if (Enemy) {
+            Hand = EnemyHand;
+        }
+        var FilteredDeck = new Array();
+        for (let i = 0; i < Deck.length; i++) {
+            if (Deck[i].Cost<=MaxEnergy) {
+                FilteredDeck.push(Deck[i]);
+            }
+        }
+        if (FilteredDeck.length==0) {
+            FilteredDeck = Deck;
+            if (Deck.length==0) {
+                FilteredDeck = [{Name:"None",Description:"None",Cost:1,Attack:1,Health:1,Texture:"MissingCharacter"}]
+            }
+        }
+        for (let i = 0; i < Amount; i++) {
+            let SelectedCard = FilteredDeck[Math.floor(Math.random() * FilteredDeck.length)];
+            Hand.push(new Card(SelectedCard.Name,SelectedCard.Description,SelectedCard.Cost,SelectedCard.Attack,SelectedCard.Health,SelectedCard.Texture,SelectedCard.Type,SelectedCard.AttackType,i/2,Enemy));
+        }
+    }
+    // Give Random Card Function
+    function GiveCard(Hand, SelectedCard) {
+        Hand.push(new Card(SelectedCard.Name,SelectedCard.Description,SelectedCard.Cost,SelectedCard.Attack,SelectedCard.Health,SelectedCard.Texture,SelectedCard.Type,SelectedCard.AttackType,0));
+    }
+    //Place the stone by the position of the Draggable
+    function PlaceStone() {
+        if (!yourTurn || PlayerOnField.length>=6 || DraggableCard.Class.Cost>PlayerEnergy) {return;}
+        console.log(DraggableCard.Class.Cost);
+        var PlayerField = document.getElementById("PlayerOnField");
+        var LeftSide = PlayerField.getBoundingClientRect().left;
+        var whereInDiv = (MouseX-LeftSide)/PlayerField.offsetWidth;
+        var WhatToSend = Math.floor(whereInDiv*(PlayerOnField.length+1));
+        var SelectedCardIndex = PlayerHand.indexOf(DraggableCard.Class);
+
+        PlayerOnField = [
+            ...PlayerOnField.slice(0, WhatToSend),
+            new Stone(PlayerHand[SelectedCardIndex].Attack,PlayerHand[SelectedCardIndex].Health,PlayerHand[SelectedCardIndex].Texture,PlayerField,"",PlayerHand[SelectedCardIndex].Type,PlayerHand[SelectedCardIndex].AttackType),
+            ...PlayerOnField.slice(WhatToSend) 
+        ];
+        PlayerEnergy -= PlayerHand[SelectedCardIndex].Cost;
+        PlayerHand[SelectedCardIndex].Remove();
+        PlayerHand.splice(SelectedCardIndex,1);
+        DropDraggable();
+        UpdateEnergy();
+        
+    }
+    //Place the stone by the position of the Draggable
+    function PlaceStoneOnFiled(FieldArray,FieldElement,WhereToPlaceInField,StoneInfo) {
+        FieldArray = [
+            ...FieldArray.slice(0, WhereToPlaceInField),
+            new Stone(StoneInfo.Attack,StoneInfo.Health,StoneInfo.Texture,FieldElement,WhereToPlaceInField,StoneInfo.Type,StoneInfo.AttackType),
+            ...FieldArray.slice(WhereToPlaceInField) 
+        ]
     }
 
     // Function to handle mousemove events
@@ -918,17 +861,7 @@
             }
         }
     }
-    //Place the stone by the position of the Draggable
-    function PlaceStone() {
-        if (!yourTurn) {return;}
-        var PlayerField = document.getElementById("PlayerOnField");
-        var LeftSide = PlayerField.getBoundingClientRect().left;
-        var whereInDiv = (MouseX-LeftSide)/PlayerField.offsetWidth;
-        var WhatToSend = Math.floor(whereInDiv*(PlayerOnField.length+1));
-        //TODO: FIX THIS
-        //socket.send(JSON.stringify({function:"PlaceCard",SelectedIndex:WhatToSend,SelectedCardIndex:PlayerHand.indexOf(DraggableCard.Class)}));
-        DropDraggable();
-    }
+    
 
     //Select the object to drag and start drag
     function SelectDraggable(Element,Class=null) {
@@ -965,37 +898,41 @@
     function DropDraggable() {
         if (DraggableSelectTarget) {
             if (DraggableSelectTarget.SelectedTarget!="") {
-                var IndexOfStone = PlayerOnField.indexOf(DraggableSelectTarget.Class);
-                var AttackIndex = -1;
+                var AttackingStone = DraggableSelectTarget.Class;
+                var Target = null;
                 if (DraggableSelectTarget.SelectedTarget && DraggableSelectTarget.SelectedTarget != "" && DraggableSelectTarget.SelectedTarget != "Avatar") {
-                    AttackIndex = Number(DraggableSelectTarget.SelectedTarget);
-                }
-                var Type = "";
-                if (DraggableSelectTarget.Class == PlayerAvatar) {
-                    Type = "Avatar";
+                    Target = EnemyOnField[Number(DraggableSelectTarget.SelectedTarget)];
+                } else {
+                    Target = EnemyAvatar;
                 }
                 // if player is using a card Projectile to select target
                 if (DraggableCard && DraggableCard.Class.Type == "Projectile") {
-                    //TODO: Use Card ON CLIENT
-                    /*socket.send(JSON.stringify( 
-                        { 
-                            function:"UseCard",
-                            SelectedTargetIndex:AttackIndex,
-                            SelectedCardIndex:PlayerHand.indexOf(DraggableCard.Class),
-                            EnemyType:DraggableSelectTarget.SelectedTarget
-                        }
-                    ));*/
+                    Target.Health -= DraggableSelectTarget.SelectedTarget == "Avatar"||Target.Type == "Tank"?AttackingStone.Attack/2:AttackingStone.Attack;
+                    AttackingStone.Remove();
+                    PlayerHand.splice(PlayerHand.indexOf(AttackingStone),1);
+                    if (Target.Health<=0 && DraggableSelectTarget.SelectedTarget == "Avatar") {
+                        // Player Win TODO: Add Win
+                    }
                 } else { // if player is using a stone to select target
-                    //TODO:
-                    /*socket.send(JSON.stringify(
-                        {
-                            function:"SelectStoneTarget",
-                            SelectedAttackIndex:AttackIndex,
-                            SelectedStoneIndex:IndexOfStone,
-                            Type:Type,
-                            EnemyType:DraggableSelectTarget.SelectedTarget
+                    Target.Health -= DraggableSelectTarget.SelectedTarget == "Avatar"||Target.Type == "Tank"?AttackingStone.Attack/2:AttackingStone.Attack;
+                    AttackingStone.AttackCooldown++;
+
+                    // Burst DMG
+                    if (AttackingStone.AttackType && AttackingStone.AttackType == "Burst" && DraggableSelectTarget.SelectedTarget != "Avatar") {
+                        let SelectedAttackIndex = EnemyOnField.indexOf(AttackingStone);
+                        if (SelectedAttackIndex<EnemyOnField.length-1) {
+                            EnemyOnField[SelectedAttackIndex+1].Health -= Target.Type == "Tank"?AttackingStone.Attack/2:AttackingStone.Attack;
                         }
-                    ));*/
+                        if (SelectedAttackIndex>0) {
+                            EnemyOnField[SelectedAttackIndex-1].Health -= Target.Type == "Tank"?AttackingStone.Attack/2:AttackingStone.Attack;
+                        }
+                    }
+
+                    if (Target.Health<=0 && DraggableSelectTarget.SelectedTarget == "Avatar") {
+                        
+                        // Player Win TODO: Add Win
+                        
+                    }
                 }
             }
             
@@ -1068,14 +1005,14 @@
 
     function SetEnergyLevel(FakeAmount=null) {
         var EnergyHolder = document.getElementById("DisplayEnergy");
-        for (let i = 0; i < EnergyHolder.children.length || i < PlayerMaxEnergy; i++) {
-            if (i>= EnergyHolder.children.length && i < PlayerMaxEnergy) { // Create Child
+        for (let i = 0; i < EnergyHolder.children.length || i < MaxEnergy; i++) {
+            if (i>= EnergyHolder.children.length && i < MaxEnergy) { // Create Child
                 var EnergyCrystal = document.createElement("img");
                 EnergyCrystal.src = "/images/EnergyIcon.png";
                 document.getElementById("DisplayEnergy").appendChild(EnergyCrystal);
             } else if (i< EnergyHolder.children.length && i >= PlayerEnergy) {
                 EnergyHolder.children[i].style.filter = "grayscale(1)";
-            } else if (i >= PlayerMaxEnergy) { // Remove Object
+            } else if (i >= MaxEnergy) { // Remove Object
                 EnergyHolder.children[i].remove();
             } else if (FakeAmount && i>=FakeAmount) {
                 EnergyHolder.children[i].style.filter = "brightness(80%) saturate(200%) grayscale(0) hue-rotate(100deg)";
@@ -1186,8 +1123,27 @@
         }
     }
 
+    // Get Player Current Deck
+    async function GetDeck() {
+        const deck = await fetch(window.location.origin+'/api/cards/getDeck', {
+            method: 'GET',
+            headers: {
+	    		'Content-Type': 'application/json',
+	    	}
+        });
+        PlayerDeck = await deck.json();
+        DeckImported = true;
+    }
+    // Remove all event listeners from an element
+    function removeAllEventListeners(element) {
+        // Clone the element to remove all its events
+        const newElement = element.cloneNode(true);
+        element.parentNode.replaceChild(newElement, element);
+        return newElement;
+    }
+
     class Card {
-        constructor(Name,Description,Cost,Attack,Health,Texture,Type,SpawnDelay=0) {
+        constructor(Name,Description,Cost,Attack,Health,Texture,Type=null,AttackType=null,SpawnDelay=0,EnemyCard=false) {
             this.Cost = Cost;
             this.Health = Health;
             this.Attack = Attack;
@@ -1195,6 +1151,8 @@
             this.Name = Name;
             this.Description = Description;
             this.Type = Type;
+            this.AttackType = AttackType;
+            this.EnemyCard = EnemyCard;
 
             setTimeout(() => {
                 this.CreateBody();
@@ -1230,51 +1188,70 @@
         CreateBody() {
             this.Body = CreateEmptyCard();
             document.body.appendChild(this.Body);
-            this.Body.classList.add("CardAnimation");
+            if (this.EnemyCard) {
+                this.Body.classList.add("EnemyCardAnimation");
+            } else
+                this.Body.classList.add("CardAnimation");
             this.Body.addEventListener('animationend', () => {
                 // Add your code here to run when the animation is complete
                 this.Body.remove();
-                this.Body = CreateCard(this.Name,this.Description,this.Cost,this.Attack,this.Health,this.Texture);
-                document.getElementById("PlayerHand").appendChild(this.Body);
-                this.Body.classList.add("Selectable");
+                if (this.EnemyCard) {
+                    this.Body = CreateEmptyCard();
+                    document.getElementById("EnemyHand").appendChild(this.Body);
+                    this.AnimationDone = true;
+                }else {
+                    this.Body = CreateCard(this.Name,this.Description,this.Cost,this.Attack,this.Health,this.Texture);
+                    document.getElementById("PlayerHand").appendChild(this.Body);
+                    this.Body.classList.add("Selectable");
 
-                setTimeout(function() {SetAllFontSizeInArray(FontSizeAdjusterArray)}, 100);
-                this.Body.addEventListener('mousedown', ()=>SelectDraggable(this.Body,this));
+                    setTimeout(function() {SetAllFontSizeInArray(FontSizeAdjusterArray)}, 100);
+                    this.Body.addEventListener('mousedown', ()=>SelectDraggable(this.Body,this));
+                }
+                
             });
         }
     } 
     class Stone {
-        constructor(Attack,Health,Texture, ParentNode, Type) {
+        constructor(Attack,Health,Texture, ParentNode, WhatAmI="", Type=null, AttackType=null) {
             this.Health = Health;
             this.Attack = Attack;
             this.Texture = Texture;
             this.AttackCooldown = 1;
+            this.WhatAmI = WhatAmI;
             this.Type = Type;
+            this.AttackType = AttackType;
 
             this.Body = CreateCharacterStone(Attack,Health,Texture,"",Type);
             this.Body.classList.add("Selectable");
             this.Body.addEventListener("mousedown", ()=>this.SelectAttackingStone());
             ParentNode.appendChild(this.Body);
         }
-        UpdateVisuals(Attack = this.Attack, Health = this.Health, Texture=this.Texture, AttackCooldown=this.AttackCooldown, WhatAmI = "", Type=null) {
-            if (DraggableSelectTarget && DraggableSelectTarget.SelectedTarget == WhatAmI && WhatAmI!="") {
-                this.Body.getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = Attack;
-                this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = Health-(Type=="Tank"?DraggableSelectTarget.Class.Attack/2:DraggableSelectTarget.Class.Attack);
+        UpdateVisuals() {
+            if (PlayerOnField.indexOf(this) >=0 && this.Body != null) {
+                var BodyIndex = PlayerOnField.indexOf(this);
+                if (this.Body != document.getElementById("PlayerOnField").children[BodyIndex]) {
+                    this.Body = document.getElementById("PlayerOnField").children[BodyIndex];
+                    this.Body = removeAllEventListeners(this.Body);
+                    this.Body.addEventListener("mousedown", ()=>this.SelectAttackingStone());
+                } // test
+            }
+            if (DraggableSelectTarget && DraggableSelectTarget.SelectedTarget == this.WhatAmI && this.WhatAmI!="") {
+                this.Body.getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = this.Attack;
+                this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = this.Health-(this.Type=="Tank"?DraggableSelectTarget.Class.Attack/2:DraggableSelectTarget.Class.Attack);
                 this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].style.color = "blue";
+            } else if (DraggableSelectTarget && DraggableSelectTarget.Class && DraggableSelectTarget.Class.AttackType == "Burst" &&  this.WhatAmI!="" && typeof(Number(this.WhatAmI)) == "number" && DraggableSelectTarget.SelectedTarget != "" && (Number(DraggableSelectTarget.SelectedTarget) == Number(this.WhatAmI)-1 || Number(DraggableSelectTarget.SelectedTarget) == Number(this.WhatAmI)+1)) {
+                this.Body.getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = this.Attack;
+                this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = this.Health-(this.Type=="Tank"?DraggableSelectTarget.Class.Attack/2:DraggableSelectTarget.Class.Attack);
+                this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].style.color = "rgb(0,0,100)";
             } else {
-                this.Body.getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = Attack;
-                this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = Health;
+                this.Body.getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = this.Attack;
+                this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = this.Health;
                 this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].style.color = "black";
             }
-            if (Type != null && Type == "Tank") {
-                this.Body.style.backgroundImage = "url('/images/Cards/"+Texture+".png'), url('/images/shield.png')";
+            if (this.Type != null && this.Type == "Tank") {
+                this.Body.style.backgroundImage = "url('/images/Cards/"+this.Texture+".png'), url('/images/shield.png')";
             } else 
-                this.Body.style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
-            this.AttackCooldown = AttackCooldown;
-
-            this.Attack = Attack;
-            this.Health = Health;
-            this.Texture = Texture;
+                this.Body.style.backgroundImage = "url('/images/Cards/"+this.Texture+".png')";
             if (this.AttackCooldown>0) {
                 this.Body.classList.add("OnCooldown");
             } else {
@@ -1285,11 +1262,10 @@
             this.Body.remove();
         }
         SelectAttackingStone() {
-            console.log(this);
             if (DraggableSelectTarget) {
-            DropDraggable();
-        }
-            if (!yourTurn && this.AttackCooldown > 0) {return;}
+                DropDraggable();
+            }
+            if (!yourTurn || this.AttackCooldown > 0) {return;}
             var TargetIndicator = document.createElement("img");
             TargetIndicator.classList.add("TargetIndicator");
             TargetIndicator.src = "/images/target.png";
@@ -1298,23 +1274,6 @@
             document.getElementById("DraggableParent").appendChild(TargetIndicator);
             DraggableSelectTarget.TargetIndicator.style.left = MouseX+"px";
             DraggableSelectTarget.TargetIndicator.style.top = MouseY+"px";
-        }
-    }
-    class EnemyCard {
-        constructor(SpawnDelay) {
-            setTimeout(() => {
-                this.CreateBody();
-                }, SpawnDelay*500);
-            
-        }
-        Remove() {
-            if (this.Body)
-                this.Body.remove();
-        }
-        CreateBody() {
-            this.Body = CreateEmptyCard();
-            document.getElementById("EnemyHand").appendChild(this.Body);
-            this.Body.classList.add("EnemyCardAnimation");
         }
     }
     // Text Boble 

@@ -295,7 +295,7 @@ class Player {
                     TargetStone = Enemy.Field[input.SelectedTargetIndex];
                 }
                 if (TargetStone) {
-                    TargetStone.Health -= this.Hand[SelectedCardIndex].Attack;
+                    TargetStone.Health -= (input.EnemyType=="Avatar")||(TargetStone.Type && TargetStone.Type =="Tank")?this.Hand[SelectedCardIndex].Attack/2:this.Hand[SelectedCardIndex].Attack;
                     
                     this.Energy -= this.Hand[SelectedCardIndex].Cost;
                     this.match.Projectiles.push({From:this.PlayerType,EnemyType:input.EnemyType,Texture:this.Hand[SelectedCardIndex].Texture,SelectedTargetIndex:SelectedTargetIndex});;
@@ -328,7 +328,7 @@ class Player {
             if (this.Hand[SelectedCardIndex] && this.Field.length<6 && this.Energy >= this.Hand[SelectedCardIndex].Cost) {
                 var newField = [
                     ...this.Field.slice(0, SelectedIndex),
-                    new stone(this.Hand[SelectedCardIndex].Attack,this.Hand[SelectedCardIndex].Health,this.Hand[SelectedCardIndex].Texture,1,this.Hand[SelectedCardIndex].Type),
+                    new stone(this.Hand[SelectedCardIndex].Attack,this.Hand[SelectedCardIndex].Health,this.Hand[SelectedCardIndex].Texture,1,this.Hand[SelectedCardIndex].Type,this.Hand[SelectedCardIndex].AttackType),
                     ...this.Field.slice(SelectedIndex) 
                 ];
                 this.Field = newField;
@@ -361,18 +361,33 @@ class Player {
             }
             if (AttackingStone && !AttackingStone.attackCooldown) {AttackingStone.attackCooldown = 0;}
             if (AttackingStone && TargetStone && AttackingStone.attackCooldown<=0) {
-                TargetStone.Health -= TargetStone.Type&&TargetStone.Type=="Tank"?AttackingStone.Attack/2:AttackingStone.Attack;
+                TargetStone.Health -= (input.EnemyType&&input.EnemyType == "Avatar")||(TargetStone.Type && TargetStone.Type =="Tank")?AttackingStone.Attack/2:AttackingStone.Attack;
+                // Burst DMG
+                if (AttackingStone.AttackType && AttackingStone.AttackType == "Burst" && input.EnemyType!="Avatar" && input.SelectedStoneIndex != null) {
+                    if (input.SelectedAttackIndex<Enemy.Field.length-1) {
+                        Enemy.Field[input.SelectedAttackIndex+1].Health -= (TargetStone.Type&&TargetStone.Type=="Tank"?AttackingStone.Attack/2:AttackingStone.Attack);
+                        console.log(input.SelectedAttackIndex+1, Enemy.Field[input.SelectedAttackIndex+1].Health)
+                    }
+                    if (input.SelectedAttackIndex>0) {
+                        Enemy.Field[input.SelectedAttackIndex-1].Health -= (TargetStone.Type&&TargetStone.Type=="Tank"?AttackingStone.Attack/2:AttackingStone.Attack);
+                        console.log(input.SelectedAttackIndex-1, Enemy.Field[input.SelectedAttackIndex-1].Health)
+                    }
+                }
+                // Remove All Destroyed Stones
+                for (let i = 0; i < Enemy.Field.length; i++) {
+                    if (Enemy.Field[i].Health<=0) {
+                        Enemy.Field.splice(i,1);
+                        i--;
+                    }
+                }
                 AttackingStone.attackCooldown++;
-                if (TargetStone.Health<=0) {
-                    if (input.EnemyType=="Avatar") {
-                        this.match.SendInfo();
-                        if (this.match.p1 == this) {
-                            this.match.EndGame(this.match.p2.UserName);
-                        } else {
-                            this.match.EndGame(this.match.p1.UserName);
-                        }
+                // Killed Avatar? End Game
+                if (TargetStone.Health<=0 && input.EnemyType=="Avatar") {
+                    this.match.SendInfo();
+                    if (this.match.p1 == this) {
+                        this.match.EndGame(this.match.p2.UserName);
                     } else {
-                        Enemy.Field.splice(Enemy.Field.indexOf(TargetStone),1);
+                        this.match.EndGame(this.match.p1.UserName);
                     }
                 }
             }
@@ -389,12 +404,13 @@ class Player {
 }
 
 class stone {
-    constructor(Attack, Health, Texture, attackCooldown, Type=null) {
+    constructor(Attack, Health, Texture, attackCooldown, Type=null, AttackType=null) {
         this.Attack = Attack;
         this.Health = Health;
         this.Texture = Texture;
         this.attackCooldown = attackCooldown;
         this.Type = Type;
+        this.AttackType = AttackType;
     }
 }
 
