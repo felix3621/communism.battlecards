@@ -44,9 +44,9 @@
         left:50%;
         top:55px;
         transform: translate(-50%,0);
-        width: 150px;
+        height: 30%;
         max-width: 30%;
-        max-height: 30%;
+        max-height: 20%;
         aspect-ratio: 1.66/2.14;
         background-size: contain;
     }
@@ -55,9 +55,9 @@
         left:50%;
         bottom:55px;
         transform: translate(-50%,0);
-        width: 150px;
         max-width: 30%;
-        max-height: 30%;
+        max-height: 25%;
+        height: 30%;
         aspect-ratio: 1.66/2.14;
         background-size: contain;
     }

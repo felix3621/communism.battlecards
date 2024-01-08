@@ -1,0 +1,96 @@
+[
+    {
+        "Text":"Oh Hello There!",
+        "Sender":"Opponent",
+        "GamePause": true,
+        "Duration":2,
+        "EnemyAi":false,
+        "PlayerDeck": [{"Name":"TrainerCard","Description":"Trainer","Attack":2,"Health":2,"Cost":1,"Texture":"Svein"}],
+        "CanEndTurn":false,
+        "TimedPlay":false
+    },
+    {
+        "Text":"Welcome To Battle Cards.<br>Let Me Show You Haw To Play.",
+        "Sender":"Opponent",
+        "GamePause": true,
+        "Duration":4
+    },
+    {
+        "Text":"Lets Start!",
+        "Sender":"Opponent",
+        "GamePause": true,
+        "Duration":2,
+        "Function":{"Function":"StartGame"}
+    },
+    {
+        "Text":"First Things First. <br>Place Out A Card.",
+        "Sender":"Opponent",
+        "GamePause": false,
+        "Duration":4,
+        "Invoke":"GiveCard(PlayerHand,{Name:'TrainerCard',Description:'Trainer',Attack:2,Health:2,Cost:1,Texture:'Svein'})",
+        "Objective":{"Title":"Place Card", "Description":"Drag Your Card Out To You Play Field.<br>(Right Above Your Avatar)", "CompletionTrigger":"PlayerOnField.length>0"}
+    },
+    {
+        "Text":"Dide You See That It Used Up Some Energy When You Placed It Down (right Corner)",
+        "Sender":"Opponent",
+        "GamePause": true,
+        "Duration":4,
+        "Function":{"Function":"ShowEnergy","Value":5}
+    },
+    {
+        "Text":"Now Attack My Minion",
+        "Sender":"Opponent",
+        "GamePause": false,
+        "Duration":3,
+        "UseAttackCooldown":false,
+        "Invoke":"EnemyOnField.push(new Stone(1,1,'Goblin',document.getElementById('EnemyOnField'))",
+        "Objective":{"Title":"Attack", "Description":"Hold Down On Your Placed Stone And Move The Target Indicator To The Goblin And Let Go.","CompletionTrigger":"EnemyOnField.length==0"}
+    },
+    {
+        "Text":"Good Now Attack My Minion",
+        "Sender":"Opponent",
+        "GamePause": false,
+        "Duration":3,
+        "EnemyAi":false,
+        "Invoke":"EnemyOnField.push(new Stone(1,1,'PurpleSlime',document.getElementById('EnemyOnField'),'','',''))",
+        "UseAttackCooldown": false,
+        "Objective":{"Title":"Kill Minion", "Description":"Use Your Cards And Destroy PurpleSlime","CompletionTrigger":"EnemyOnField.length==0"}
+    },
+    {
+        "Text":"Try To Kill This One Next. Look At It Being A Little Diffrent",
+        "Sender":"Opponent",
+        "GamePause": false,
+        "Duration":3,
+        "EnemyAi":false,
+        "Invoke":"EnemyOnField.push(new Stone(1,2,'Bloob',document.getElementById('EnemyOnField'),'','Tank',''))",
+        "UseAttackCooldown": false,
+        "Objective":{"Title":"Kill Minion", "Description":"Use Your Cards And Destroy Bloob","CompletionTrigger":"EnemyOnField.length==0"}
+    },
+    {
+        "Text":"Dide You See That It Took Longer To Kill It Then Normall. <br>That Is Becuse It Hade That Shield On It.<br>Diffrent Card Have Diffrent Classes And This One Was A Tank.",
+        "Sender":"Opponent",
+        "GamePause": true,
+        "Duration":5,
+        "EnemyAi":false
+    },
+    {
+        "Text":"Now Attack Me Using Your Avatar And Minion.",
+        "Sender":"Opponent",
+        "GamePause": false,
+        "Duration":5,
+        "EnemyAi":true,
+        "Invoke":"GiveRandomCard(PlayerDeck,MaxEnergy,2,false); EnemyOnField.push(new Stone(1,1,'PurpleSlime',document.getElementById('EnemyOnField'),'','','')); EnemyOnField.push(new Stone(1,2,'Bandit',document.getElementById('EnemyOnField'),'','','')); EnemyOnField.push(new Stone(1,1,'PurpleSlime',document.getElementById('EnemyOnField'),'','',''))",
+        "UseAttackCooldown": true,
+        "CanEndTurn":true,
+        "TimedPlay":true,
+        "Objective":{"Title":"Kill Runar", "Description":"Use Your Cards And Kill His Minions To Then Kill Runar","CompletionTrigger":"EnemyAvatar.Health<=0"}
+    },
+    {
+        "Text":"Congratulations Tutorial Done",
+        "Sender":"Opponent",
+        "GamePause": true,
+        "Duration":5,
+        "EnemyAi":false,
+        "Invoke":"setTimeout(()=>window.location.href='/',5000)"
+    }
+]

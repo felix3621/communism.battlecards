@@ -44,9 +44,9 @@
         left:50%;
         top:55px;
         transform: translate(-50%,0);
-        width: 150px;
+        height: 30%;
         max-width: 30%;
-        max-height: 30%;
+        max-height: 20%;
         aspect-ratio: 1.66/2.14;
         background-size: contain;
     }
@@ -55,9 +55,9 @@
         left:50%;
         bottom:55px;
         transform: translate(-50%,0);
-        width: 150px;
         max-width: 30%;
-        max-height: 30%;
+        max-height: 25%;
+        height: 30%;
         aspect-ratio: 1.66/2.14;
         background-size: contain;
     }
@@ -402,6 +402,20 @@
         padding: 5px;
         outline: 5px gray solid;
     }
+    :global(#Objectives) {
+        position:fixed;
+        top:45px;
+        bottom: 50%;
+        right:0;
+        left:75%;
+        display: grid;
+        grid-template-rows: repeat(auto,100%);
+        color: white;
+        pointer-events: none;
+    }
+    :global(#Objectives h1, #Objectives p) {
+        margin: 0;
+    }
 </style>
 <hr id="MidleLine">
 <div id="EnemyAvatar"><h1 id="EnemyName">Runar</h1></div>
@@ -418,83 +432,17 @@
 <div id="TopBar"><h1 style="margin: 0; text-align:center; color:white">Battle!</h1></div>
 <h1 id="DisplayTitle"></h1>
 <h1 id="code" style="cursor: pointer" on:click={() => {navigator.clipboard.writeText(document.getElementById("code").innerText)}}></h1>
-<div id="Tournament">
-    <button id="TournamentReadyButton" on:click={() => {socket.send(JSON.stringify({tournamentReady:true}));}}>Ready?</button>
-    <div id="TournamentPlayerList">
-        <h1 style="text-align: center;">Player List (0/16)</h1>
-    </div>
-    <div id="TournamentGameList"></div>
-</div>
+<div id="Objectives"></div>
 <script>
     import { onMount } from "svelte";
+    import { page } from '$app/stores';
 
     // Tutorial Values
     var Tutorial = {
         Stage:0,
-        Stages: [
-            {
-                Text:"Oh Hello There!",
-                Sender:"Runar",
-                GamePause: true,
-                Duration:5
-            },
-            {
-                Text:"Welcome To Battle Cards.<br>Let Me Show You Haw To Play.<br>Let Me Just End My Turn.",
-                Sender:"Runar",
-                GamePause: true,
-                Duration:5
-            },
-            {
-                Text:"There You Go",
-                Sender:"Runar",
-                GamePause: true,
-                Duration:5,
-                Function:{Function:"StartGame"}
-            },
-            {
-                Text:"Place Out A Card",
-                Sender:"Runar",
-                GamePause: false,
-                Duration:5,
-                Objective:{Title:"Place Card", Description:"Drag Your Card Out To You Play Field", CompletionTrigger:"PlayerOnField.length>0"}
-            },
-            {
-                Text:"Dide You See That It Used Up Some Energy When You Placed It Down (right Corner)",
-                Sender:"Runar",
-                GamePause: true,
-                Duration:5,
-                Function:{Function:"ShowEnergy",Value:5}
-            },
-            {
-                Text:"Now Attack My Minion",
-                Sender:"Runar",
-                GamePause: false,
-                Duration:5,
-                Invoke:"EnemyOnField.push(new Stone(1,1,'Goblin',document.getElementById('EnemyOnField'))",
-                Objective:{Title:"Attack", Description:"Hold Down On Your Placed Stone And Move The Target Indicator To The Goblin And Let Go.",CompletionTrigger:"EnemyOnField.length==0"}
-            },
-            {
-                Text:"Now Attack Me Using Your Avatar And Minion.<br>Ps Here Are Some Energy And Cards",
-                Sender:"Runar",
-                GamePause: false,
-                Duration:5,
-                EnemyAi:true,
-                Invoke:"MaxEnergy = 10;PlayerEnergy = 10; GiveCards('p1',5)",
-                AttackCooldown: 0,
-                Objective:{Title:"Kill Runar", Description:"Use Your Cards And Destroy Runar ",CompletionTrigger:"EnemyAvatar.Health<=0"}
-            },
-            {
-                Text:"Congratulations Tutorial Done",
-                Sender:"Runar",
-                GamePause: true,
-                Duration:5,
-                EnemyAi:false,
-                Invoke:"window.location.href='/'"
-            }
-        ]
+        Stages: []
     }
     var Objectives = new Array();
-    var ObjectiveTrigger = new Array();
     var TextBobles = new Array();
     var EnemyAi = true;
 
@@ -521,11 +469,15 @@
     var Round = 0;
 
     //GameSettings
+    var CanEndTurn = true;
+    var TimedPlay = true;
     var MaxEnergy = 4;
     var GiveCardsAuto = true;
     var GiveCardAmount = 2;
-    var Pause = false;
+    var Pause = true;
     var RoundTime = 30;
+    var GetPlayerDeck = true;
+    var UseAttackCooldown = true;
 
     //Update Loop
     let lastFrameTime = performance.now();
@@ -543,21 +495,88 @@
                 i--;
             }
         }
-        // Quests
+        // Objectives
+        var ObjectivesParent = document.getElementById("Objectives");
+        for (let i = 0; i < Objectives.length || i < ObjectivesParent.children.length; i++) {
+            if (i < Objectives.length && i >= ObjectivesParent.children.length) { // Create New Element
+                var Div = document.createElement("div");
+                //Title
+                var Title = document.createElement("h1");
+                Title.innerHTML = Objectives[i].Title;
+                Div.appendChild(Title);
+                //Description
+                var Description = document.createElement("p");
+                Description.innerHTML = Objectives[i].Description;
+                Div.appendChild(Description);
+                //Append to Parent
+                ObjectivesParent.appendChild(Div);
+            } else if (i < Objectives.length && i < ObjectivesParent.children.length) { // Update Element
+                ObjectivesParent.children[i].children[0].innerHTML = Objectives[i].Title;
+                ObjectivesParent.children[i].children[1].innerHTML = Objectives[i].Description;
+                try {
+                    if (eval(Objectives[i].CompletionTrigger)) {
+                        Tutorial.Stage++;
+                        Objectives.splice(i,1);
+                    }
+                } catch (error) {
+                    console.error('Error executing code:', error);
+                }
+            } else { // Remove Extra Element
+                ObjectivesParent.children[i].remove();
+            }
+        }
 
         // Tutorial
-        if(Tutorial != null && Tutorial.Stage<Tutorial.Stages.length) {
+        if(Tutorial != null && Tutorial.Stage<Tutorial.Stages.length && Tutorial.Stages.length>0) {
             // Text Boble + Objective
             if (!Tutorial.Stages[Tutorial.Stage].Started) {
                 if (Tutorial.Stages[Tutorial.Stage].Text) { // Text Boble
                     console.log("Create Boble")
-                    let X = Tutorial.Stages[Tutorial.Stage].Sender == "Runar" ? document.getElementById("EnemyAvatar").getBoundingClientRect().right : (Tutorial.Stages[Tutorial.Stage].Sender == "You" ? document.getElementById("PlayerAvatar").getBoundingClientRect().right : 10);
-                    let Y = Tutorial.Stages[Tutorial.Stage].Sender == "Runar" ? document.getElementById("EnemyAvatar").getBoundingClientRect().bottom : (Tutorial.Stages[Tutorial.Stage].Sender == "You" ? document.getElementById("PlayerAvatar").getBoundingClientRect().top : 10);
+                    let X = Tutorial.Stages[Tutorial.Stage].Sender == "Opponent" ? document.getElementById("EnemyAvatar").getBoundingClientRect().right : (Tutorial.Stages[Tutorial.Stage].Sender == "You" ? document.getElementById("PlayerAvatar").getBoundingClientRect().right : 10);
+                    let Y = Tutorial.Stages[Tutorial.Stage].Sender == "Opponent" ? document.getElementById("EnemyAvatar").getBoundingClientRect().bottom : (Tutorial.Stages[Tutorial.Stage].Sender == "You" ? document.getElementById("PlayerAvatar").getBoundingClientRect().top : 10);
                     CreateTextBoble(X,Y,Tutorial.Stages[Tutorial.Stage].Text,Tutorial.Stages[Tutorial.Stage].Duration);
+                }
+                if (Tutorial.Stages[Tutorial.Stage].PlayerDeck != null) {
+                    PlayerDeck = Tutorial.Stages[Tutorial.Stage].PlayerDeck;
+                    GetPlayerDeck = false;
+                }
+                if (Tutorial.Stages[Tutorial.Stage].EnemyDeck != null) {
+                    EnemyDeck = Tutorial.Stages[Tutorial.Stage].EnemyDeck;
+                }
+                if (Tutorial.Stages[Tutorial.Stage].GamePause != null) {
+                    Pause = Tutorial.Stages[Tutorial.Stage].GamePause;
+                }
+                if (Tutorial.Stages[Tutorial.Stage].EnemyAi != null) {
+                    EnemyAi = Tutorial.Stages[Tutorial.Stage].EnemyAi;
+                }
+                if (Tutorial.Stages[Tutorial.Stage].CanEndTurn != null) {
+                    CanEndTurn = Tutorial.Stages[Tutorial.Stage].CanEndTurn;
+                }
+                if (Tutorial.Stages[Tutorial.Stage].TimedPlay != null) {
+                    TimedPlay = Tutorial.Stages[Tutorial.Stage].TimedPlay;
+                }
+                if (Tutorial.Stages[Tutorial.Stage].UseAttackCooldown != null) {
+                    UseAttackCooldown = Tutorial.Stages[Tutorial.Stage].UseAttackCooldown;
+                }
+                if (Tutorial.Stages[Tutorial.Stage].Function != null) { // Run Function TODO: 
+                    try {
+                        eval(Tutorial.Stages[Tutorial.Stage].Function.Function+"("+Tutorial.Stages[Tutorial.Stage].Function.Value!=null?Tutorial.Stages[Tutorial.Stage].Function.Value:""+")");
+                    } catch (error) {
+                        console.error('Error executing code:', error);
+                    }
+                }
+                if (Tutorial.Stages[Tutorial.Stage].Invoke != null) { // Run Function TODO: 
+                    try {
+                        eval(Tutorial.Stages[Tutorial.Stage].Invoke);
+                    } catch (error) {
+                        console.error('Error executing code:', error);
+                    }
+                }
+                if (Tutorial.Stages[Tutorial.Stage].Objective != null) {
+                    Objectives.push(Tutorial.Stages[Tutorial.Stage].Objective);
                 }
                 Tutorial.Stages[Tutorial.Stage].Started = true;
             }
-
 
             // Duration
             if (Tutorial.Stages[Tutorial.Stage].Duration>0) {
@@ -566,15 +585,20 @@
                 Tutorial.Stage++;
             }
         }
-        if (!GameStarted && DeckImported) {
+        if (!GameStarted && DeckImported && Tutorial.Stage ==-1) {
             StartGame();
             GameStarted = true;
         }
-
         
         //Update Visuals
-        EnemyAvatar.UpdateVisuals();
-        PlayerAvatar.UpdateVisuals();
+        if (EnemyAvatar != null && PlayerAvatar != null) {
+            EnemyAvatar.UpdateVisuals();
+            PlayerAvatar.UpdateVisuals();
+            if(!UseAttackCooldown) {
+                PlayerAvatar.AttackCooldown = 0;
+            }
+        }
+        
         for (let i = 0; i < EnemyOnField.length; i++) {
             EnemyOnField[i].UpdateVisuals();
             if (EnemyOnField[i].Health<=0) {
@@ -585,6 +609,9 @@
         }
         for (let i = 0; i < PlayerOnField.length; i++) {
             PlayerOnField[i].UpdateVisuals();
+            if (!UseAttackCooldown) {
+                PlayerOnField[i].AttackCooldown = 0;
+            }
             if (PlayerOnField[i].Health<=0) {
                 PlayerOnField[i].Remove();
                 PlayerOnField.splice(i,1);
@@ -605,7 +632,7 @@
                     }
                     if (EnemyHand[i].AnimationDone&&EnemyHand[i].Cost<=EnemyEnergy&& EnemyOnField.length<6) {
 
-                        EnemyOnField.push(new Stone(EnemyHand[i].Attack,EnemyHand[i].Health,EnemyHand[i].Texture,document.getElementById("EnemyOnField"),EnemyHand[i].Type,EnemyHand[i].AttackType))
+                        EnemyOnField.push(new Stone(EnemyHand[i].Attack,EnemyHand[i].Health,EnemyHand[i].Texture,document.getElementById("EnemyOnField"),EnemyHand[i].Type,EnemyHand[i].AttackType));
                         
                         EnemyEnergy -= EnemyHand[i].Cost;
                         EnemyHand[i].Remove();
@@ -644,16 +671,45 @@
         }
         //Time 
         document.getElementById("TimeDisplay").innerHTML = Math.trunc(Math.floor(TurnTime)/60) + ":" + String(Math.floor(TurnTime)%60).padStart(2,"0");
-        if (!Pause) {TurnTime -= deltaTime;}
+        if (!Pause && TimedPlay) {TurnTime -= deltaTime;}
         if (TurnTime<=0) {
             endTurn(true);
+        }
+        if (TimedPlay) {
+            document.getElementById("TimeDisplay").style.opacity = 1;
+        } else {
+            document.getElementById("TimeDisplay").style.opacity = 0;
+        }
+        // CanEndTurn 
+        if (CanEndTurn) {
+            document.getElementById("EndTurn").style.opacity = 1;
+        } else {
+            document.getElementById("EndTurn").style.opacity = 0;
         }
         requestAnimationFrame(Update);
     }
 
 
     
-    onMount(() => {
+    onMount(async() => {
+        let search = $page.url.searchParams;
+        if (search.has("tutorial")) {
+            let data = await fetch(window.location.origin+'/api/tutorials/get/'+search.get("tutorial"), {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            if (data.ok) {
+                Tutorial.Stages = await data.json()
+            } else {
+                window.location.href = "/";
+            }
+        } else {
+            Tutorial.Stage = -1;
+        }
+
+
         EnemyAvatar = new Stone(0,5,"Runar",document.getElementById("EnemyAvatar"),"Avatar","Tank");
         PlayerAvatar = new Stone(5,15,"BOB",document.getElementById("PlayerAvatar"),"","Tank");
 
@@ -682,6 +738,7 @@
         document.addEventListener('mousemove', handleMouseMove);
     })
     function StartGame() {
+        Pause = false;
         TurnTime = RoundTime;
         if (GiveCardsAuto) {
             if (yourTurn) {
@@ -908,6 +965,16 @@
                 // if player is using a card Projectile to select target
                 if (DraggableCard && DraggableCard.Class.Type == "Projectile") {
                     Target.Health -= DraggableSelectTarget.SelectedTarget == "Avatar"||Target.Type == "Tank"?AttackingStone.Attack/2:AttackingStone.Attack;
+                    // Projctile Visual
+                    var Projectile = document.createElement("img");
+                    Projectile.classList.add("Projectile");
+                    document.body.appendChild(Projectile);
+                    Projectile.style.top = "75%";
+                    Projectile.style.left = "50%";
+                    Projectile.style.top = (AttackingStone.Body.getBoundingClientRect().top+(AttackingStone.Body.getBoundingClientRect().height/2))+"px";
+                    Projectile.style.left = (AttackingStone.Body.getBoundingClientRect().left+(AttackingStone.Body.getBoundingClientRect().width/2))+"px";
+                    setTimeout(() => {Projectile.remove();},1500);
+                    // Apply
                     AttackingStone.Remove();
                     PlayerHand.splice(PlayerHand.indexOf(AttackingStone),1);
                     if (Target.Health<=0 && DraggableSelectTarget.SelectedTarget == "Avatar") {
@@ -915,7 +982,7 @@
                     }
                 } else { // if player is using a stone to select target
                     Target.Health -= DraggableSelectTarget.SelectedTarget == "Avatar"||Target.Type == "Tank"?AttackingStone.Attack/2:AttackingStone.Attack;
-                    AttackingStone.AttackCooldown++;
+                    if (UseAttackCooldown) {AttackingStone.AttackCooldown++;}
 
                     // Burst DMG
                     if (AttackingStone.AttackType && AttackingStone.AttackType == "Burst" && DraggableSelectTarget.SelectedTarget != "Avatar") {
@@ -1131,8 +1198,11 @@
 	    		'Content-Type': 'application/json',
 	    	}
         });
-        PlayerDeck = await deck.json();
-        DeckImported = true;
+        if (GetPlayerDeck) {
+            PlayerDeck = await deck.json();
+            DeckImported = true;
+        }
+        
     }
     // Remove all event listeners from an element
     function removeAllEventListeners(element) {
@@ -1265,7 +1335,7 @@
             if (DraggableSelectTarget) {
                 DropDraggable();
             }
-            if (!yourTurn || this.AttackCooldown > 0) {return;}
+            if (!yourTurn || this.AttackCooldown > 0 || Pause) {return;}
             var TargetIndicator = document.createElement("img");
             TargetIndicator.classList.add("TargetIndicator");
             TargetIndicator.src = "/images/target.png";

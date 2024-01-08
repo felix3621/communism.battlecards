@@ -17,11 +17,10 @@
     {
         "Name":"Felix",
         "Description":"A furry that has to much free time",
-        "Attack":5,
-        "Health":15,
+        "Attack":10,
+        "Health":10,
         "Cost":8,
         "Texture":"Felix",
-        "AttackType":"Burst",
         "TargetType":"Enemy",
         "AbilityStone":{
             "Name":"Bite",
@@ -50,8 +49,8 @@
     {
         "Name":"Ian",
         "Description":"Mr Purple man is here and throws purple slime...",
-        "Attack":5,
-        "Health":15,
+        "Attack":7,
+        "Health":13,
         "Cost":5,
         "Texture":"Ian",
         "AttackType":"Burst",

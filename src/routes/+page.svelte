@@ -448,6 +448,16 @@
                 adminLink.innerText = "Admin"
                 document.getElementById("SettingsDropDown").appendChild(adminLink);
             }
+            if (ud.getAllCards) {
+                let gac = document.createElement("a");
+                gac.onclick = () => {
+                    fetch(window.location.origin+'/api/cards/getAllCards', {
+                        method: 'GET'
+                    });
+                }
+                gac.innerText = "CARDS"
+                document.getElementById("SettingsDropDown").appendChild(gac);
+            }
         } else {
             window.location.href = '/login';
         }

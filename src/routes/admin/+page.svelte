@@ -381,7 +381,7 @@
                             } else if (data.selected.users[i].ready) {
                                 playerList.children[i].children[1].innerText = "Ready"
                             } else {
-                                playerList.children[i].children[1].innerText = "&nbsp;"
+                                playerList.children[i].children[1].innerHTML = "&nbsp;"
                             }
                         } else if (i < data.selected.users.length && i >= playerList.children.length) {
                             let main = document.createElement("div")

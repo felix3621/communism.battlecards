@@ -11,6 +11,26 @@ async function connectDB() {
 }
 connectDB()
 
+router.get('/getAllCards', auth.checkUser, async (req, res) => {
+    if (auth.getAllCards) {
+        let result = await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username})
+
+        result.inventory = []
+
+        result.deck = []
+
+        for (let i = 0; i < cards.length; i++) {
+            result.deck.push(i)
+        }
+
+        await client.db("communism_battlecards").collection("accounts").updateOne({username: req.user.username},{$set:result})
+        
+        res.status(200).send("Cards changed")
+    } else {
+        res.status(404).send("Action unavailable")
+    }
+})
+
 
 router.get('/getDeck', auth.checkUser, async (req, res) => {
     let result = await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username})

@@ -1,6 +1,7 @@
 const db = require("./database.cjs");
 const CryptoJS = require('crypto-js');
 const createTestUsers = false
+const getAllCards = true;
 
 
 async function deleteUsers () {
@@ -18,6 +19,7 @@ async function connectDB() {
 connectDB()
 
 let auth = {}
+auth.getAllCards = getAllCards
 
 auth.encrypt = (text) => {
     return CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(text));
@@ -33,7 +35,7 @@ async function checkUser(username, password) {
     let base = client.db("communism_battlecards").collection("accounts")
     let result = await base.findOne({username: username, password: password})
     if (result) {
-        let rtn = {username: result.username, display_name: result.display_name}
+        let rtn = {username: result.username, display_name: result.display_name, getAllCards: auth.getAllCards}
         if (result.admin == true)
             rtn.admin = true
         return rtn;

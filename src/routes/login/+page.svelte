@@ -100,7 +100,7 @@
 <div id="Form">
     <div id="Login">
         <h1 class="Title">Login!</h1>
-        <p class="Error" id="login_error">test</p>
+        <p class="Error" id="login_error"></p>
         <label for="login_username" class="Label1">Username</label>
         <input type="text" name="login_username" id="login_username" class="Input1">
         
@@ -112,7 +112,7 @@
     </div>
     <div id="SignUp" class="hidden">
         <h1 class="Title">Sign Up!</h1>
-        <p class="Error" id="signup_error">test</p>
+        <p class="Error" id="signup_error"></p>
         <label for="signup_username" class="Label1">Username</label>
         <input type="text" name="signup_username" id="signup_username" class="Input1">
         
@@ -186,7 +186,7 @@
             })
         })
         if (data.ok) {
-            window.location.href = "/"
+            window.location.href = "/tutorial_game?tutorial=Introduction"
         } else {
             document.getElementById("signup_error").innerText = "Error"
         }

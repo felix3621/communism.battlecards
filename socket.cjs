@@ -322,7 +322,7 @@ class Player {
         if (this.match.currentPlayer == this.PlayerType){
             var SelectedIndex = input.SelectedIndex;
             var SelectedCardIndex = input.SelectedCardIndex;
-            if (this.Hand[SelectedCardIndex].Type && this.Hand[SelectedCardIndex] == "Projectile") {
+            if (this.Hand[SelectedCardIndex] && this.Hand[SelectedCardIndex].Type && this.Hand[SelectedCardIndex] == "Projectile") {
                 return;
             }
             if (this.Hand[SelectedCardIndex] && this.Field.length<6 && this.Energy >= this.Hand[SelectedCardIndex].Cost) {

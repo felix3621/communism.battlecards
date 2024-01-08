@@ -34,7 +34,7 @@
     },
     {
         "Name":"Bloob",
-        "Description":"Its a Bloob",
+        "Description":"Its a Bloob that for some reason become a tank and does burst DMG",
         "Attack":1,
         "Health":2,
         "Cost":2,
@@ -116,5 +116,14 @@
         "Cost":2,
         "Texture":"FireBall",
         "Type":"Projectile"
+    },
+    {
+        "Name":"Draw Combo",
+        "Description":"More Cards",
+        "Attack":null,
+        "Health":null,
+        "Cost":1,
+        "Texture":"multicard",
+        "Type":"Consumable"
     }
 ]
