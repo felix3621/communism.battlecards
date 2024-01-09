@@ -52,7 +52,7 @@ auth.checkUser = async(req, res, next) => {
             res.cookie('userToken', userToken, { httpOnly: true });
             return next()
         } else {
-            res.status(401).json({ message: 'Unauthorized credentials' });
+            res.status(401).send("Invalid credentials");
         }
     } else if (req.cookies && req.cookies.userToken) {
         let token = JSON.parse(auth.decrypt(req.cookies.userToken))
@@ -67,11 +67,11 @@ auth.checkUser = async(req, res, next) => {
                     return next()
                 } else {
                     res.clearCookie('userToken');
-                    res.status(401).json({ message: 'Unauthorized credentials' });
+                    res.status(401).send("Invalid credentials");
                 }
             } else {
                 res.clearCookie('userToken');
-                res.status(401).json({ message: 'Unauthorized credentials' });
+                res.status(401).send("Invalid credentials");
             }
         } else if (req.body.createTestUser == null || req.body.createTestUser == true) {
             let user = await checkUser(username, password)
@@ -79,10 +79,10 @@ auth.checkUser = async(req, res, next) => {
                 req.user = user
                 return next()
             } else {
-                res.status(401).json({ message: 'Unauthorized token' });
+                res.status(401).send("Invalid token");
             }
         } else {
-            res.status(401).json({ message: 'Unauthorized credentials' });
+            res.status(401).send("Invalid credentials");
         }
     } else {
         if (createTestUsers && req.body.createTestUser == null || req.body.createTestUser == true) {
@@ -97,7 +97,7 @@ auth.checkUser = async(req, res, next) => {
             res.cookie('userToken', userToken, { httpOnly: true })
             return next()
         }
-        res.status(401).json({ message: 'Unauthorized' });
+        res.status(401).send("Unauthorized");
     }
 }
 module.exports = auth;

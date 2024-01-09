@@ -171,6 +171,45 @@
     :global(#tournament_battleDisplay_slot_p2) {
         direction: rtl;
     }
+    #lastPing {
+        background-color: rgb(50, 50, 50);
+        outline: 5px black solid;
+        border-radius: 25px;
+        position: fixed;
+        top: 12.5%;
+        bottom: 82.5%;
+        left: 45%;
+        right: 45%;
+        color: white;
+        text-align: center;
+    }
+    #logPanel {
+        position: fixed;
+        top:0;
+        right:0;
+        background-color: rgb(50, 50, 50);
+        border-radius: 0 0 0 25px;
+        outline: 5px black solid;
+        height: 12.5%;
+        width: 40%;
+        padding: 0 0 10px 10px;
+    }
+    #logPanel > div {
+        direction: rtl;
+        overflow: auto;
+        width: 100%;
+        height: 100%;
+    }
+    #log {
+        width: 100%;
+        height: fit-content;
+        direction: ltr;
+        color: white;
+    }
+    :global(#log > p) {
+        margin: 0;
+        border-bottom: 2.5px solid black;
+    }
 </style>
 <img id="logo" src="images/BattlecardsLogo.png" on:click={()=>window.location.href="/"}>
 
@@ -185,24 +224,37 @@
     </div>
 </div>
 <div id="selectedDisplay"></div>
+<div id="lastPing">Last Ping:<br>{lastPing.toFixed(1)}s</div>
+
+<div id="logPanel">
+    <div>
+        <div id="log"></div>
+    </div>
+</div>
 
 <script>
     import { onMount } from "svelte";
 
     var socket;
+    var lastPing = 0;
 
+    setInterval(() => {
+        lastPing += 0.1;
+    }, 100);
 
     function createSocket() {
         socket = new WebSocket(`wss://${window.location.host}/gamesocket?admin=true`);
 
         socket.onopen = () => {
             console.log('Connected to server');
+            lastPing = 0;
         }
 
         socket.onmessage = (event) => {
             var data = JSON.parse(event.data)
             console.log(data)
             Update(data)
+            lastPing = 0;
         }
 
         socket.onclose = (event) => {
@@ -236,12 +288,33 @@
         createSocket();
     })
 
+    async function autoScroll(element) {
+        element.scroll({ top: element.scrollHeight, behavior: 'smooth' });
+
+    }
+
     function Update(data) {
         UpdateSelected(data)
         if (data.battles)
             UpdateGameList(data.battles)
         if (data.tournaments)
             UpdateTournamentList(data.tournaments)
+        if (data.log) {
+            let logDiv = document.getElementById("log")
+            for (let i = 0; i < data.log.length || i<logDiv.children.length; i++) {
+                if (i<data.log.length && i>=logDiv.children.length) {
+                    logDiv.appendChild(document.createElement("p"))
+                    logDiv.children[i].innerText = data.log[i]
+                    autoScroll(logDiv.parentNode)
+                } else if (i<data.log.length && i<logDiv.children.length) {
+                    logDiv.children[i].innerText = data.log[i];
+                } else {
+                    logDiv.children[i].remove;
+                    autoScroll(logDiv.parentNode)
+                    i--;
+                }
+            }
+        }
     }
 
     function updateGamePlayer(div, data, playerData) {
@@ -256,9 +329,9 @@
             //avatar
             let avatarDiv = div.getElementsByClassName("battle_player_avatar")[0]
             if (avatarDiv.children.length == 0) {
-                avatarDiv.appendChild(CreateCharacterStone(playerData.avatar.Attack, playerData.avatar.Health, playerData.avatar.Texture))
+                avatarDiv.appendChild(CreateCharacterStone(playerData.avatar.Card.Attack, playerData.avatar.Card.Health, playerData.avatar.Card.Texture))
             } else {
-                avatarDiv.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerText = playerData.avatar.Health
+                avatarDiv.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerText = playerData.avatar.Card.Health
             }
 
             //hand
@@ -268,9 +341,9 @@
             let fieldDiv = div.getElementsByClassName("battle_player_field")[0]
             for (let i = 0; i < playerData.field.length || i<fieldDiv.children.length; i++) {
                 if (i<playerData.field.length && i>=fieldDiv.children.length) {
-                    fieldDiv.appendChild(CreateCharacterStone(playerData.field[i].Attack, playerData.field[i].Health, playerData.field[i].Texture, playerData.field[i].Type));
+                    fieldDiv.appendChild(CreateCharacterStone(playerData.field[i].Card.Attack, playerData.field[i].Card.Health, playerData.field[i].Card.Texture, playerData.field[i].Card.Type));
                 } else if (i<playerData.field.length && i < fieldDiv.children.length) {
-                    UpdateStone(fieldDiv.children[i],playerData.field[i].Attack, playerData.field[i].Health, playerData.field[i].Texture, playerData.field[i].Type);
+                    UpdateStone(fieldDiv.children[i],playerData.field[i].Card.Attack, playerData.field[i].Card.Health, playerData.field[i].Card.Texture, playerData.field[i].Card.Type);
                 } else {
                     fieldDiv.children[i].remove();
                     i--;

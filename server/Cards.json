@@ -110,7 +110,7 @@
     },
     {
         "Name":"FireBall",
-        "Description":"BURN!",
+        "Description":"Fix says BURN!!",
         "Attack":3,
         "Health":null,
         "Cost":2,
@@ -123,7 +123,8 @@
         "Attack":null,
         "Health":null,
         "Cost":1,
-        "Texture":"multicard",
+        "DrawAmount":2,
+        "Texture":"DrawCombo",
         "Type":"Consumable"
     }
 ]

@@ -8,6 +8,8 @@ const cards = require('./server/Cards.json');
 
 //admin
 var viewer = new Array();
+var log = new Array();
+const maxLogLength = 25
 
 //Game Info
 var queuedUsers = new Array();
@@ -202,6 +204,12 @@ class Battle {
     Update() {
 
         if (this.active) {
+            if (this.p1) {
+                this.p1.UpdateStones();
+            }
+            if (this.p2) {
+                this.p2.UpdateStones();
+            }
             if (this.currentPlayer == "p1") {
                 this.p1.title = "Your turn";
                 this.p2.title = "Other player's turn";
@@ -246,15 +254,25 @@ class Battle {
         }
     }
     EndGame(looser) {
-        console.log("Endgame, Looser:", looser)
         if (!this.dead && !this.Tournament) {
             if (this.p1 && this.p1.UserName == looser && this.p2) {
                 giveRewards(this.p2.UserName)
+                log.push(this.code+" ended, looser: <"+this.p1.UserName+">, winner: <"+this.p2.UserName+">")
             } else if (this.p2 && this.p2.UserName == looser && this.p1) {
                 giveRewards(this.p1.UserName)
+                log.push(this.code+" ended, looser: <"+this.p2.UserName+">, winner: <"+this.p1.UserName+">")
+            } else {
+                log.push(this.code+" died")
             }
         } else if (this.Tournament) {
             this.looser = looser;
+            if (this.p1 && this.p1.UserName == looser && this.p2) {
+                giveRewards(this.p2.UserName)
+                log.push(this.Tournament.code+" had a game end, looser: <"+this.p1.UserName+">, winner: <"+this.p2.UserName+">")
+            } else if (this.p2 && this.p2.UserName == looser && this.p1) {
+                giveRewards(this.p1.UserName)
+                log.push(this.Tournament.code+" had a game end, looser: <"+this.p2.UserName+">, winner: <"+this.p1.UserName+">")
+            }
         }
         this.dead = true;
     }
@@ -276,6 +294,22 @@ class Player {
 
         getPlayerInfo(userName,this, match);
     }
+    UpdateStones() {
+        for (let i = 0; i < this.Field.length; i++) {
+            if (this.Field[i].Card.Health<=0) {
+                console.log(this.Field[i].Card.Texture)
+                this.Field.splice(i,1);
+            }
+        }
+        if (this.Avatar && this.Avatar.Card.Health<=0 && this.match.active) {
+            this.match.SendInfo();
+            if (this.match.p1 == this) {
+                this.match.EndGame(this.match.p1.UserName);
+            } else {
+                this.match.EndGame(this.match.p2.UserName);
+            }
+        }
+    }
     UseCard(input) {
         if (this.match.currentPlayer == this.PlayerType){
             var Enemy;
@@ -295,26 +329,17 @@ class Player {
                     TargetStone = Enemy.Field[input.SelectedTargetIndex];
                 }
                 if (TargetStone) {
-                    TargetStone.Health -= (input.EnemyType=="Avatar")||(TargetStone.Type && TargetStone.Type =="Tank")?this.Hand[SelectedCardIndex].Attack/2:this.Hand[SelectedCardIndex].Attack;
+                    TargetStone.TakeDMG(this.Hand[SelectedCardIndex].Attack);
                     
                     this.Energy -= this.Hand[SelectedCardIndex].Cost;
                     this.match.Projectiles.push({From:this.PlayerType,EnemyType:input.EnemyType,Texture:this.Hand[SelectedCardIndex].Texture,SelectedTargetIndex:SelectedTargetIndex});;
                     this.Hand.splice(SelectedCardIndex,1);
-                    if (TargetStone.Health<=0) {
-                        if (input.EnemyType=="Avatar") {
-                            this.match.SendInfo();
-                            if (this.match.p1 == this) {
-                                this.match.EndGame(this.match.p2.UserName);
-                            } else {
-                                this.match.EndGame(this.match.p1.UserName);
-                            }
-                        } else {
-                            Enemy.Field.splice(Enemy.Field.indexOf(TargetStone),1);
-                        }
-                    }
                 }
-            } else if (this.Hand[SelectedCardIndex] && this.Hand[SelectedCardIndex].Type == "Consumable") {
-
+            } else if (this.Hand[SelectedCardIndex] && this.Hand[SelectedCardIndex].Type == "Consumable" && this.Hand[SelectedCardIndex].Cost<=this.Energy) {
+                if (this.Hand[SelectedCardIndex].DrawAmount && this.Hand[SelectedCardIndex].DrawAmount>0)
+                    this.match.DrawCardsToPlayer(this,this.Hand[SelectedCardIndex].DrawAmount);
+                this.Energy -= this.Hand[SelectedCardIndex].Cost;
+                this.Hand.splice(SelectedCardIndex,1);
             }
         }
     }
@@ -328,11 +353,12 @@ class Player {
             if (this.Hand[SelectedCardIndex] && this.Field.length<6 && this.Energy >= this.Hand[SelectedCardIndex].Cost) {
                 var newField = [
                     ...this.Field.slice(0, SelectedIndex),
-                    new stone(this.Hand[SelectedCardIndex].Attack,this.Hand[SelectedCardIndex].Health,this.Hand[SelectedCardIndex].Texture,1,this.Hand[SelectedCardIndex].Type,this.Hand[SelectedCardIndex].AttackType),
+                    new stone({...this.Hand[SelectedCardIndex]}),
                     ...this.Field.slice(SelectedIndex) 
                 ];
                 this.Field = newField;
                 this.Energy -= this.Hand[SelectedCardIndex].Cost;
+                console.log(this.Energy)
                 this.Hand.splice(SelectedCardIndex,1);
             }
         }
@@ -355,34 +381,9 @@ class Player {
                 AttackingStone = this.Field[input.SelectedStoneIndex];
             }
             if (input.EnemyType=="Avatar" && Enemy.Field.length==0) {
-                TargetStone = Enemy.Avatar;
-            } else if (input.SelectedAttackIndex!=null) {
-                TargetStone = Enemy.Field[input.SelectedAttackIndex];
-            }
-            if (AttackingStone && !AttackingStone.attackCooldown) {AttackingStone.attackCooldown = 0;}
-            if (AttackingStone && TargetStone && AttackingStone.attackCooldown<=0) {
-                TargetStone.Health -= (input.EnemyType&&input.EnemyType == "Avatar")||(TargetStone.Type && TargetStone.Type =="Tank")?AttackingStone.Attack/2:AttackingStone.Attack;
-                // Burst DMG
-                if (AttackingStone.AttackType && AttackingStone.AttackType == "Burst" && input.EnemyType!="Avatar" && input.SelectedStoneIndex != null) {
-                    if (input.SelectedAttackIndex<Enemy.Field.length-1) {
-                        Enemy.Field[input.SelectedAttackIndex+1].Health -= (TargetStone.Type&&TargetStone.Type=="Tank"?AttackingStone.Attack/2:AttackingStone.Attack);
-                        console.log(input.SelectedAttackIndex+1, Enemy.Field[input.SelectedAttackIndex+1].Health)
-                    }
-                    if (input.SelectedAttackIndex>0) {
-                        Enemy.Field[input.SelectedAttackIndex-1].Health -= (TargetStone.Type&&TargetStone.Type=="Tank"?AttackingStone.Attack/2:AttackingStone.Attack);
-                        console.log(input.SelectedAttackIndex-1, Enemy.Field[input.SelectedAttackIndex-1].Health)
-                    }
-                }
-                // Remove All Destroyed Stones
-                for (let i = 0; i < Enemy.Field.length; i++) {
-                    if (Enemy.Field[i].Health<=0) {
-                        Enemy.Field.splice(i,1);
-                        i--;
-                    }
-                }
-                AttackingStone.attackCooldown++;
+                AttackingStone.AttackStone(null,null,Enemy.Avatar);
                 // Killed Avatar? End Game
-                if (TargetStone.Health<=0 && input.EnemyType=="Avatar") {
+                if (Enemy.Avatar.Card.Health<=0) {
                     this.match.SendInfo();
                     if (this.match.p1 == this) {
                         this.match.EndGame(this.match.p2.UserName);
@@ -390,6 +391,8 @@ class Player {
                         this.match.EndGame(this.match.p1.UserName);
                     }
                 }
+            } else if (input.SelectedAttackIndex!=null && Enemy.Field[input.SelectedAttackIndex] != null) {
+                AttackingStone.AttackStone(input.SelectedAttackIndex,Enemy.Field);
             }
         }
     }
@@ -404,13 +407,28 @@ class Player {
 }
 
 class stone {
-    constructor(Attack, Health, Texture, attackCooldown, Type=null, AttackType=null) {
-        this.Attack = Attack;
-        this.Health = Health;
-        this.Texture = Texture;
-        this.attackCooldown = attackCooldown;
-        this.Type = Type;
-        this.AttackType = AttackType;
+    constructor(Card) {
+        this.Card = Card;
+        this.attackCooldown = 1;
+    }
+    TakeDMG(DMG) {
+        this.Card.Health -= this.Card.Type=="Tank"?DMG/2:DMG;
+    }
+    AttackStone(StoneIndex, Field, Avatar=null) {
+        this.attackCooldown++;
+        if (Avatar) {
+            Avatar.TakeDMG(this.Card.Attack);
+        } else {
+            Field[StoneIndex].TakeDMG(this.Card.Attack);
+        }
+        if (Avatar == null && this.Card.AttackType && this.Card.AttackType == "Burst") {
+            if (StoneIndex-1>=0) {
+                Field[StoneIndex-1].TakeDMG(this.Card.Attack);
+            } 
+            if (StoneIndex+1<Field.length) {
+                Field[StoneIndex+1].TakeDMG(this.Card.Attack);
+            }
+        }
     }
 }
 
@@ -494,7 +512,7 @@ class Tournament {
                         //Players@0
                         if (Players.length) {
                             giveRewards(Players[0].username);
-                            console.log("tournament winner:",Players[0].username);
+                            log.push(this.code+" has ended, winner: <"+Players[0].username+">");
                         }
 
                         while (this.Sockets.length > 0) {
@@ -647,7 +665,7 @@ async function getPlayerInfo(username, player, game) {
     for (let i = 0; i < result.deck.length; i++) {
         player.Deck.push(cards[result.deck[i]]);
     }
-    player.Avatar = { ...avatar[result.avatar]};
+    player.Avatar = new stone({...avatar[result.avatar]});
     game.DataLoaded++
 }
 
@@ -680,6 +698,7 @@ async function tick() {
         if (!added) {
             battles.push(new Battle());
             battles[battles.length-1].code = auth.encrypt("game_"+gameID)
+            log.push("<"+queuedUsers[0].username+"> created game: "+auth.encrypt("game_"+gameID))
             battles[battles.length-1].SetP1(queuedUsers[0].username);
             gameID++
         }
@@ -744,6 +763,11 @@ async function tick() {
         }
         mainData.tournaments.push({code: code, userList: userList});
     }
+    //log
+    while (log.length > maxLogLength) {
+        log.splice(0,1);
+    }
+    mainData.log = log;
 
     for (let i = 0; i < viewer.length; i++) {
         if (viewer[i].view) {
@@ -881,6 +905,7 @@ webSocketServer.on('connection', async(socket, request) => {
         //new tournament
         tournaments.push(new Tournament())
         tournaments[tournaments.length-1].code = auth.encrypt("tournament"+tournamentID);
+        log.push("<"+username+"> created tournament: "+auth.encrypt("tournament"+tournamentID))
         tournamentID++;
         tournaments[tournaments.length-1].addSocket(username,socket);
     } else if (search.get("tournament")) {
@@ -931,6 +956,7 @@ webSocketServer.on('connection', async(socket, request) => {
                 battleUsers.push({username: username, socket: socket, reconnectTime: 30})
                 battles[battles.length-1].SetP1(username);
                 battles[battles.length-1].private = true;
+                log.push("<"+username+"> created private game: "+auth.encrypt("game_"+gameID))
                 gameID++
             } else if (search.get("code")) {
                 let battle = battles.find(obj => obj.code == decodeURIComponent(search.get("code")))

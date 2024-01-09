@@ -31,7 +31,7 @@ router.post('/signup', async(req, res) => {
             res.status(403).send("Username already exists")
         }
     } else {
-        res.status(500).send("error")
+        res.status(500).send("Internal server error")
     }
 })
 router.post('/logout', (req, res) => {

@@ -166,7 +166,7 @@
         if (data.ok) {
             window.location.href = "/"
         } else {
-            document.getElementById("login_error").innerText = "Login error"
+            document.getElementById("login_error").innerText = await data.text()
         }
     }
 
@@ -188,7 +188,7 @@
         if (data.ok) {
             window.location.href = "/tutorial_game?tutorial=Introduction"
         } else {
-            document.getElementById("signup_error").innerText = "Error"
+            document.getElementById("signup_error").innerText = await data.text()
         }
     }
 </script>
