@@ -1,4 +1,5 @@
 const db = require("./database.cjs");
+const xp = require("./xp.cjs");
 const CryptoJS = require('crypto-js');
 const createTestUsers = false
 const getAllCards = true;
@@ -35,7 +36,16 @@ async function checkUser(username, password) {
     let base = client.db("communism_battlecards").collection("accounts")
     let result = await base.findOne({username: username, password: password})
     if (result) {
-        let rtn = {username: result.username, display_name: result.display_name, getAllCards: auth.getAllCards}
+        let rtn = {
+            username: result.username,
+            display_name: result.display_name,
+            getAllCards: auth.getAllCards,
+            xp: {
+                level: xp.getLevel(result.xp),
+                xp: xp.getXp(result.xp),
+                requiredXp: xp.getXpForNextLevel(result.xp)
+            }
+        }
         if (result.admin == true)
             rtn.admin = true
         return rtn;

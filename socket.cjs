@@ -25,6 +25,10 @@ var tournamentID = 0;
 const tickSpeed = 0.1;
 const roundTime = 30/tickSpeed;
 
+const winPoints = 5;
+const lossPoints = 1;
+const tournamentWinPoints = 10;
+
 
 var client;
 async function connectDB() {
@@ -204,12 +208,6 @@ class Battle {
     Update() {
 
         if (this.active) {
-            if (this.p1) {
-                this.p1.UpdateStones();
-            }
-            if (this.p2) {
-                this.p2.UpdateStones();
-            }
             if (this.currentPlayer == "p1") {
                 this.p1.title = "Your turn";
                 this.p2.title = "Other player's turn";
@@ -237,7 +235,13 @@ class Battle {
             this.EndGame()
         else if (p1 && !p1.socket && !p2)
             this.EndGame()
-        this.SendInfo()
+        this.SendInfo();
+        if (this.p1) {
+            this.p1.UpdateStones();
+        }
+        if (this.p2) {
+            this.p2.UpdateStones();
+        }
     }
     DrawCardsToPlayer(player, amount) {
         var AvalebleCards = new Array();
@@ -257,9 +261,13 @@ class Battle {
         if (!this.dead && !this.Tournament) {
             if (this.p1 && this.p1.UserName == looser && this.p2) {
                 giveRewards(this.p2.UserName)
+                giveXP(this.p1.UserName, lossPoints)
+                giveXP(this.p2.UserName, winPoints)
                 log.push(this.code+" ended, looser: <"+this.p1.UserName+">, winner: <"+this.p2.UserName+">")
             } else if (this.p2 && this.p2.UserName == looser && this.p1) {
                 giveRewards(this.p1.UserName)
+                giveXP(this.p2.UserName, lossPoints)
+                giveXP(this.p1.UserName, winPoints)
                 log.push(this.code+" ended, looser: <"+this.p2.UserName+">, winner: <"+this.p1.UserName+">")
             } else {
                 log.push(this.code+" died")
@@ -268,9 +276,13 @@ class Battle {
             this.looser = looser;
             if (this.p1 && this.p1.UserName == looser && this.p2) {
                 giveRewards(this.p2.UserName)
+                giveXP(this.p1.UserName, lossPoints)
+                giveXP(this.p2.UserName, winPoints)
                 log.push(this.Tournament.code+" had a game end, looser: <"+this.p1.UserName+">, winner: <"+this.p2.UserName+">")
             } else if (this.p2 && this.p2.UserName == looser && this.p1) {
                 giveRewards(this.p1.UserName)
+                giveXP(this.p2.UserName, lossPoints)
+                giveXP(this.p1.UserName, winPoints)
                 log.push(this.Tournament.code+" had a game end, looser: <"+this.p2.UserName+">, winner: <"+this.p1.UserName+">")
             }
         }
@@ -296,9 +308,14 @@ class Player {
     }
     UpdateStones() {
         for (let i = 0; i < this.Field.length; i++) {
-            if (this.Field[i].Card.Health<=0) {
-                console.log(this.Field[i].Card.Texture)
+            if (this.Field[i].Card.New) {
+                this.Field[i].Card.New = null;
+            } 
+            if (this.Field[i].Card.Health<=0 && this.Field[i].Card.Death) {
                 this.Field.splice(i,1);
+                i--;
+            } else if (!this.Field[i].Card.Death && this.Field[i].Card.Health<=0) {
+                this.Field[i].Card.Death = true;
             }
         }
         if (this.Avatar && this.Avatar.Card.Health<=0 && this.match.active) {
@@ -353,7 +370,7 @@ class Player {
             if (this.Hand[SelectedCardIndex] && this.Field.length<6 && this.Energy >= this.Hand[SelectedCardIndex].Cost) {
                 var newField = [
                     ...this.Field.slice(0, SelectedIndex),
-                    new stone({...this.Hand[SelectedCardIndex]}),
+                    new stone({...this.Hand[SelectedCardIndex],New:true}),
                     ...this.Field.slice(SelectedIndex) 
                 ];
                 this.Field = newField;
@@ -512,6 +529,7 @@ class Tournament {
                         //Players@0
                         if (Players.length) {
                             giveRewards(Players[0].username);
+                            giveXP(Players[0].username, tournamentWinPoints)
                             log.push(this.code+" has ended, winner: <"+Players[0].username+">");
                         }
 
@@ -600,6 +618,18 @@ async function giveRewards(username) {
     }
 
 
+    await client.db("communism_battlecards").collection("accounts").updateOne({username: username},{$set:result})
+}
+
+async function giveXP(username, points) {
+    var result = await client.db("communism_battlecards").collection("accounts").findOne({username: username})
+
+    if (result.xp) {
+        result.xp += points
+    } else {
+        result.xp = points
+    }
+    
     await client.db("communism_battlecards").collection("accounts").updateOne({username: username},{$set:result})
 }
 

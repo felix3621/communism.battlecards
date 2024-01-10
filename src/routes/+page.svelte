@@ -6,30 +6,26 @@
         background-color: rgb(50, 50, 50);
         border-radius: 0 0 25px 0;
         outline: 5px black solid;
-        max-height: 10%;
-        padding: 0 10px 10px 0;
+        width: 350px;
+        padding: 0 10px 7.5px 0;
     }
     #EXP_Bar{
-        position: fixed;
-        left:0;
-        transform: translate(0,0);
-        background-color: rgb(50, 50, 50);
+        background-color: rgb(100, 100, 100);
         color: white;
-        top:110px;
         height:15px;
-        width:350px;
+        width:150px;
         outline: 2px black solid;
-        border-radius: 0 0 25px 0;
+        border-radius: 5px;
+        float: left;
     }
     #EXP_FilLevel {
-        position: fixed;
+        position: relative;
         width:0%;
         float:left;
         height: 100%;
-        border-radius: 0 0 25px 0;
+        border-radius: 5px;
         background-color: rgb(50,150,255);
         transition: 2s;
-        opacity: 0.85;
     }
     #gamePanel {
         position: fixed;
@@ -363,10 +359,58 @@
         border-radius: 5px;
         float: left;
     }
+    #profile {
+        background-color: rgb(50,50,50);
+        position: fixed;
+        top: 115px;
+        left: 0;
+        width: fit-content;
+        height: fit-content;
+        border: 5px solid black;
+        padding: 10px 10px 10px 1px;
+        border-radius: 0 10px 10px 0;
+        color: white;
+    }
+    #profile p {
+        margin: 0;
+    }
+    #pfp {
+        height: 100%;
+        aspect-ratio: 1/1;
+        background-size: calc(100%);
+        background-repeat: no-repeat;
+        background-position: 0;
+        border-radius: 50%;
+        border: 5px solid black;
+    }
+    #level_display {
+        float: left;
+        margin-right: 10px;
+    }
 </style>
 <img id="logo" src="images/BattlecardsLogo.png">
-<div id="EXP_Bar">
-    <div id="EXP_FilLevel"></div>
+<div id="profile">
+    <table>
+        <tr>
+            <td rowspan=2 style="aspect-ratio: 1/1;" id="pfp_row">
+                <div id="pfp">
+
+                </div>
+            </td>
+            <td>
+                <p id="display_displayName" style="text-decoration: underline; font-weight: bold; font-size: 20px;"></p>
+                <p id="display_userName" style="color:rgb(175,175,175)"></p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div id="level_display"></div>
+                <div id="EXP_Bar">
+                    <div id="EXP_FilLevel"></div>
+                </div>
+            </td>
+        </tr>
+    </table>
 </div>
 <div id="SettingsMenu">
     <div id="SettingsDropDown" style="display: none;">
@@ -381,10 +425,6 @@
     }}></div>
 </div>
 
-<div id="DisplayPlayer">
-    <div class="PlayerProfileImage"></div>
-    <div class="PlayerName"><p></p></div>
-</div>
 <!--Select Match-->
 <div id="gamePanel">
     <h1 class="PanelTitle" style="position: relative"><b>Game</b></h1>
@@ -433,6 +473,17 @@
     var FontSizeAdjusterArray = new Array();
     var SelectedAvatar;
 
+    async function updateProfilePicture() {
+        var avatar_data = await (await fetch(window.location.origin+'/api/avatar/get', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })).json();
+        document.getElementById("pfp_row").width = document.getElementById("pfp_row").offsetHeight+"px"
+        document.getElementById("pfp").style.backgroundImage = 'url("/images/Cards/'+avatar_data.selected.Texture+'.png")'
+    }
+
     onMount(async() => {
         const user = await fetch(window.location.origin+'/api/account/login', {
             method: 'POST',
@@ -442,6 +493,7 @@
         });
         if (user.ok) {
             let ud = await user.json()
+            console.log(ud)
             if (ud.admin) {
                 let adminLink = document.createElement("a");
                 adminLink.setAttribute("href","admin");
@@ -458,10 +510,14 @@
                 gac.innerText = "CARDS"
                 document.getElementById("SettingsDropDown").appendChild(gac);
             }
+            document.getElementById("display_displayName").innerText = ud.display_name;
+            document.getElementById("display_userName").innerText = ud.username;
+            updateProfilePicture()
+            SetExpFilLevel((ud.xp.xp/ud.xp.requiredXp)*100);
+            document.getElementById("level_display").innerText = ud.xp.level
         } else {
             window.location.href = '/login';
         }
-        SetExpFilLevel(100);
         
         SetAllFontSizeInArray(FontSizeAdjusterArray);
         window.addEventListener('resize', () => SetAllFontSizeInArray(FontSizeAdjusterArray));
@@ -844,6 +900,7 @@
                 i--;
             }
         }
+        updateProfilePicture();
     }
     async function SetAvatar(index) {
         console.log("SetAvatar",index);

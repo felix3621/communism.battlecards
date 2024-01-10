@@ -236,7 +236,7 @@
         position: absolute;
         left:50%;
         bottom: -10px;
-        transform: translate(-50%,100%);
+        transform: translate(-50%,150%);
         color:white;
         width: 100%;
         text-align: center;
@@ -245,12 +245,13 @@
         text-shadow: 1px 0 #000000;
         letter-spacing:1px;
         font-weight:bold;
+        animation: 2s PlayerNames linear;
     }
     #PlayerName {
         position: absolute;
         left:50%;
         bottom: -10px;
-        transform: translate(-50%,100%);
+        transform: translate(-50%,150%);
         color:white;
         width: 100%;
         text-align: center;
@@ -259,6 +260,7 @@
         text-shadow: 1px 0 #000000;
         letter-spacing:1px;
         font-weight:bold;
+        animation: 2s PlayerNames linear;
     }
     :global(.OnCooldown) {
         filter: opacity(0.5);
@@ -349,6 +351,18 @@
             filter: opacity(0);
         }
     }
+   
+    @keyframes PlayerNames {
+        0% {
+            filter: opacity(0);
+        }
+        75% {
+            filter: opacity(0);
+        }
+        100% {
+            filter: opacity(1);
+        }
+    }
     :global(.CharacterName) {
         position: relative;
         margin: 0;
@@ -364,7 +378,7 @@
         user-select: none;
         overflow: hidden;
         white-space: nowrap;
-        pointer-events: none
+        pointer-events: none;
     }
     :global(.Prompt) {
         position: fixed;
@@ -387,11 +401,44 @@
         height: fit-content;
         transform: translate(-50%,-50%);
     }
+    :global(.NewStone) {
+        animation: 0.5s PlaceMent linear;
+    }
+    :global(.DestroyStone) {
+        animation: 0.5s Destroy linear;
+    } 
+    @keyframes Destroy {
+        0% {
+            transform: scale(1,1);
+            filter: opacity(1);
+        }
+        25% {
+            transform: scale(1.5,1.5);
+            filter: opacity(1);
+        }
+        100% {
+            transform: scale(0,0);
+            filter: opacity(0);
+        }
+    }
+    @keyframes PlaceMent {
+        0% {
+            transform: translate(0,50%) scale(1.5,1.5);
+            filter: opacity(0) drop-shadow(0 -6mm 4mm rgba(0, 0, 0,0));
+        }
+        25% {
+            filter: opacity(1) drop-shadow(0 -6mm 4mm rgba(0, 0, 0,0.5));
+        }
+        100% {
+            transform: translate(0,0) scale(1,1);
+            filter: opacity(1) drop-shadow(0 0mm 0mm rgba(0, 0, 0,0));;
+        }
+    }
 </style>
 <hr id="MidleLine">
 <div id="EnemyAvatar"><h1 id="EnemyName">Waiting for Player...</h1></div>
 
-<div id="PlayerAvatar"><h1 id="PlayerName"></h1></div>
+<div id="PlayerAvatar"><h1 id="PlayerName"> </h1></div>
 <div id="EnemyHand"></div>
 <div id="PlayerHand"></div>
 <div id="EnemyOnField"></div>
@@ -1038,6 +1085,7 @@
             
             var containerHeight = Element.parentNode.clientHeight;
             var textHeight = Element.scrollHeight;
+            console.log(textHeight, containerHeight)
 
             //if Number(Element.style.fontSize) > 0 then use else 1, then multiply with fontSize
 
@@ -1101,6 +1149,9 @@
                 }, SpawnDelay*500);
         }
         UpdateVisuals(Card) {
+            if ((DraggableCard == null && this.Body && this.Body.classList.contains("Card") && this.Body.style.display == "none") || (DraggableCard && DraggableCard.Class != this && this.Body && this.Body.classList.contains("Card") && this.Body.style.display == "none")) {
+                this.Body.style.display = "block";
+            }
             if (this.BodyCreated && this.Card != Card) {
                 this.Body = removeAllEventListeners(this.Body);
                 if (this.Card.Type != "Consumable") {
@@ -1163,10 +1214,30 @@
             this.Body = CreateCharacterStone(Card.Attack,Card.Health,Card.Texture,"",Card.Type);
             this.Body.classList.add("Selectable");
             this.Body.addEventListener("mousedown", ()=>this.SelectAttackingStone());
+
             ParentNode.appendChild(this.Body);
+            if (this.Card.New==true) {
+                this.Body.classList.add("NewStone");
+                this.Body.addEventListener('animationend', () => {
+                    this.Body.classList.remove("NewStone");
+                });
+            }
         }
         UpdateVisuals(Card=this.Card, AttackCooldown=this.AttackCooldown, WhatAmI = "") {
             this.Card = Card;
+            if (Card.New==true) {
+                this.Body.classList.add("NewStone");
+                this.Body.addEventListener('animationend', () => {
+                    this.Body.classList.remove("NewStone");
+                });
+            } else if (Card.Death==true) {
+                this.Body.classList.add("DestroyStone");
+                this.Body.addEventListener('animationend', () => {
+                    if (!this.Removing) {
+                        this.Body.classList.remove("DestroyStone");
+                    }
+                });
+            }
             if (DraggableSelectTarget && DraggableSelectTarget.SelectedTarget == WhatAmI && WhatAmI!="") {
                 this.Body.getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = this.Card.Attack;
                 this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = this.Card.Health-(this.Card.Type=="Tank"?DraggableSelectTarget.Class.Card.Attack/2:DraggableSelectTarget.Class.Card.Attack);
@@ -1193,7 +1264,17 @@
             }
         }
         Remove() {
-            this.Body.remove();
+            if (this.Body) {
+                if (this.Card.Death==true) {
+                    this.Body.classList.add("DestroyStone");
+                }
+                
+                this.Removing = true;
+                let Body = this.Body;
+                setTimeout(function() {
+                    Body.remove();
+                }, 500);
+            }
         }
         SelectAttackingStone() {
             if (DraggableSelectTarget) {
