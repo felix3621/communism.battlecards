@@ -2,6 +2,7 @@ const http = require('http');
 const WebSocket = require('ws');
 const auth = require('./server/authentication.cjs');
 const db = require('./server/database.cjs');
+const fr = require('./server/fileReader.cjs');
 
 const avatar = require('./server/Avatars.json')
 const cards = require('./server/Cards.json');
@@ -710,7 +711,7 @@ async function authorizeSocket(socket, request) {
 
 async function isAdmin(username) {
     var data = await client.db("communism_battlecards").collection("accounts").findOne({username: username})
-    if (data.admin == true)
+    if (data.admin == true || data.root == true)
         return true
     return false
 }

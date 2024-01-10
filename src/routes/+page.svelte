@@ -125,12 +125,21 @@
         filter: opacity(0.5);
     }
 
-    :global(#SettingsMenu a) {
+    
+    :global(.adminButton) {
+        color: red;
+        text-decoration: none;
+    }
+    :global(.adminButton:hover) {
+        color: rgba(255,0,0,0.5);
+    }
+
+    :global(#SettingsMenu a:not(.adminButton)) {
         color: white;
         cursor: pointer;
         text-decoration: none;
     }
-    :global(#SettingsMenu a:hover) {
+    :global(#SettingsMenu a:not(.adminButton):hover) {
         color: rgb(150, 150, 150);
     }
     :global(#SettingsMenu a:active) {
@@ -403,7 +412,7 @@
         color: white;
         font-size: 500%;
     }
-    #RewardCreate {
+    #RewardCrate {
         position: fixed;
         transform: translate(-50%,-50%);
         top: 35%;
@@ -413,7 +422,24 @@
         width: 200px;
         background-size: contain;
         background-repeat: no-repeat;
-        animation: 3s CreateBreak linear;
+    }
+    :global(.CrateShake) {
+        animation: 2s CrateBreak linear;
+    }
+    #RewardDisplay {
+        position: fixed;
+        top: 50%;
+        transform: translate(-50%,-50%);
+        left: 50%;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(100px,200px));
+        grid-column-gap: 10%;
+        width: 50%;
+    }
+    :global(#RewardDisplay > div) {
+        filter: drop-shadow(0 0 0.5rem crimson);
+        min-height: 100px;
+        min-width: 100px;
     }
     #ResultPage button {
         position: fixed;
@@ -421,9 +447,24 @@
         bottom: 25%;
         left: 50%;
         font-size: 200%;
-
     }
-    @keyframes CreateBreak {
+    :global(.XpDisplay) {
+        background-color: #252525;
+        border-radius: 15px;
+        outline: 5px black solid;
+    }
+    :global(.XpDisplay h1) {
+        position: absolute;
+        left: 50%;
+        top:50%;
+        margin: 0;
+        width: fit-content;
+        transform: translate(-50%,-50%);
+        text-align: center;
+        color: rgb(0, 255, 0);
+        filter: drop-shadow(0.5rem 0.5rem 4rem rgb(0,100,0));
+    }
+    @keyframes CrateBreak {
         0% {
             transform: translate(0%,0%) scale(1,1) rotate(0deg);
         }
@@ -528,11 +569,11 @@
     <button style="position: fixed;right:0;top:0;font-size:50px" class="btn" on:click={()=>document.getElementById("InventoryPanel").style.display="none"}>Back</button>
     <div id="Inventory"></div>
 </div>
-<div id="ResultPage" style="display: block;">
+<div id="ResultPage" style="display: none;">
     <h1 id="ResultTitle">Title</h1>
-    <div id="RewardCreate"></div>
+    <div id="RewardCrate" style="display: none;"></div>
     <div id="RewardDisplay"></div>
-    <button on:click={()=>{document.getElementById("ResultPage".style.display="none");fetch(window.location.origin+'/api/cards/getDeck', {method: 'POST',headers: {'Content-Type': 'application/json',}});}}>Okay</button>
+    <button on:click={()=>{document.getElementById("ResultPage").style.display="none";fetch(window.location.origin+'/api/account/clearRewards', {method: 'POST',headers: {'Content-Type': 'application/json'}});}}>Okay</button>
 </div>
 
 
@@ -550,8 +591,33 @@
                 'Content-Type': 'application/json',
             }
         })).json();
-        document.getElementById("pfp_row").width = document.getElementById("pfp_row").offsetHeight+"px"
-        document.getElementById("pfp").style.backgroundImage = 'url("/images/Cards/'+avatar_data.selected.Texture+'.png")'
+        document.getElementById("pfp_row").width = document.getElementById("pfp_row").offsetHeight+"px";
+        document.getElementById("pfp").style.backgroundImage = 'url("/images/Cards/'+avatar_data.selected.Texture+'.png")';
+    }
+    function OppenRewardCrate(Rewards) {
+        document.getElementById("ResultPage").style.display = "block";
+        document.getElementById("ResultTitle").innerHTML = Rewards.won?"You Won!": "You Lost!";
+        document.getElementById("RewardDisplay").innerHTML = "";
+        
+        //Create Animation + Reward Display
+        document.getElementById("RewardCrate").style.display = "block";
+        document.getElementById("RewardCrate").classList.add("CrateShake");
+        document.getElementById("RewardCrate").addEventListener("animationend",()=>{
+            document.getElementById("RewardCrate").classList.remove("CrateShake");
+            document.getElementById("RewardCrate").style.display = "none";
+            // Display Rewards
+            var RewardDisplay = document.getElementById("RewardDisplay");
+            var XpDisplay = document.createElement("div");
+            XpDisplay.classList.add("XpDisplay");
+            var XpText = document.createElement("h1");
+            XpText.innerHTML = Rewards.xp + " XP";
+            XpDisplay.appendChild(XpText);
+            RewardDisplay.appendChild(XpDisplay);
+            for (let i = 0; i < Rewards.cards.length; i++) {
+                RewardDisplay.appendChild(CreateCard(Rewards.cards[i].Name,Rewards.cards[i].Description,Rewards.cards[i].Cost,Rewards.cards[i].Attack,Rewards.cards[i].Health,Rewards.cards[i].Texture));
+            }
+        });
+
     }
 
     onMount(async() => {
@@ -564,10 +630,20 @@
         if (user.ok) {
             let ud = await user.json()
             console.log(ud)
+            if (ud.rewards) {
+                OppenRewardCrate(ud.rewards);
+            }
             if (ud.admin) {
+                let viewLink = document.createElement("a");
+                viewLink.setAttribute("href","view");
+                viewLink.innerText = "View";
+                viewLink.classList.add("adminButton");
+                document.getElementById("SettingsDropDown").appendChild(viewLink);
+                
                 let adminLink = document.createElement("a");
                 adminLink.setAttribute("href","admin");
-                adminLink.innerText = "Admin"
+                adminLink.innerText = "Admin";
+                adminLink.classList.add("adminButton");
                 document.getElementById("SettingsDropDown").appendChild(adminLink);
             }
             if (ud.getAllCards) {
@@ -766,7 +842,6 @@
         for (let i = 0; i < Deck.length || i < DeckParent.children.length; i++) {
             var CurrentChild;
             if (i>= DeckParent.children.length && i < Deck.length) {
-                console.log(Deck[i].Type);
                 CurrentChild = CreateCard(Deck[i].Name,Deck[i].Description,Deck[i].Cost,Deck[i].Attack,Deck[i].Health,Deck[i].Texture);
                 CurrentChild.classList.add("ClicableCard");
                 DeckParent.appendChild(CurrentChild);

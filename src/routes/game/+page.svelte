@@ -431,7 +431,7 @@
         }
         100% {
             transform: translate(0,0) scale(1,1);
-            filter: opacity(1) drop-shadow(0 0mm 0mm rgba(0, 0, 0,0));;
+            filter: opacity(1) drop-shadow(0 0mm 0mm rgba(0, 0, 0,0));
         }
     }
 </style>

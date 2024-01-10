@@ -40,7 +40,6 @@
         "Cost":2,
         "Texture":"Bloob",
         "AttackType":"Burst",
-        "TargetType":"Enemy",
         "Type":"Tank"
     },
     {
@@ -126,5 +125,162 @@
         "DrawAmount":2,
         "Texture":"DrawCombo",
         "Type":"Consumable"
+    },
+    {
+        "Name":"Litten",
+        "Description":"The cat",
+        "Attack":9,
+        "Health":11,
+        "Cost":5,
+        "Texture":"Litten"
+    },
+    {
+        "Name":"Loot crate",
+        "Description":"A lootcrate, but for battle",
+        "Attack":0,
+        "Health":20,
+        "Cost":7,
+        "Texture":"LootCrate"
+    },
+    {
+        "Name":"Pepe",
+        "Description":"The meme lord",
+        "Attack":3,
+        "Health":3,
+        "Cost":4,
+        "Texture":"Pepe"
+    },
+    {
+        "Name":"Pokeball",
+        "Description":"A ball is a deadly weapon, if used correctly. Got to catch em all!",
+        "Attack":15,
+        "Health":null,
+        "Cost":7,
+        "Texture":"Pokeball",
+        "Type":"Projectile"
+    },
+    {
+        "Name":"Pope",
+        "Description":"The pope has joined the battle",
+        "Attack":10,
+        "Health":10,
+        "Cost":10,
+        "Texture":"Pope"
+    },
+    {
+        "Name":"Geometry Dash",
+        "Description":"there is nothing called wrong game",
+        "Attack":6,
+        "Health":9,
+        "Cost":5,
+        "Texture":"Geometry_dash"
+    },
+    {
+        "Name":"Snail",
+        "Description":"Will you snail?",
+        "Attack":2,
+        "Health":4,
+        "Cost":3,
+        "Type":"Tank",
+        "Texture":"Snail"
+    },
+    {
+        "Name":"Car",
+        "Description":"Drive over your enemy with the power of anime",
+        "Attack":10,
+        "Health":null,
+        "Cost":5,
+        "Texture":"Car",
+        "Type":"Projectile"
+    },
+    {
+        "Name":"Goblin Slayer",
+        "Description":"Here to delete all the goblins from the enemy",
+        "Attack":3,
+        "AttackType":"Burst",
+        "Health":7,
+        "Cost":5,
+        "Texture":"GoblinSlayer"
+    },
+    {
+        "Name":"Kristian",
+        "Description":"A wild Kristian has appeared",
+        "Attack":5,
+        "Health":11,
+        "Cost":8,
+        "Texture":"Kristian"
+    },
+    {
+        "Name":"Tor Steinar",
+        "Description":"How did he get here",
+        "Attack":5,
+        "Health":10,
+        "Cost":8,
+        "Texture":"TorSteinar"
+    },
+    {
+        "Name":"BAD",
+        "Description":"Big Airship of Doom",
+        "Attack":15,
+        "Health":null,
+        "Cost":10,
+        "Texture":"BAD",
+        "Type":"Projectile"
+    },
+    {
+        "Name":"Monke",
+        "Description":"Le monke",
+        "Attack":1,
+        "Health":5,
+        "Cost":3,
+        "Texture":"Monke"
+    },
+    {
+        "Name":"Bloon",
+        "Description":"A bloon of destruction",
+        "Attack":1,
+        "Health":1,
+        "Cost":1,
+        "Texture":"Bloon"
+    },
+    {
+        "Name":"Uganda Knuckles",
+        "Description":"Do u kno da wae",
+        "Attack":2,
+        "Health":4,
+        "Cost":3,
+        "Texture":"UgandaKnuckles"
+    },
+    {
+        "Name":"Duolingo",
+        "Description":"Enemy has forgotten their duolingo lesson",
+        "Attack":3,
+        "Health":5,
+        "Cost":4,
+        "Texture":"Duolingo"
+    },
+    {
+        "Name":"Ohio",
+        "Description":"Welcome to ohio",
+        "Attack":0,
+        "Health":10,
+        "Cost":4,
+        "Texture":"Ohio"
+    },
+    {
+        "Name":"Offensive Duolingo",
+        "Description":"You did not complete your lessons, so you know what happens now",
+        "Attack":9,
+        "Health":5,
+        "Cost":7,
+        "Texture":"DuolingoGun"
+    },
+    {
+        "Name":"Technoblade",
+        "Description":"Technoblade never dies!<br>Blood for the Blood God!",
+        "Attack":15,
+        "Health":15,
+        "Cost":10,
+        "Texture":"Technoblade"
     }
 ]

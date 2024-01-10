@@ -121,9 +121,5 @@ Login
 ## Missing
 - Starter: 1 Energy
 - Select between 4 random cards from deck to start whit first round
-- Some Cards Cost 0 Energy
-- Tank Cards
 - Attack Cards
 - Card Rolles
-- Consumebles
-- Burst Attack

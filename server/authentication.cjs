@@ -2,15 +2,12 @@ const db = require("./database.cjs");
 const xp = require("./xp.cjs");
 const CryptoJS = require('crypto-js');
 const cards = require("./Cards.json");
-const createTestUsers = false
-const getAllCards = true;
+const fr = require('./fileReader.cjs');
 
 
 async function deleteUsers () {
-    if (!createTestUsers) {
-        await client.db("communism_battlecards").collection("accounts").deleteMany({testUser: true})
-        console.log("testusers deleted")
-    }
+    await client.db("communism_battlecards").collection("accounts").deleteMany({testUser: true})
+    console.log("testusers deleted")
 }
 setTimeout(deleteUsers,1000);
 
@@ -21,7 +18,6 @@ async function connectDB() {
 connectDB()
 
 let auth = {}
-auth.getAllCards = getAllCards
 
 auth.encrypt = (text) => {
     return CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(text));
@@ -40,7 +36,7 @@ async function checkUser(username, password) {
         let rtn = {
             username: result.username,
             display_name: result.display_name,
-            getAllCards: auth.getAllCards,
+            getAllCards: JSON.parse(fr('./settings.json')).getAllCards||result.admin||result.root,
             xp: {
                 level: xp.getLevel(result.xp),
                 xp: xp.getXp(result.xp),
@@ -48,8 +44,10 @@ async function checkUser(username, password) {
                 totalXp: result.xp
             }
         }
-        if (result.admin == true)
+        if (result.admin == true || result.root == true)
             rtn.admin = true
+        if (result.root)
+            rtn.root = true
 
         rtn.rewards = {}
 
@@ -73,6 +71,9 @@ async function checkUser(username, password) {
             rtn.rewards.xp = result.previousGame.rewardXp
         }
 
+        if (Object.entries(rtn.rewards).length == 0)
+            delete rtn.rewards;
+
         return rtn;
     }
     return null;
@@ -80,6 +81,7 @@ async function checkUser(username, password) {
 
 auth.checkUser = async(req, res, next) => {
     try {
+        setting = JSON.parse(fr('./settings.json'))
         if (req.body.username && req.body.password) {
             let user = await checkUser(req.body.username, req.body.password)
             if (user) {
@@ -96,7 +98,7 @@ auth.checkUser = async(req, res, next) => {
             let password = auth.decrypt(auth.decrypt(token[1]))
             
             if (token[2] && auth.decrypt(token[2]) == "true") {
-                if (createTestUsers) {
+                if (settings.testUsers) {
                     let user = await checkUser(username, password)
                     if (user) {
                         req.user = user
@@ -121,7 +123,7 @@ auth.checkUser = async(req, res, next) => {
                 res.status(401).send("Invalid credentials");
             }
         } else {
-            if (createTestUsers && req.body.createTestUser == null || req.body.createTestUser == true) {
+            if (settings.testUsers && req.body.createTestUser == null || req.body.createTestUser == true) {
                 let base = client.db("communism_battlecards").collection("accounts")
     
                 let testpsw = auth.encrypt("test")

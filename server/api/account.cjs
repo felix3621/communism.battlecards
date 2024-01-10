@@ -40,7 +40,7 @@ router.post('/logout', (req, res) => {
     res.json({ message: 'Logout successful' });
 })
 router.post('/clearRewards', auth.checkUser, async (req, res) => {
-    await client.db("communism_battlecards").collection("accounts").updateOne({username: username},{$unset:{previousGame:'',previousTournament:'',newCards:''}})
+    await client.db("communism_battlecards").collection("accounts").updateOne({username: req.user.username},{$unset:{previousGame:'',previousTournament:'',newCards:''}})
 })
 
 module.exports = router;
