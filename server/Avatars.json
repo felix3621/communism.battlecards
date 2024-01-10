@@ -1,34 +1,10 @@
 [
     {
-        "Name":"BOB",
-        "Description":"Oh no the BOB has descended and is here to kill uss all!",
-        "Attack":5,
-        "Health":15,
-        "Texture":"BOB",
-        "AbilityStone":{
-            "Name":"Wind Blade",
-            "Description":"A Blade Off Wind<br>DMG: 4",
-            "Attack":4,
-            "Texture":"WindBlade",
-            "Cost":2,
-            "Type":"Projectile"
-        }
-    },
-    {
-        "Name":"Felix",
-        "Description":"A furry that has to much free time",
-        "Attack":10,
-        "Health":10,
-        "Cost":8,
-        "Texture":"Felix",
-        "TargetType":"Enemy",
-        "AbilityStone":{
-            "Name":"Bite",
-            "Description":"A Weird Furry Attack <br>DMG: 4",
-            "Attack":4,
-            "Texture":"bite",
-            "Cost":2
-        }
+        "Name":"SandBag",
+        "Description":"He Weak But He Angry",
+        "Attack":2,
+        "Health":8,
+        "Texture":"sandbag"
     },
     {
         "Name":"FixFox",
@@ -44,7 +20,8 @@
             "Texture":"FireBall",
             "Cost":2,
             "Type":"Projectile"
-        }
+        },
+        "unlockRequirements":4
     },
     {
         "Name":"Ian",
@@ -61,7 +38,8 @@
             "Attack":4,
             "Texture":"SlimeShip",
             "Cost":2
-        }
+        },
+        "unlockRequirements":3
     },
     {
         "Name":"Professor Hornung",
@@ -79,6 +57,40 @@
             "Texture":"book",
             "Cost":2,
             "Type":"Projectile"
-        }
+        },
+        "unlockRequirements":2
+    },
+    {
+        "Name":"BOB",
+        "Description":"Oh no the BOB has descended and is here to kill uss all!",
+        "Attack":5,
+        "Health":15,
+        "Texture":"BOB",
+        "AbilityStone":{
+            "Name":"Wind Blade",
+            "Description":"A Blade Off Wind<br>DMG: 4",
+            "Attack":4,
+            "Texture":"WindBlade",
+            "Cost":2,
+            "Type":"Projectile"
+        },
+        "unlockRequirements":5
+    },
+    {
+        "Name":"Felix",
+        "Description":"A furry that has to much free time",
+        "Attack":10,
+        "Health":10,
+        "Cost":8,
+        "Texture":"Felix",
+        "TargetType":"Enemy",
+        "AbilityStone":{
+            "Name":"Bite",
+            "Description":"A Weird Furry Attack <br>DMG: 4",
+            "Attack":4,
+            "Texture":"bite",
+            "Cost":2
+        },
+        "unlockRequirements":5
     }
 ]

@@ -261,13 +261,23 @@ class Battle {
         if (!this.dead && !this.Tournament) {
             if (this.p1 && this.p1.UserName == looser && this.p2) {
                 giveRewards(this.p2.UserName)
+                
                 giveXP(this.p1.UserName, lossPoints)
+                client.db("communism_battlecards").collection("accounts").updateOne({username: this.p1.UserName},{$set:{previousGame: {won: false, rewardXp: lossPoints}}})
+
                 giveXP(this.p2.UserName, winPoints)
+                client.db("communism_battlecards").collection("accounts").updateOne({username: this.p2.UserName},{$set:{previousGame: {won: true, rewardXp: winPoints}}})
+                
                 log.push(this.code+" ended, looser: <"+this.p1.UserName+">, winner: <"+this.p2.UserName+">")
             } else if (this.p2 && this.p2.UserName == looser && this.p1) {
                 giveRewards(this.p1.UserName)
+
                 giveXP(this.p2.UserName, lossPoints)
+                client.db("communism_battlecards").collection("accounts").updateOne({username: this.p2.UserName},{$set:{previousGame: {won: false, rewardXp: lossPoints}}})
+                
                 giveXP(this.p1.UserName, winPoints)
+                client.db("communism_battlecards").collection("accounts").updateOne({username: this.p1.UserName},{$set:{previousGame: {won: true, rewardXp: winPoints}}})
+
                 log.push(this.code+" ended, looser: <"+this.p2.UserName+">, winner: <"+this.p1.UserName+">")
             } else {
                 log.push(this.code+" died")
@@ -276,13 +286,21 @@ class Battle {
             this.looser = looser;
             if (this.p1 && this.p1.UserName == looser && this.p2) {
                 giveRewards(this.p2.UserName)
+
                 giveXP(this.p1.UserName, lossPoints)
+                client.db("communism_battlecards").collection("accounts").updateOne({username: this.p1.UserName},{$inc:{previousTournament: {rewardXp: lossPoints}}})
                 giveXP(this.p2.UserName, winPoints)
+                client.db("communism_battlecards").collection("accounts").updateOne({username: this.p2.UserName},{$inc:{previousTournament: {rewardXp: winPoints}}})
+
                 log.push(this.Tournament.code+" had a game end, looser: <"+this.p1.UserName+">, winner: <"+this.p2.UserName+">")
             } else if (this.p2 && this.p2.UserName == looser && this.p1) {
                 giveRewards(this.p1.UserName)
+
                 giveXP(this.p2.UserName, lossPoints)
+                client.db("communism_battlecards").collection("accounts").updateOne({username: this.p2.UserName},{$inc:{previousTournament: {rewardXp: lossPoints}}})
                 giveXP(this.p1.UserName, winPoints)
+                client.db("communism_battlecards").collection("accounts").updateOne({username: this.p1.UserName},{$inc:{previousTournament: {rewardXp: winPoints}}})
+
                 log.push(this.Tournament.code+" had a game end, looser: <"+this.p2.UserName+">, winner: <"+this.p1.UserName+">")
             }
         }
@@ -530,6 +548,10 @@ class Tournament {
                         if (Players.length) {
                             giveRewards(Players[0].username);
                             giveXP(Players[0].username, tournamentWinPoints)
+
+                            client.db("communism_battlecards").collection("accounts").updateOne({username: Players[0].username},{$inc:{previousTournament: {rewardXp: tournamentWinPoints}}})
+                            client.db("communism_battlecards").collection("accounts").updateOne({username: Players[0].username},{$set:{previousTournament: {win: true}}})
+
                             log.push(this.code+" has ended, winner: <"+Players[0].username+">");
                         }
 
@@ -615,6 +637,12 @@ async function giveRewards(username) {
         item.count++;
     } else {
         result.inventory.push({card:cardID,count:1});
+    }
+
+    if (result.newCards) {
+        result.newCards.push(cardID)
+    } else {
+        result.newCards = [cardID]
     }
 
 
@@ -910,6 +938,8 @@ async function tick() {
 webSocketServer.on('connection', async(socket, request) => {
     let username = await authorizeSocket(socket, request);
     if (!username) return;
+
+    await client.db("communism_battlecards").collection("accounts").updateOne({username: username},{$unset:{previousGame:'',previousTournament:''}})
 
     const search = (new URL(request.url, 'http://localhost')).searchParams
 

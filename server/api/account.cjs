@@ -39,5 +39,8 @@ router.post('/logout', (req, res) => {
     res.clearCookie('userToken');
     res.json({ message: 'Logout successful' });
 })
+router.post('/clearRewards', auth.checkUser, async (req, res) => {
+    await client.db("communism_battlecards").collection("accounts").updateOne({username: username},{$unset:{previousGame:'',previousTournament:'',newCards:''}})
+})
 
 module.exports = router;

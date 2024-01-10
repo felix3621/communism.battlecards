@@ -387,6 +387,70 @@
         float: left;
         margin-right: 10px;
     }
+    #ResultPage {
+        background-color: rgba(0, 0, 0, 0.5);
+        position: fixed;
+        left:0;
+        top:0;
+        right:0;
+        bottom: 0;
+    }
+    #ResultTitle {
+        position: fixed;
+        transform: translate(-50%,-50%);
+        top: 0;
+        left: 50%;
+        color: white;
+        font-size: 500%;
+    }
+    #RewardCreate {
+        position: fixed;
+        transform: translate(-50%,-50%);
+        top: 35%;
+        left: 50%;
+        background-image: url("/images/loot_crate.png");
+        aspect-ratio: 1/1;
+        width: 200px;
+        background-size: contain;
+        background-repeat: no-repeat;
+        animation: 3s CreateBreak linear;
+    }
+    #ResultPage button {
+        position: fixed;
+        transform: translate(-50%,-50%);
+        bottom: 25%;
+        left: 50%;
+        font-size: 200%;
+
+    }
+    @keyframes CreateBreak {
+        0% {
+            transform: translate(0%,0%) scale(1,1) rotate(0deg);
+        }
+        10% {
+            transform: translate(30%,0%) scale(1.1,1) rotate(25deg);
+        }
+        30% {
+            transform: translate(0%,30%) scale(1,1.1) rotate(-25deg);
+        }
+        40% {
+            transform: translate(-10%,20%) scale(1.1,1.1) rotate(45deg);
+        }
+        60% {
+            transform: translate(-20%,15%) scale(1,1.1) rotate(15deg);
+        }
+        70% {
+            transform: translate(0%,15%) scale(1,1) rotate(0deg);
+            filter: opacity(1);
+        }
+        97% {
+            transform: translate(0%,0%) scale(3,3) rotate(0deg);
+        }
+        100% {
+            transform: translate(0%,0%) scale(2,2) rotate(0deg);
+            filter: opacity(0);
+        }
+    }
 </style>
 <img id="logo" src="images/BattlecardsLogo.png">
 <div id="profile">
@@ -464,6 +528,12 @@
     <button style="position: fixed;right:0;top:0;font-size:50px" class="btn" on:click={()=>document.getElementById("InventoryPanel").style.display="none"}>Back</button>
     <div id="Inventory"></div>
 </div>
+<div id="ResultPage" style="display: block;">
+    <h1 id="ResultTitle">Title</h1>
+    <div id="RewardCreate"></div>
+    <div id="RewardDisplay"></div>
+    <button on:click={()=>{document.getElementById("ResultPage".style.display="none");fetch(window.location.origin+'/api/cards/getDeck', {method: 'POST',headers: {'Content-Type': 'application/json',}});}}>Okay</button>
+</div>
 
 
 <script>
@@ -515,6 +585,7 @@
             updateProfilePicture()
             SetExpFilLevel((ud.xp.xp/ud.xp.requiredXp)*100);
             document.getElementById("level_display").innerText = ud.xp.level
+            CreateTooltipEvent(document.getElementById("EXP_Bar").parentNode, "Level: "+ud.xp.level, (ud.xp.requiredXp-ud.xp.xp)+" xp remaining for next level<br>Total xp: "+ud.xp.totalXp)
         } else {
             window.location.href = '/login';
         }
@@ -884,17 +955,27 @@
 
         for (let i = 0; i < Avatars.avatars.length || i < DisplayAllAvatarsParent.children.length; i++) {
             if (i>= DisplayAllAvatarsParent.children.length && i < Avatars.avatars.length) {
-                var NewAvatar = CreateCharacterStone(Avatars.avatars[i].Attack,Avatars.avatars[i].Health,Avatars.avatars[i].Texture, "Tank");
+                if (Avatars.avatars[i].Locked) {
+                    var NewAvatar = document.createElement("div");
+                    NewAvatar.style.backgroundImage = "url(/images/locked.png)";
+                    NewAvatar.classList.add("CharacterStone");
+                    NewAvatar.Locked = true;
+                } else {
+                    var NewAvatar = CreateCharacterStone(Avatars.avatars[i].Attack,Avatars.avatars[i].Health,Avatars.avatars[i].Texture, "Tank");
+                    NewAvatar.Locked = false;
+                    (function(index) {
+                        NewAvatar.addEventListener("click",()=>SetAvatar(index));
+                    })(i);
+                }
                 DisplayAllAvatarsParent.appendChild(NewAvatar);
-                (function(index) {
-                    NewAvatar.addEventListener("click",()=>SetAvatar(index));
-                })(i);
+                
                 (function(index, NewAvatar) {
                     CreateTooltipEvent(NewAvatar,Avatars.avatars[i].Name,Avatars.avatars[i].Description)
                 })(i, NewAvatar)
                 
             } else if (i < Avatars.avatars.length) {
-                UpdateStone(DisplayAllAvatarsParent.children[i], Avatars.avatars[i].Attack,Avatars.avatars[i].Health,Avatars.avatars[i].Texture, "Tank")
+                if (!DisplayAllAvatarsParent.children[i].Locked && !Avatars.avatars.Locked)
+                    UpdateStone(DisplayAllAvatarsParent.children[i], Avatars.avatars[i].Attack,Avatars.avatars[i].Health,Avatars.avatars[i].Texture, "Tank")
             } else {
                 DisplayAllAvatarsParent.children[i].remove();
                 i--;
