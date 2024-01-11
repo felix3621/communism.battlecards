@@ -1,5 +1,11 @@
 {
     "lockdown": false,
     "getAllCards": true,
-    "testUsers": false
+    "getXp": true,
+    "getXpAmount": 5562,
+    "testUsers": true,
+    "defaultAvatar": 0,
+    "defaultDeck": [0,1],
+    "defaultInventory": [],
+    "defaultXp": 0
 }

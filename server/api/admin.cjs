@@ -26,6 +26,12 @@ router.get('/users', async (req, res) => {
     } else {
         result = await client.db("communism_battlecards").collection("accounts").find({admin: {$exists: false}, root: {$exists: false}}).toArray();
     }
+    if (result) {
+        for (let i = 0; i < result.length; i++) {
+            delete result[i]._id
+            delete result[i].password
+        }
+    }
     res.json(result);
 })
 
@@ -125,25 +131,83 @@ router.post('/setAvatar', async (req, res) => {
     }
 })
 
-router.post('/setXp', (req, res) => {
+router.post('/setXp', async (req, res) => {
+    if (req.body.user && req.body.xp) {
+        if (typeof req.body.xp == "number" && req.body.xp >= 0) {
+            var getResult;
+            if (req.user.root == true) {
+                getResult = await client.db("communism_battlecards").collection("accounts").findOne({username: req.body.user});
+            } else {
+                getResult = await client.db("communism_battlecards").collection("accounts").findOne({username: req.body.user, admin: {$exists: false}, root: {$exists: false}});
+            }
     
+            if (getResult) {
+                await client.db("communism_battlecards").collection("accounts").updateOne({username: req.body.user},{$set: {xp: req.body.xp}});
+                res.json(req.body.xp)
+            } else {
+                res.status(404).send("Not found")
+            }
+        } else {
+            res.status(500).send("invalid input")
+        }
+    } else {
+        res.status(500).send("invalid input")
+    }
 })
 
-router.post('/setDisplayName', (req, res) => {
+router.post('/setDisplayName', async (req, res) => {
+    if (req.body.user && req.user.displayName) {
+        if (typeof req.body.displayName == "string") {
+            var getResult;
+            if (req.user.root == true) {
+                getResult = await client.db("communism_battlecards").collection("accounts").findOne({username: req.body.user});
+            } else {
+                getResult = await client.db("communism_battlecards").collection("accounts").findOne({username: req.body.user, admin: {$exists: false}, root: {$exists: false}});
+            }
     
+            if (getResult) {
+                await client.db("communism_battlecards").collection("accounts").updateOne({username: req.body.user},{$set: {display_name: req.body.displayName}});
+                res.json(req.body.displayName)
+            } else {
+                res.status(404).send("Not found")
+            }
+        } else {
+            res.status(500).send("invalid input")
+        }
+    } else {
+        res.status(500).send("invalid input")
+    }
+})
+
+function rootCheck (req, res, next) {
+    if (req.user.root) {
+        return next();
+    } else {
+        res.status(401).send("unauthorized")
+    }
+}
+
+router.post('/setAdmin', rootCheck, async (req, res) => {
+    if (req.body.user && typeof req.body.admin == 'boolean') {
+        getResult = await client.db("communism_battlecards").collection("accounts").findOne({username: req.body.user});
+
+        if (getResult) {
+            await client.db("communism_battlecards").collection("accounts").updateOne({username: req.body.user},{$set: {admin: req.body.admin}});
+            res.send(req.body.admin)
+        } else {
+            res.status(404).send("Not found")
+        }
+    } else {
+        res.status(500).send("invalid input")
+    }
 })
 
 
 
 
-
-
-
-//setAdmin
 //resetUser
 //purgeUser
 //lockdown
 //testUsers
-//getAllCards
 
 module.exports = router;

@@ -37,6 +37,7 @@ async function checkUser(username, password) {
             username: result.username,
             display_name: result.display_name,
             getAllCards: JSON.parse(fr('./settings.json')).getAllCards||result.admin||result.root,
+            getXp: JSON.parse(fr('./settings.json')).getXp||result.admin||result.root,
             xp: {
                 level: xp.getLevel(result.xp),
                 xp: xp.getXp(result.xp),
@@ -81,7 +82,7 @@ async function checkUser(username, password) {
 
 auth.checkUser = async(req, res, next) => {
     try {
-        setting = JSON.parse(fr('./settings.json'))
+        var settings = JSON.parse(fr('./settings.json'))
         if (req.body.username && req.body.password) {
             let user = await checkUser(req.body.username, req.body.password)
             if (user) {
@@ -96,42 +97,27 @@ auth.checkUser = async(req, res, next) => {
             let token = JSON.parse(auth.decrypt(req.cookies.userToken))
             let username = auth.decrypt(token[0])
             let password = auth.decrypt(auth.decrypt(token[1]))
-            
-            if (token[2] && auth.decrypt(token[2]) == "true") {
-                if (settings.testUsers) {
-                    let user = await checkUser(username, password)
-                    if (user) {
-                        req.user = user
-                        return next()
-                    } else {
-                        res.clearCookie('userToken');
-                        res.status(401).send("Invalid credentials");
-                    }
-                } else {
-                    res.clearCookie('userToken');
-                    res.status(401).send("Invalid credentials");
-                }
-            } else if (req.body.createTestUser == null || req.body.createTestUser == true) {
-                let user = await checkUser(username, password)
-                if (user) {
-                    req.user = user
-                    return next()
-                } else {
-                    res.status(401).send("Invalid token");
-                }
+
+            let user = await checkUser(username, password)
+            if (user) {
+                req.user = user
+                return next()
             } else {
-                res.status(401).send("Invalid credentials");
+                res.clearCookie('userToken');
+                res.status(401).send("Invalid token");
             }
         } else {
-            if (settings.testUsers && req.body.createTestUser == null || req.body.createTestUser == true) {
+            if (settings.testUsers) {
                 let base = client.db("communism_battlecards").collection("accounts")
     
-                let testpsw = auth.encrypt("test")
+                let testpsw = "test"
                 
                 let userCount = await base.countDocuments({testUser: true});
-                req.user = {username: "test_"+userCount, display_name: "test "+userCount, testUser: true, password: auth.encrypt(testpsw)}
+                await base.insertOne({username: "test_"+userCount, display_name: "test "+userCount, testUser: true, password: auth.encrypt(testpsw), avatar: settings.defaultAvatar, deck: settings.defaultDeck, inventory: settings.defaultInventory, xp: settings.defaultXp})
+
+                req.user = await checkUser("test_"+userCount, testpsw)
     
-                let userToken = auth.encrypt(JSON.stringify([auth.encrypt("test_"+userCount), auth.encrypt(testpsw), auth.encrypt("true")]))
+                let userToken = auth.encrypt(JSON.stringify([auth.encrypt("test_"+userCount), auth.encrypt(auth.encrypt(testpsw)), auth.encrypt("true")]))
                 res.cookie('userToken', userToken, { httpOnly: true })
                 return next()
             }

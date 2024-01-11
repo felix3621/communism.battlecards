@@ -37,6 +37,21 @@ router.get('/getAllCards', auth.checkUser, async (req, res) => {
     }
 })
 
+router.get('/getXp', auth.checkUser, async (req, res) => {
+    try {
+        var settings = JSON.parse(fr('./settings.json'))
+        if (settings.getXp || req.user.admin) {
+            await client.db("communism_battlecards").collection("accounts").updateOne({username: req.user.username},{$set:{xp: settings.getXpAmount}})
+            
+            res.status(200).send("Cards changed")
+        } else {
+            res.status(401).send("Unauthorized")
+        }
+    } catch (e) {
+        res.status(500).send("Server Error")
+    }
+})
+
 
 router.get('/getDeck', auth.checkUser, async (req, res) => {
     let result = await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username})

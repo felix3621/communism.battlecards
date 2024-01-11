@@ -1,5 +1,5 @@
 const BaseXP = 10;
-const Multiplier = 1.1;
+const Multiplier = 1.05;
 
 
 xp = {};

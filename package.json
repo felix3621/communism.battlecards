@@ -6,9 +6,10 @@
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
-		"start": "npm-run-all -p dev server socket",
+		"start": "npm-run-all -p dev server socket chat",
 		"server": "node server.cjs",
-		"socket": "node socket.cjs"
+		"socket": "node socket.cjs",
+		"chat": "node chat.cjs"
 	},
 	"devDependencies": {
 		"@rollup/plugin-commonjs": "^25.0.7",

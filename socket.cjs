@@ -394,7 +394,6 @@ class Player {
                 ];
                 this.Field = newField;
                 this.Energy -= this.Hand[SelectedCardIndex].Cost;
-                console.log(this.Energy)
                 this.Hand.splice(SelectedCardIndex,1);
             }
         }
@@ -569,7 +568,6 @@ class Tournament {
         }
     }
     StartBattles() {
-        console.log("Start Battles!");
         var PlayerCount = this.Sockets.filter(obj => !obj.out).length;
         var Count=0;
         this.CountDown = 10/tickSpeed;
@@ -580,17 +578,14 @@ class Tournament {
         }
 
         for (let i = 0; i < this.Sockets.length; i++) {
-            console.log("bob")
             if (!this.Sockets[i].out) {
                 Count++;
             }
             if (this.Battles[this.Battles.length-1] && !this.Battles[this.Battles.length-1].active && !this.Battles[this.Battles.length-1].p2 && !this.Sockets[i].out) {
-                console.log("a")
                 this.Battles[this.Battles.length-1].SetP2(this.Sockets[i].username);
                 this.Sockets[i].inGame = true;
                 this.Sockets[i].ready = false;
             } else if (i != this.Sockets.length && Count != PlayerCount && !this.Sockets[i].out) {
-                console.log("b")
                 this.Battles.push(new Battle(this));
                 this.Battles[this.Battles.length-1].SetP1(this.Sockets[i].username);
                 this.Sockets[i].inGame = true;
@@ -940,8 +935,14 @@ webSocketServer.on('connection', async(socket, request) => {
     let username = await authorizeSocket(socket, request);
     if (!username) return;
 
+    if (JSON.parse(fr('./settings.json')).lockdown) {
+        let ud = await client.db("communism_battlecards").collection("accounts").findOne({username: username})
+        if (!ud.admin && !ud.root) {
+            socket.close(1008, "LOCKDOWN")
+        }
+    }
+    
     await client.db("communism_battlecards").collection("accounts").updateOne({username: username},{$unset:{previousGame:'',previousTournament:''}})
-
     const search = (new URL(request.url, 'http://localhost')).searchParams
 
     if (search.get("admin") && decodeURIComponent(search.get("admin")) == "true") {
@@ -1115,5 +1116,5 @@ httpServer.on('upgrade', (request, socket, head) => {
 
 // Listen on port 3000
 httpServer.listen(3000, () => {
-    console.log('socket running on port 3000');
+    console.log('game-socket running on port 3000');
 });

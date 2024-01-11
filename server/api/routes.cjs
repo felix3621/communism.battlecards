@@ -4,6 +4,8 @@ const auth = require('../authentication.cjs');
 const fr = require('../fileReader.cjs');
 const router = express.Router();
 
+console.log(db)
+
 var client;
 async function connectDB() {
     client = await db.connect();
@@ -11,6 +13,7 @@ async function connectDB() {
 connectDB()
 
 router.use(async (req, res, next) => {
+    console.log("connection")
     try {
         let settings = JSON.parse(fr('./settings.json'))
         if (settings.lockdown == true) {
@@ -36,9 +39,9 @@ router.use(async (req, res, next) => {
                         return next()
                     }
                 }
-                res.status(401).send("Unauthorized");
+                res.status(401).send("System Lockdown");
             } catch (e) {
-                res.status(401).send("Unauthorized");
+                res.status(401).send("System Lockdown");
             }
         } else {
             return next()

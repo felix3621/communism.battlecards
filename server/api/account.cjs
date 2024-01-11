@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../authentication.cjs');
 const db = require('../database.cjs');
+const fr = require('../fileReader.cjs');
 
 var client;
 async function connectDB() {
@@ -13,6 +14,7 @@ router.post('/login', auth.checkUser, (req, res) => {
     res.json(req.user)
 })
 router.post('/signup', async(req, res) => {
+    let settings = JSON.parse(fr('./settings.json'))
     let username = req.body.username;
     let password = req.body.password;
     let display_name = req.body.display_name;
@@ -22,7 +24,7 @@ router.post('/signup', async(req, res) => {
         let base = client.db("communism_battlecards").collection("accounts")
         let check = await base.findOne({username: username})
         if (!check) {
-            let result = await base.insertOne({username: username, password: password, display_name: display_name, avatar: 0, deck: [0,1], inventory: []})
+            let result = await base.insertOne({username: username, password: password, display_name: display_name, avatar: settings.defaultAvatar, deck: settings.defaultDeck, inventory: settings.defaultInventory, xp: settings.defaultXp})
 
             let userToken = auth.encrypt(JSON.stringify([auth.encrypt(username), auth.encrypt(password)]))
             res.cookie('userToken', userToken, { httpOnly: true });

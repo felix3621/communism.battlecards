@@ -492,6 +492,39 @@
             filter: opacity(0);
         }
     }
+    #Chat {
+        position: fixed;
+        left: 0;
+        bottom: 0px;
+        width: 50%;
+        height: 20%;
+    }
+    #Chat input{
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: calc(100%);
+        height: 20px;
+        background-color: #1f1e1e;
+        outline: 2px rgb(192, 192, 192) solid;
+        color: white;
+    }
+    #MessagesDisplay{
+        position: absolute;
+        left: 0;
+        bottom: 20px;
+        width: 100%;
+        top: 0;
+        display: grid;
+        grid-template-columns: auto;
+        grid-template-rows: repeat(auto,minmax(10px,20px));
+        overflow-x: hidden;
+        overflow-y: scroll;
+        background-color: #1f1e1e;
+        outline: 5px black solid;
+        border-radius: 0px 25px 0px 0px;
+        color: white;
+    }
 </style>
 <img id="logo" src="images/BattlecardsLogo.png">
 <div id="profile">
@@ -555,6 +588,10 @@
     <div class="Icon" id="DeckButton" on:click={()=>{document.getElementById("CardDeckPanel").style.display="block"; ShowDeck();}}></div>
     <div class="Icon" id="AvatarButton" on:click={()=>{document.getElementById("AvatarPanel").style.display="block"; UpdateAvatarsPanel();}}></div>
 </div>
+<div id="Chat">
+    <div id="MessagesDisplay"></div>
+    <input type="text" id="ChatInputFiled" on:keydown={MessagesSendOnEnter}>
+</div>
 <div id="AvatarPanel" style="display:none;">
     <button style="position: fixed;right:0;top:0;font-size:50px" class="btn" on:click={()=>document.getElementById("AvatarPanel").style.display="none"}>Back</button>
     <div id="SelectedAvatar"></div>
@@ -583,6 +620,8 @@
     var Exp = 0;
     var FontSizeAdjusterArray = new Array();
     var SelectedAvatar;
+    var socket;
+    var MessagesStored = new Array();
 
     async function updateProfilePicture() {
         var avatar_data = await (await fetch(window.location.origin+'/api/avatar/get', {
@@ -617,19 +656,72 @@
                 RewardDisplay.appendChild(CreateCard(Rewards.cards[i].Name,Rewards.cards[i].Description,Rewards.cards[i].Cost,Rewards.cards[i].Attack,Rewards.cards[i].Health,Rewards.cards[i].Texture));
             }
         });
+    }
+    function MessagesSendOnEnter(event) {
+        if (event.key === 'Enter') {
+            // Handle the Enter key press here
+            console.log('Enter key pressed. Value:', inputValue);
+            console.log("Test")
+            document.getElementById("MessagesDisplay");
+        }
 
+    };
+    function CreateSocketConnection() {
+        socket = new WebSocket(`wss://${window.location.host}/chatsocket`);
+
+        // Event listener for when the connection is established
+        socket.onopen = () => {
+            console.log('Connected to server');
+            document.getElementById("MessagesDisplay").addEventListener("keypress", MessagesSendOnEnter);
+        };
+
+        // Event listener for incoming messages from the server
+        socket.onmessage = (event) => {
+            var data = event.data;
+            if (data) {
+                data = JSON.parse(data);
+                MessagesStored.push(data);
+                while (MessagesStored.length>=100) {
+                    MessagesStored.splice(0,1);
+                }
+                var MessageParent = document.getElementById("MessagesDisplay");
+                for (let i = 0; i < MessagesStored.length || i < MessageParent.children.length; i++) {
+                    if (i < MessagesStored.length && i >= MessageParent.children.length) {
+                        let Text = document.createElement("p");
+                        Text.innerHTML = MessagesStored[i];
+                        MessageParent.appendChild(Text);
+                    } else if (i < MessageParent.children.length) {
+                        MessageParent.children[i].innerHTML = MessagesStored[i];
+                    } else {
+                        MessageParent.children[i].remove();
+                    }
+                }
+            }
+        };
+
+        // Event listener for when the connection is closed
+        socket.onclose = (event) => {
+            console.log('Connection closed', event);
+        };
+
+        // Event listener for errors
+        socket.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
     }
 
     onMount(async() => {
+        console.log("starting")
         const user = await fetch(window.location.origin+'/api/account/login', {
             method: 'POST',
             headers: {
 	    		'Content-Type': 'application/json',
 	    	}
         });
+        console.log(user)
         if (user.ok) {
             let ud = await user.json()
-            console.log(ud)
+            //CreateSocketConnection();
             if (ud.rewards) {
                 OppenRewardCrate(ud.rewards);
             }
@@ -655,6 +747,17 @@
                 }
                 gac.innerText = "CARDS"
                 document.getElementById("SettingsDropDown").appendChild(gac);
+            }
+            if (ud.getXp) {
+                let gXp = document.createElement("a");
+                gXp.onclick = async () => {
+                    await fetch(window.location.origin+'/api/cards/getXp', {
+                        method: 'GET'
+                    });
+                    window.location.reload();
+                }
+                gXp.innerText = "XP";
+                document.getElementById("SettingsDropDown").appendChild(gXp);
             }
             document.getElementById("display_displayName").innerText = ud.display_name;
             document.getElementById("display_userName").innerText = ud.username;
@@ -831,6 +934,10 @@
 	    		'Content-Type': 'application/json',
 	    	}
         });
+
+        if (!deck.ok)
+            window.location.reload();
+
         var Deck = await deck.json();
 
         //Remove the add new card from the end if it exsist
@@ -900,6 +1007,10 @@
 	    		'Content-Type': 'application/json',
 	    	}
         });
+
+        if (!InventoryPanel.ok)
+            window.location.reload();
+
         inventory = await inventory.json();
         //Remove The Current Card From Deck Element
         if (RemoveCard == null){
@@ -1004,6 +1115,10 @@
                 'Content-Type': 'application/json',
             }
         });
+
+        if (!Avatars.ok)
+            window.location.reload();
+
         SetAllFontSizeInArray(FontSizeAdjusterArray);
         Avatars = await Avatars.json();
         // Update The Avatar Display
