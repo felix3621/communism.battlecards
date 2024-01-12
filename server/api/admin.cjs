@@ -27,11 +27,15 @@ router.get('/users', async (req, res) => {
         result = await client.db("communism_battlecards").collection("accounts").find({}).toArray();
     } else {
         result = await client.db("communism_battlecards").collection("accounts").find({admin: {$exists: false}, root: {$exists: false}}).toArray();
+        result.push(await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username}))
     }
     if (result) {
         for (let i = 0; i < result.length; i++) {
             delete result[i]._id
             delete result[i].password
+            if (!req.user.root) {
+                delete result[i].admin
+            }
             result[i].level = xp.getLevel(result[i].xp)
         }
     }
@@ -47,7 +51,7 @@ router.get('/avatars', (req, res) => {
 })
 
 router.post('/setDeck', async (req, res) => {
-    if (req.body.user && typeof req.body.deck == "array") {
+    if (req.body.user && typeof req.body.deck == "object") {
         // Validator 
         var valid = true;
         for (let i = 0; i < req.body.deck.length; i++) {
@@ -57,11 +61,15 @@ router.post('/setDeck', async (req, res) => {
         }
         // Set Deck
         if (valid) {
-            var getResult;
+        var getResult;
             if (req.user.root == true) {
                 getResult = await client.db("communism_battlecards").collection("accounts").findOne({username: req.body.user});
             } else {
                 getResult = await client.db("communism_battlecards").collection("accounts").findOne({username: req.body.user, admin: {$exists: false}, root: {$exists: false}});
+            }
+
+            if (!getResult) {
+                getResult = (await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username}))
             }
     
             if (getResult) {
@@ -78,38 +86,6 @@ router.post('/setDeck', async (req, res) => {
     }
 })
 
-router.post('/setInventory', async (req, res) => {
-        // Validator 
-    if (req.body.user && typeof req.body.inventory == "array") {
-        var valid = true;
-        for (let i = 0; i < req.body.inventory.length; i++) {
-            if (typeof req.body.inventory[i] != "object" || typeof req.body.inventory[i].card != "number" || typeof req.body.inventory[i].count != "number" || req.body.inventory[i].count < 1 || req.body.inventory[i].card<0 || req.body.inventory[i].card >= cards.length) {
-                valid = false;
-            }
-        }
-        // Set Inventory
-        if (valid) {
-            var getResult;
-            if (req.user.root == true) {
-                getResult = await client.db("communism_battlecards").collection("accounts").findOne({username: req.body.user});
-            } else {
-                getResult = await client.db("communism_battlecards").collection("accounts").findOne({username: req.body.user, admin: {$exists: false}, root: {$exists: false}});
-            }
-    
-            if (getResult) {
-                await client.db("communism_battlecards").collection("accounts").updateOne({username: req.body.user},{$set: {inventory: req.body.inventory}});
-                res.json(req.body.inventory)
-            } else {
-                res.status(404).send("Not found");
-            }
-        } else {
-            res.status(500).send("invalid input");
-        }
-    } else {
-        res.status(500).send("invalid input");
-    }
-})
-
 router.post('/setAvatar', async (req, res) => {
     if (req.body.user && req.body.avatar) {
         if (typeof req.body.avatar == "number" && req.body.avatar >= 0 && req.body.avatar < avatars.length) {
@@ -118,6 +94,10 @@ router.post('/setAvatar', async (req, res) => {
                 getResult = await client.db("communism_battlecards").collection("accounts").findOne({username: req.body.user});
             } else {
                 getResult = await client.db("communism_battlecards").collection("accounts").findOne({username: req.body.user, admin: {$exists: false}, root: {$exists: false}});
+            }
+
+            if (!getResult) {
+                getResult = (await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username}))
             }
     
             if (getResult) {
@@ -143,6 +123,10 @@ router.post('/setXp', async (req, res) => {
             } else {
                 getResult = await client.db("communism_battlecards").collection("accounts").findOne({username: req.body.user, admin: {$exists: false}, root: {$exists: false}});
             }
+
+            if (!getResult) {
+                getResult = (await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username}))
+            }
     
             if (getResult) {
                 await client.db("communism_battlecards").collection("accounts").updateOne({username: req.body.user},{$set: {xp: req.body.xp}});
@@ -167,6 +151,10 @@ router.post('/setDisplayName', async (req, res) => {
             } else {
                 getResult = await client.db("communism_battlecards").collection("accounts").findOne({username: req.body.user, admin: {$exists: false}, root: {$exists: false}});
             }
+
+            if (!getResult) {
+                getResult = (await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username}))
+            }
     
             if (getResult) {
                 await client.db("communism_battlecards").collection("accounts").updateOne({username: req.body.user},{$set: {display_name: req.body.displayName}});
@@ -189,6 +177,10 @@ router.post('/resetUser', async (req, res) => {
             getResult = await client.db("communism_battlecards").collection("accounts").findOne({username: req.body.user});
         } else {
             getResult = await client.db("communism_battlecards").collection("accounts").findOne({username: req.body.user, admin: {$exists: false}, root: {$exists: false}});
+        }
+
+        if (!getResult) {
+            getResult = (await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username}))
         }
 
         if (getResult) {

@@ -327,6 +327,12 @@ class Player {
     }
     UpdateStones() {
         for (let i = 0; i < this.Field.length; i++) {
+            if (this.Field[i].Card.Attacker) {
+                this.Field[i].Card.Attacker = false;
+            }
+            if (this.Field[i].Card.Attacked) {
+                this.Field[i].Card.Attacked = false;
+            }
             if (this.Field[i].Card.New) {
                 this.Field[i].Card.New = null;
             } 
@@ -344,6 +350,12 @@ class Player {
             } else {
                 this.match.EndGame(this.match.p2.UserName);
             }
+        }
+        if (this.Avatar && this.Avatar.Card.Attacker) {
+            this.Avatar.Card.Attacker = false;
+        }
+        if (this.Avatar && this.Avatar.Card.Attacked) {
+            this.Avatar.Card.Attacked = false;
         }
     }
     UseCard(input) {
@@ -426,7 +438,7 @@ class Player {
                         this.match.EndGame(this.match.p1.UserName);
                     }
                 }
-            } else if (input.SelectedAttackIndex!=null && Enemy.Field[input.SelectedAttackIndex] != null) {
+            } else if (input.SelectedAttackIndex!=null && Enemy.Field[input.SelectedAttackIndex] != null && AttackingStone != null) {
                 AttackingStone.AttackStone(input.SelectedAttackIndex,Enemy.Field);
             }
         }
@@ -451,10 +463,13 @@ class stone {
     }
     AttackStone(StoneIndex, Field, Avatar=null) {
         this.attackCooldown++;
+        this.Card.Attacker = true;
         if (Avatar) {
             Avatar.TakeDMG(this.Card.Attack);
+            Avatar.Card.Attacked = true;
         } else {
             Field[StoneIndex].TakeDMG(this.Card.Attack);
+            Field[StoneIndex].Card.Attacked = true;
         }
         if (Avatar == null && this.Card.AttackType && this.Card.AttackType == "Burst") {
             if (StoneIndex-1>=0) {

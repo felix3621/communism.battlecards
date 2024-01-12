@@ -823,7 +823,7 @@
     function CreateCharacterStone(Attack, Health, Texture, Type = null) {
         //THE CharacterStone
         var CharacterStone = document.createElement("div");
-        CharacterStone.classList.add("CharacterStone");
+        CharacterStone.classList.add("CharacterStone"); 
         if (Type != null && Type == "Tank") {
             CharacterStone.style.backgroundImage = "url('/images/Cards/"+Texture+".png'), url('/images/shield.png')";
         } else 
@@ -871,31 +871,32 @@
         Card.appendChild(CardFrame);
 
         //CardDMG
-        if (Attack != null && Attack != 0) {
-            var CardDMG = document.createElement("div");
-            CardDMG.classList.add("CardDMG");
-            Card.appendChild(CardDMG);
+        var CardDMG = document.createElement("div");
+        CardDMG.classList.add("CardDMG");
+        Card.appendChild(CardDMG);
 
-            //DMG Display
-            var CardDMGText = document.createElement("p");
-            CardDMGText.innerHTML = Attack;
-            CardDMG.appendChild(CardDMGText);
-            FontSizeAdjusterArray.push({Element:CardDMGText,HeightFactor:1});
+        //DMG Display
+        var CardDMGText = document.createElement("p");
+        CardDMGText.innerHTML = Attack;
+        CardDMG.appendChild(CardDMGText);
+        FontSizeAdjusterArray.push({Element:CardDMGText,HeightFactor:1});
+        if(Attack == null || Attack == 0) {
+            CardDMG.style.filter = "opacity(0)";
         }
         
-        if (Health != null) {
-            //CardHealth
-            var CardHealth = document.createElement("div");
-            CardHealth.classList.add("CardHealth");
-            Card.appendChild(CardHealth);
+        //CardHealth
+        var CardHealth = document.createElement("div");
+        CardHealth.classList.add("CardHealth");
+        Card.appendChild(CardHealth);
 
-            //Health Display
-            var CardHealthText = document.createElement("p");
-            CardHealthText.innerHTML = Health;
-            CardHealth.appendChild(CardHealthText);
-            FontSizeAdjusterArray.push({Element:CardHealthText,HeightFactor:1});
+        //Health Display
+        var CardHealthText = document.createElement("p");
+        CardHealthText.innerHTML = Health;
+        CardHealth.appendChild(CardHealthText);
+        FontSizeAdjusterArray.push({Element:CardHealthText,HeightFactor:1});
+        if(Health == null || Health == 0) {
+            CardHealth.style.filter = "opacity(0)";
         }
-        
 
         //CardCost
         var CardCost = document.createElement("div");
@@ -937,11 +938,11 @@
         for (var i = 0; i < Array.length; i++) {
             const Element = Array[i].Element;
             if (Element!= null) {
-                let HightFactor = Array[i].HeightFactor != null ? Array[i].HeightFactor : 0.5;
+                let HeightFactor = Array[i].HeightFactor != null ? Array[i].HeightFactor : 0.5;
                 //var containerHeight = Element.parentNode.clientHeight;
                 //var textHeight = Element.scrollHeight;
 
-                var CharacterAreal = ((Element.parentNode.clientHeight*0.75*HightFactor) * (Element.parentNode.clientWidth))/(100+(Element.innerHTML.length));
+                var CharacterAreal = ((Element.parentNode.clientHeight*0.75*HeightFactor) * (Element.parentNode.clientWidth))/(100+(Element.innerHTML.length));
 
                 //if Number(Element.style.fontSize) > 0 then use else 1, then multiply with fontSize
 
@@ -968,6 +969,7 @@
             window.location.reload();
 
         var Deck = await deck.json();
+        console.log(Deck)
 
         //Remove the add new card from the end if it exsist
         var newCardElementToRemove = document.getElementById("NewCard");
@@ -995,6 +997,17 @@
                 CurrentChild.children[4].children[0].innerHTML = Deck[i].Cost;
                 CurrentChild.children[5].children[0].innerHTML = Deck[i].Name;
                 CurrentChild.children[6].children[0].innerHTML = Deck[i].Description;
+                if(Deck[i].Attack == null || Deck[i].Attack == 0) {
+                    CurrentChild.children[2].style.filter = "opacity(0)";
+                } else {
+                    CurrentChild.children[2].style.filter = "opacity(1)";
+                }
+                if(Deck[i].Health == null || Deck[i].Health == 0) {
+                    CurrentChild.children[3].style.filter = "opacity(0)";
+                } else {
+                    CurrentChild.children[3].style.filter = "opacity(1)";
+                }
+                RemoveAllRefensesFromArray(CurrentChild,FontSizeAdjusterArray);
                 CurrentChild = removeAllEventListeners(CurrentChild);
                 (function(index) {
                     CurrentChild.addEventListener("click", ()=> {
@@ -1002,15 +1015,18 @@
                     });
                     CreateTooltipEvent(CurrentChild, Deck[i].Name, Deck[i].Description+"<br>Cost: "+Deck[i].Cost);
                 })(i);
+                AddAllOfElementTypeToArray(CurrentChild,"p",FontSizeAdjusterArray,1);
+                AddAllOfElementTypeToArray(CurrentChild,"p1",FontSizeAdjusterArray,null);
             }
             if (i>=Deck.length) {
+                RemoveAllRefensesFromArray(DeckParent.children[i],FontSizeAdjusterArray);
                 DeckParent.children[i].remove();
                 i--;
             }
         }
 
         //Re add it if it suld exsist
-        if (Deck.length<20) {
+        if (Deck.length<50) {
             if (!document.getElementById("NewCard")){
                 var AddNewCard = document.createElement("div");
                 AddNewCard.id = "NewCard";
@@ -1037,7 +1053,7 @@
 	    	}
         });
 
-        if (!InventoryPanel.ok)
+        if (!inventory.ok)
             window.location.reload();
 
         inventory = await inventory.json();
@@ -1080,22 +1096,34 @@
                 CurrentChild.children[4].children[0].innerHTML = inventory[i].card.Cost;
                 CurrentChild.children[5].children[0].innerHTML = inventory[i].card.Name;
                 CurrentChild.children[6].children[0].innerHTML = inventory[i].card.Description;
-                
+                if(inventory[i].card.Attack == null || inventory[i].card.Attack == 0) {
+                    CurrentChild.children[2].style.filter = "opacity(0)";
+                } else {
+                    CurrentChild.children[2].style.filter = "opacity(1)";
+                }
+                if(inventory[i].card.Health == null || inventory[i].card.Health == 0) {
+                    CurrentChild.children[3].style.filter = "opacity(0)";
+                } else {
+                    CurrentChild.children[3].style.filter = "opacity(1)";
+                }
                 (function(index) {
                     CurrentChild.addEventListener("click", ()=> {
                         AddToDeck(index, WhatIndexToReplace);
                     });
                     CreateTooltipEvent(CurrentChild, inventory[index].card.Name,inventory[index].card.Description+"<br>Cost: "+inventory[index].card.Cost);
                 })(i);
-                AddAllOfElementTypeToArray(CurrentChild, "p",FontSizeAdjusterArray);
+                AddAllOfElementTypeToArray(CurrentChild, "p",FontSizeAdjusterArray,1);
                 AddAllOfElementTypeToArray(CurrentChild, "p1",FontSizeAdjusterArray);
+                console.log(CurrentChild.parentNode.offsetHeight);
             }
             if (i>=inventory.length) {
+                RemoveAllRefensesFromArray(InventoryParent.children[i+1],FontSizeAdjusterArray);
                 InventoryParent.children[i+1].remove();
                 i--;
             }
         }
-        SetAllFontSizeInArray(FontSizeAdjusterArray);
+        setTimeout(()=>{SetAllFontSizeInArray(FontSizeAdjusterArray);},100);
+        
     }
 
     async function AddToDeck(index, WhatIndexToReplace) {
@@ -1120,19 +1148,21 @@
         return newElement;
     }
     function RemoveAllRefensesFromArray(Element, Array) {
-        if (Array.indexOf(Element)!=-1) {
-            Array.splice(Array.indexOf(Element),1);
+        for (let i = 0; i < Array.length; i++) {
+            if (Array.Element == Element) {
+                Array.splice(Array.indexOf(Element),1);
+            }
         }
         for (let i = 0; i < Element.children.length; i++) {
             RemoveAllRefensesFromArray(Element.children[i], Array);
         }
     }
-    function AddAllOfElementTypeToArray(Element, ElementType, Array) {
+    function AddAllOfElementTypeToArray(Element, ElementType, Array, HeightFactor = null) {
         if (Element.tagName.toLowerCase() === ElementType) {
-            Array.push(Element);
+            Array.push({Element:Element, HeightFactor:HeightFactor});
         }
         for (let i = 0; i < Element.children.length; i++) {
-            AddAllOfElementTypeToArray(Element.children[i],ElementType, Array);
+            AddAllOfElementTypeToArray(Element.children[i],ElementType, Array, HeightFactor);
         }
     }
 

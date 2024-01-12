@@ -44,7 +44,7 @@
         "GamePause": false,
         "Duration":5,
         "UseAttackCooldown":true,
-        "Invoke":"EnemyOnField.push(new Stone({Attack:1,Health:2,Texture:'Goblin'},document.getElementById('EnemyOnField'),'0'))",
+        "Invoke":"EnemyOnField.push(new Stone({Attack:1,Health:2,Texture:'Goblin',New:true},document.getElementById('EnemyOnField'),'0'))",
         "Objective":{"Title":"Attack", "Description":"Hold Down On Your Placed Stone And Move The Target Indicator To The Goblin And Let Go.","CompletionTrigger":"EnemyOnField.length==0"}
     },
     {
@@ -60,7 +60,7 @@
         "GamePause": false,
         "Duration":3,
         "EnemyAi":false,
-        "Invoke":"EnemyOnField.push(new Stone({Attack:1,Health:2,Texture:'Bloob',Type:'Tank'},document.getElementById('EnemyOnField'),'0'))",
+        "Invoke":"EnemyOnField.push(new Stone({Attack:1,Health:2,Texture:'Bloob',Type:'Tank',New:true},document.getElementById('EnemyOnField'),'0'))",
         "UseAttackCooldown": true,
         "Objective":{"Title":"Kill Minion", "Description":"Use Your Cards And Destroy Bloob.<br> The Shield Around the Bloob makes it take Half Damage","CompletionTrigger":"EnemyOnField.length==0"}
     },
@@ -78,7 +78,7 @@
         "GamePause": false,
         "Duration":8,
         "EnemyAi":true,
-        "Invoke":"GiveRandomCard(PlayerDeck,MaxEnergy,2,false); EnemyOnField.push(new Stone({Attack:1,Health:1,Texture:'PurpleSlime'},document.getElementById('EnemyOnField'),'','','')); EnemyOnField.push(new Stone({Attack:1,Health:2,Texture:'Bandit'},document.getElementById('EnemyOnField'),'','','')); EnemyOnField.push(new Stone({Attack:1,Health:1,Texture:'PurpleSlime'},document.getElementById('EnemyOnField'),'','',''))",
+        "Invoke":"GiveRandomCard(PlayerDeck,MaxEnergy,2,false); EnemyOnField.push(new Stone({Attack:1,Health:1,Texture:'PurpleSlime',New:true},document.getElementById('EnemyOnField'),'','','')); EnemyOnField.push(new Stone({Attack:1,Health:2,Texture:'Bandit',New:true},document.getElementById('EnemyOnField'),'','','')); EnemyOnField.push(new Stone({Attack:1,Health:1,Texture:'PurpleSlime',New:true},document.getElementById('EnemyOnField'),'','',''))",
         "UseAttackCooldown": true,
         "CanEndTurn":true,
         "TimedPlay":true,

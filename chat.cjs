@@ -86,9 +86,9 @@ webSocketServer.on('connection', async(socket, request) => {
         var message = JSON.parse(message);
         let PlayerMessage = ""
         if (user.root) {
-            PlayerMessage+="<p style='color:red;'>&#60;"+user.display_name+"&#62;</p>&nbsp;";
+            PlayerMessage+="<p style='color:red;'>[Owner]&#60;"+user.display_name+"&#62;</p>&nbsp;";
         } else if (user.admin) {
-            PlayerMessage+="<p style='color:rgb(0,255,255);'>&#60;"+user.display_name+"&#62;</p>&nbsp;";
+            PlayerMessage+="<p style='color:rgb(0,255,255);'>[Admin]&#60;"+user.display_name+"&#62;</p>&nbsp;";
         } else {
             PlayerMessage+="<p style='color:rgb(255,170,0);'>&#60;"+user.display_name+"&#62;</p>&nbsp;";
         }

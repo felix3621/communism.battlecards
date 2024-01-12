@@ -638,12 +638,57 @@
                     PlayerDisplayName = data.PlayerInfo.DisplayName;
                     document.getElementById("PlayerName").innerText = PlayerDisplayName;
                     PlayerAvatar.UpdateVisuals(data.PlayerInfo.Avatar.Card, data.PlayerInfo.Avatar.attackCooldown, "");
+                    if (data.PlayerInfo.Avatar.Card.Attacked || data.PlayerInfo.Avatar.Card.Attacker) {
+                        if (data.PlayerInfo.Avatar.Card.Attacker) {
+                            let TargetIndex = "Avatar";
+                            data.EnemyInfo.Field.forEach(element => {
+                                if (element.Card.Attacked) {
+                                    TargetIndex = data.EnemyInfo.Field.indexOf(element);
+                                }
+                            });
+                            PlayerAvatar.ShowAttackAnimationAtEnemy(TargetIndex,false);
+                        }
+                        if (data.PlayerInfo.Avatar.Card.Attacked) {
+                            PlayerAvatar.Attacked = true;
+                            setTimeout(()=>{PlayerAvatar.Attacked = false;},850);
+                        }
+                    }
                     PlayerEnergy = data.PlayerInfo.Energy;
                     PlayerMaxEnergy = data.MaxEnergy;
                     UpdateEnergy();
-                    displayTitle = data.PlayerInfo.Title
-                    for (let i = 0; i < data.PlayerInfo.Field.length || i<PlayerOnField.length; i++) {
-                        if (i<data.PlayerInfo.Field.length && i>=PlayerOnField.length) {
+                    displayTitle = data.PlayerInfo.Title;
+                    let Continue = true;
+                    for (let i = 0;i < (data.PlayerInfo.Field.length || i<PlayerOnField.length) && Continue; i++) {
+                        if (i<data.PlayerInfo.Field.length && data.PlayerInfo.Field[i].Card.Attacker) {
+                            console.log(data.PlayerInfo.Field[i].Card.Attacker);
+                        }
+                        if (i<PlayerOnField.length && (i<data.PlayerInfo.Field.length || PlayerOnField[i].Attacked) && (PlayerOnField[i].Attacked || data.PlayerInfo.Field[i].Card.Attacked || data.PlayerInfo.Field[i].Card.Attacker)) {
+                            Continue = false;
+                            console.log("Fire");
+                            if (i<data.PlayerInfo.Field.length && data.PlayerInfo.Field[i].Card.Attacker) {
+                                let TargetIndex = "Avatar";
+                                data.EnemyInfo.Field.forEach(element => {
+                                    if (element.Card.Attacked) {
+                                        TargetIndex = data.EnemyInfo.Field.indexOf(element);
+                                    }
+                                });
+                                PlayerOnField[i].ShowAttackAnimationAtEnemy(TargetIndex,false);
+                            }
+                            if (i<data.PlayerInfo.Field.length && data.PlayerInfo.Field[i].Card.Attacked) {
+                                PlayerOnField[i].Attacked = true;
+                                let index = i;
+                                (function(index, CardInfo) {
+                                    setTimeout(()=>{
+                                        PlayerOnField[index].Attacked = false;
+                                        if (CardInfo.Health<=0) {
+                                            PlayerOnField[index].Card.Death = true;
+                                            PlayerOnField[index].Remove();
+                                        }
+                                    },850);
+                                })(i,data.PlayerInfo.Field[i].Card);
+                            }
+                            
+                        } else if (i<data.PlayerInfo.Field.length && i>=PlayerOnField.length) {
                             PlayerOnField.push(new Stone(data.PlayerInfo.Field[i].Card, data.PlayerInfo.Field[i].attackCooldown, document.getElementById("PlayerOnField")));
                         } else if (i<data.PlayerInfo.Field.length) {
                             PlayerOnField[i].UpdateVisuals(data.PlayerInfo.Field[i].Card, data.PlayerInfo.Field[i].attackCooldown, "");
@@ -669,9 +714,52 @@
                     EnemyDisplayName = data.EnemyInfo.DisplayName;
                     document.getElementById("EnemyName").innerText = EnemyDisplayName;
                     EnemyAvatar.UpdateVisuals(data.EnemyInfo.Avatar.Card, data.EnemyInfo.Avatar.attackCooldown, "Avatar");
-                
-                    for (let i = 0; i < data.EnemyInfo.Field.length || i<EnemyOnField.length; i++) {
-                        if (i<data.EnemyInfo.Field.length && i>= EnemyOnField.length) {
+                    if (data.EnemyInfo.Avatar.Card.Attacked || data.EnemyInfo.Avatar.Card.Attacker || EnemyAvatar.Attacked) {
+                        if (data.EnemyInfo.Avatar.Card.Attacker) {
+                            let TargetIndex = "Avatar";
+                            data.PlayerInfo.Field.forEach(element => {
+                                if (element.Card.Attacked) {
+                                    TargetIndex = data.PlayerInfo.Field.indexOf(element);
+                                }
+                            });
+                            EnemyAvatar.ShowAttackAnimationAtEnemy(TargetIndex,true);
+                        }
+                        if (data.EnemyInfo.Avatar.Attacked) {
+                            EnemyAvatar.Attacked = true;
+                            setTimeout(()=>{EnemyAvatar.Attacked = false;},1500);
+                        }
+                        
+                    }
+                    var Continue = true;
+                    for (let i = 0; (i < data.EnemyInfo.Field.length || i<EnemyOnField.length) && Continue; i++) {
+                        if (i<EnemyOnField.length && (i<data.EnemyInfo.Field.length||EnemyOnField[i].Attacked) && (EnemyOnField[i].Attacked || data.EnemyInfo.Field[i].Card.Attacked || data.EnemyInfo.Field[i].Card.Attacker)) {
+                            Continue = false;
+                            if (i<data.EnemyInfo.Field.length && data.EnemyInfo.Field[i].Card.Attacker) {
+                                let TargetIndex = "Avatar";
+                                data.PlayerInfo.Field.forEach(element => {
+                                    if (element.Card.Attacked) {
+                                        TargetIndex = data.PlayerInfo.Field.indexOf(element);
+                                    }
+                                    console.log(element.Card.Attacked);
+                                });
+                                console.log(TargetIndex);
+                                EnemyOnField[i].ShowAttackAnimationAtEnemy(TargetIndex,true);
+                            }
+                            if (i<data.EnemyInfo.Field.length && data.EnemyInfo.Field[i].Card.Attacked) {
+                                EnemyOnField[i].Attacked = true;
+                                EnemyOnField[i].UpdateVisuals(data.EnemyInfo.Field[i].Card, data.EnemyInfo.Field[i].attackCooldown, i.toString());
+                                (function(index, CardInfo) {
+                                    setTimeout(()=>{
+                                        EnemyOnField[index].Attacked = false;
+                                        if (CardInfo.Health<=0) {
+                                            EnemyOnField[index].Card.Death = true;
+                                            EnemyOnField[index].Remove();
+                                        }
+                                    },850);
+                                })(i,data.EnemyInfo.Field[i].Card);
+                            }
+                            
+                        } else if (i<data.EnemyInfo.Field.length && i>= EnemyOnField.length) {
                             EnemyOnField.push(new Stone(data.EnemyInfo.Field[i].Card, data.EnemyInfo.Field[i].attackCooldown, document.getElementById("EnemyOnField")));
                         } else if (i<data.EnemyInfo.Field.length) {
                             EnemyOnField[i].UpdateVisuals(data.EnemyInfo.Field[i].Card, data.EnemyInfo.Field[i].attackCooldown, i.toString());
@@ -957,9 +1045,9 @@
         var CharacterStoneDMGText = document.createElement("p");
         CharacterStoneDMGText.innerHTML = Attack;
         CharacterStoneDMG.appendChild(CharacterStoneDMGText);
-        FontSizeAdjusterArray.push({Element:CharacterStoneDMGText,HeightFactor:1});
+        FontSizeAdjusterArray.push({Element:CharacterStoneDMGText,HeightFactor:0.85});
         if (Attack== null || Attack == 0) {
-            CardDMG.style.filter = "opacity(0)"
+            CharacterStoneDMG.style.filter = "opacity(0)";
         }
 
         //CardHealth
@@ -971,7 +1059,7 @@
         var CharacterStoneHealthText = document.createElement("p");
         CharacterStoneHealthText.innerHTML = Health;
         CharacterStoneHealth.appendChild(CharacterStoneHealthText);
-        FontSizeAdjusterArray.push({Element:CharacterStoneHealthText,HeightFactor:1});
+        FontSizeAdjusterArray.push({Element:CharacterStoneHealthText,HeightFactor:0.85});
 
         return CharacterStone;
     }
@@ -1030,30 +1118,32 @@
         CardFrame.classList.add("CardFrame");
         Card.appendChild(CardFrame);
 
-        if (Attack != null) {
-            //CardDMG
-            var CardDMG = document.createElement("div");
-            CardDMG.classList.add("CardDMG");
-            Card.appendChild(CardDMG);
+        //CardDMG
+        var CardDMG = document.createElement("div");
+        CardDMG.classList.add("CardDMG");
+        Card.appendChild(CardDMG);
 
-            //DMG Display
-            var CardDMGText = document.createElement("p");
-            CardDMGText.innerHTML = Attack;
-            CardDMG.appendChild(CardDMGText);
-            FontSizeAdjusterArray.push({Element:CardDMGText,HeightFactor:1});
+        //DMG Display
+        var CardDMGText = document.createElement("p");
+        CardDMGText.innerHTML = Attack;
+        CardDMG.appendChild(CardDMGText);
+        FontSizeAdjusterArray.push({Element:CardDMGText,HeightFactor:1});
+        if (Attack == null) {
+            CardDMG.style.filter = "opacity(0)";
         }
-        
-        if (Health != null) {
-            //CardHealth
-            var CardHealth = document.createElement("div");
-            CardHealth.classList.add("CardHealth");
-            Card.appendChild(CardHealth);
 
-            //Health Display
-            var CardHealthText = document.createElement("p");
-            CardHealthText.innerHTML = Health;
-            CardHealth.appendChild(CardHealthText);
-            FontSizeAdjusterArray.push({Element:CardHealthText,HeightFactor:1});
+        //CardHealth
+        var CardHealth = document.createElement("div");
+        CardHealth.classList.add("CardHealth");
+        Card.appendChild(CardHealth);
+
+        //Health Display
+        var CardHealthText = document.createElement("p");
+        CardHealthText.innerHTML = Health;
+        CardHealth.appendChild(CardHealthText);
+        FontSizeAdjusterArray.push({Element:CardHealthText,HeightFactor:1});
+        if (Health == null) {
+            CardHealth.style.filter = "opacity(0)";
         }
 
         //CardCost
@@ -1268,6 +1358,11 @@
                 this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = this.Card.Health;
                 this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].style.color = "black";
             }
+            if (this.Card.Attack != null || this.Card.Attack != 0) 
+                this.Body.getElementsByClassName("CharacterStoneDMG")[0].style.filter = "opacity(1)";
+            else 
+                this.Body.getElementsByClassName("CharacterStoneDMG")[0].style.filter = "opacity(0)";
+
             if (Card.Type != null && Card.Type == "Tank") {
                 this.Body.style.backgroundImage = "url('/images/Cards/"+this.Card.Texture+".png'), url('/images/shield.png')";
             } else 
@@ -1285,7 +1380,7 @@
                 if (this.Card.Death==true) {
                     this.Body.classList.add("DestroyStone");
                 }
-                
+                console.log(this.Card.Death);
                 this.Removing = true;
                 let Body = this.Body;
                 setTimeout(function() {
@@ -1306,6 +1401,42 @@
             document.getElementById("DraggableParent").appendChild(TargetIndicator);
             DraggableSelectTarget.TargetIndicator.style.left = MouseX+"px";
             DraggableSelectTarget.TargetIndicator.style.top = MouseY+"px";
+        }
+        ShowAttackAnimationAtEnemy(TargetIndex, ThisEnemy = false) {
+            var FakeStone = this.Body.cloneNode(true);
+            FakeStone.classList.remove("NewStone")
+            FakeStone.style.height = this.Body.parentNode.clientHeight+"px";
+            FakeStone.style.position = "fixed";
+            FakeStone.style.top = this.Body.getBoundingClientRect().top + (this.Body.offsetHeight/2) + "px";
+            FakeStone.style.left = this.Body.getBoundingClientRect().left + (this.Body.offsetWidth/2) + "px";
+            FakeStone.style.transform = "translate(-50%,-50%)";
+            document.body.appendChild(FakeStone);
+            this.Body.style.filter = "opacity(0)";
+            // Get Target
+            var TargetEnemy = ThisEnemy ? PlayerAvatar.Body : EnemyAvatar.Body;
+            var TargetField = ThisEnemy ? PlayerOnField : EnemyOnField;
+            if (TargetIndex != null && typeof TargetIndex == "number" && TargetField.length>TargetIndex && TargetField.length >=0) {
+                TargetEnemy = TargetField[TargetIndex].Body;
+            }
+            let top = TargetEnemy.getBoundingClientRect().top + (TargetEnemy.offsetHeight/2);
+            let left = TargetEnemy.getBoundingClientRect().left + (TargetEnemy.offsetWidth/2);
+            top -= ThisEnemy ? (TargetEnemy.offsetHeight/2) : -(TargetEnemy.offsetHeight/2);
+            setTimeout(()=>{
+                FakeStone.style.transition = "0.75s ease-in";
+                FakeStone.style.top = top+"px";
+                FakeStone.style.left = left+"px";
+            },100);
+            
+
+            setTimeout(()=>{
+                FakeStone.style.top = this.Body.getBoundingClientRect().top + "px";
+                FakeStone.style.left = this.Body.getBoundingClientRect().left + "px";
+                FakeStone.style.transform = "";
+            },1000);
+            setTimeout(()=>{
+                this.Body.style.filter = "";
+                FakeStone.remove();
+            },1750);
         }
     }
     class EnemyCard {

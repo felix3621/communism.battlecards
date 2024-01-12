@@ -655,7 +655,13 @@
         
         for (let i = 0; i < EnemyOnField.length; i++) {
             EnemyOnField[i].UpdateVisuals();
-            if (EnemyOnField[i].Card.Health<=0) {
+            if (EnemyOnField[i].DeathAnimation==null) {
+                EnemyOnField[i].DeathAnimation = 0.85;
+            }
+            if (EnemyOnField[i].Card.Health<=0 && EnemyOnField[i].DeathAnimation>0) {
+                EnemyOnField[i].DeathAnimation -= deltaTime;
+            }
+            if (EnemyOnField[i].Card.Health<=0 && EnemyOnField[i].DeathAnimation<=0) {
                 EnemyOnField[i].Remove();
                 EnemyOnField.splice(i,1);
                 i--;
@@ -666,7 +672,13 @@
             if (!UseAttackCooldown) {
                 PlayerOnField[i].AttackCooldown = 0;
             }
-            if (PlayerOnField[i].Card.Health<=0) {
+            if (PlayerOnField[i].DeathAnimation==null) {
+                PlayerOnField[i].DeathAnimation = 0.85;
+            }
+            if (PlayerOnField[i].Card.Health<=0 && PlayerOnField[i].DeathAnimation>0) {
+                PlayerOnField[i].DeathAnimation -= deltaTime;
+            }
+            if (PlayerOnField[i].Card.Health<=0 && PlayerOnField[i].DeathAnimation<=0) {
                 PlayerOnField[i].Remove();
                 PlayerOnField.splice(i,1);
                 i--;
@@ -702,24 +714,21 @@
                         }
                         TargetStone.Card.Health -= TargetStone==PlayerAvatar||TargetStone.Card.Type == "Tank"?EnemyOnField[i].Card.Attack/2:EnemyOnField[i].Card.Attack;
                         EnemyOnField[i].AttackCooldown++;
+                        EnemyOnField[i].ShowAttackAnimationAtEnemy(TargetStone != PlayerAvatar?PlayerOnField.indexOf(TargetStone):"Avatar",true);
                     }
                 }
-                if (EnemyAvatar.AttackCooldown<=0) {
+                if (EnemyAvatar.AttackCooldown<=0 && EnemyAvatar.Card.Attack>0) {
                     var TargetStone = PlayerAvatar;
                     if (PlayerOnField.length>0) {
                         TargetStone = PlayerOnField[Math.floor(Math.random()*PlayerOnField.length)];
                     }
                     TargetStone.Card.Health -= TargetStone==PlayerAvatar||TargetStone.Card.Type == "Tank"?EnemyAvatar.Card.Attack/2:EnemyAvatar.Card.Attack;
-                    AttackingStone.ShowAttackAnimationAtEnemy(TargetStone != PlayerAvatar?PlayerOnField.indexOf(TargetStone):"Avatar",true);
+                    EnemyAvatar.ShowAttackAnimationAtEnemy(TargetStone != PlayerAvatar?PlayerOnField.indexOf(TargetStone):"Avatar",true);
                     EnemyAvatar.AttackCooldown++;
-                    if (PlayerAvatar.Card.Health<=0) {
-                        //TODO: Player Death
-                    }
                 }
                 if (ActionsLeftPosable==0) {
                     endTurn(true);
                 }
-                
             }
         }
         //Time 
@@ -1395,14 +1404,12 @@
                     this.Body.addEventListener("mousedown", ()=>this.SelectAttackingStone());
                 }
             }
-            if (this.Card.New == null) {
-                this.Card.New = true;
-            }
             if (this.Card.New==true) {
                 this.Body.classList.add("NewStone");
+                let Body = this.Body;
                 this.Body.addEventListener('animationend', () => {
-                    this.Body.classList.remove("NewStone");
-                    this.Card.New==false;
+                    Body.classList.remove("NewStone");
+                    this.Card.New=false;
                 });
             } else if (this.Card.Death==true) {
                 this.Body.classList.add("DestroyStone");
@@ -1467,23 +1474,40 @@
             DraggableSelectTarget.TargetIndicator.style.top = MouseY+"px";
         }
         ShowAttackAnimationAtEnemy(TargetIndex, ThisEnemy = false) {
-            this.Body.style.height = this.Body.parentNode.clientHeight+"px";
+            var FakeStone = this.Body.cloneNode(true);
+            FakeStone.classList.remove("NewStone")
+            FakeStone.style.height = this.Body.parentNode.clientHeight+"px";
+            FakeStone.style.position = "fixed";
+            FakeStone.style.top = this.Body.getBoundingClientRect().top + (this.Body.offsetHeight/2) + "px";
+            FakeStone.style.left = this.Body.getBoundingClientRect().left + (this.Body.offsetWidth/2) + "px";
+            FakeStone.style.transform = "translate(-50%,-50%)";
+            document.body.appendChild(FakeStone);
+            this.Body.style.filter = "opacity(0)";
+            // Get Target
             var TargetEnemy = ThisEnemy ? PlayerAvatar.Body : EnemyAvatar.Body;
             var TargetField = ThisEnemy ? PlayerOnField : EnemyOnField;
-            if (TargetIndex != null && typeof TargetIndex == "number" && TargetField.length>TargetIndex && TargetField >=0) {
+            if (TargetIndex != null && typeof TargetIndex == "number" && TargetField.length>TargetIndex && TargetField.length >=0) {
                 TargetEnemy = TargetField[TargetIndex].Body;
             }
-            this.Body.style.transition = "2s ease-out";
-            this.Body.style.position = "fixed";
-            this.Body.Top = TargetEnemy.getBoundingClientRect().top - (TargetEnemy.offsetHeight)/2 + "px";
-            this.Body.left = TargetEnemy.getBoundingClientRect().left + (TargetEnemy.offsetWidth)/2 + "px";
-            console.log("Start Moving")
+            let top = TargetEnemy.getBoundingClientRect().top + (TargetEnemy.offsetHeight/2);
+            let left = TargetEnemy.getBoundingClientRect().left + (TargetEnemy.offsetWidth/2);
+            top -= ThisEnemy ? (TargetEnemy.offsetHeight/2) : -(TargetEnemy.offsetHeight/2);
             setTimeout(()=>{
-                this.Body.style.position = "";
-                this.Body.Top = "";
-                this.Body.left = "";
-                console.log("Reset")
-            },2000);
+                FakeStone.style.transition = "0.75s ease-in";
+                FakeStone.style.top = top+"px";
+                FakeStone.style.left = left+"px";
+            },100);
+            
+
+            setTimeout(()=>{
+                FakeStone.style.top = this.Body.getBoundingClientRect().top + "px";
+                FakeStone.style.left = this.Body.getBoundingClientRect().left + "px";
+                FakeStone.style.transform = "";
+            },1000);
+            setTimeout(()=>{
+                this.Body.style.filter = "";
+                FakeStone.remove();
+            },1750);
         }
     }
     // Text Boble 
