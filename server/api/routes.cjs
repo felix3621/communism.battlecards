@@ -4,8 +4,6 @@ const auth = require('../authentication.cjs');
 const fr = require('../fileReader.cjs');
 const router = express.Router();
 
-console.log(db)
-
 var client;
 async function connectDB() {
     client = await db.connect();
@@ -13,9 +11,8 @@ async function connectDB() {
 connectDB()
 
 router.use(async (req, res, next) => {
-    console.log("connection")
     try {
-        let settings = JSON.parse(fr('./settings.json'))
+        let settings = JSON.parse(fr.read('./settings.json'))
         if (settings.lockdown == true) {
             try {
                 if (req.body.username && req.body.password) {

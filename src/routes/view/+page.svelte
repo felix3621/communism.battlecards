@@ -280,7 +280,7 @@
         });
         if (user.ok) {
             let ud = await user.json();
-            if (!ud.admin)
+            if (!ud.view)
                 window.location.href = '/';
         } else
             window.location.href = '/login';

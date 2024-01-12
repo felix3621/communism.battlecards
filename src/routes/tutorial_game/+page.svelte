@@ -416,6 +416,60 @@
     :global(#Objectives h1, #Objectives p) {
         margin: 0;
     }
+    :global(.Prompt) {
+        position: fixed;
+        right: 0;
+        left: 0;
+        top:0; 
+        bottom: 0;
+        background-color: rgba(0,0,0,0.25);
+    }
+    :global(.Prompt div) {
+        color: white;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        background-color: rgb(50, 50, 50);
+        border-radius: 25px;
+        outline: 2px gray solid;
+        padding: 5px;
+        width: fit-content;
+        height: fit-content;
+        transform: translate(-50%,-50%);
+    }
+    :global(.NewStone) {
+        animation: 0.5s PlaceMent linear;
+    }
+    :global(.DestroyStone) {
+        animation: 0.5s Destroy linear;
+    } 
+    @keyframes Destroy {
+        0% {
+            transform: scale(1,1);
+            filter: opacity(1);
+        }
+        25% {
+            transform: scale(1.5,1.5);
+            filter: opacity(1);
+        }
+        100% {
+            transform: scale(0,0);
+            filter: opacity(0);
+        }
+    }
+    @keyframes PlaceMent {
+        0% {
+            transform: translate(0,50%) scale(1.5,1.5);
+            filter: opacity(0) drop-shadow(0 -6mm 4mm rgba(0, 0, 0,0));
+        }
+        25% {
+            filter: opacity(1) drop-shadow(0 -6mm 4mm rgba(0, 0, 0,0.5));
+        }
+        100% {
+            transform: translate(0,0) scale(1,1);
+            filter: opacity(1) drop-shadow(0 0mm 0mm rgba(0, 0, 0,0));
+        }
+    }
 </style>
 <hr id="MidleLine">
 <div id="EnemyAvatar"><h1 id="EnemyName">Runar</h1></div>
@@ -601,7 +655,7 @@
         
         for (let i = 0; i < EnemyOnField.length; i++) {
             EnemyOnField[i].UpdateVisuals();
-            if (EnemyOnField[i].Health<=0) {
+            if (EnemyOnField[i].Card.Health<=0) {
                 EnemyOnField[i].Remove();
                 EnemyOnField.splice(i,1);
                 i--;
@@ -612,7 +666,7 @@
             if (!UseAttackCooldown) {
                 PlayerOnField[i].AttackCooldown = 0;
             }
-            if (PlayerOnField[i].Health<=0) {
+            if (PlayerOnField[i].Card.Health<=0) {
                 PlayerOnField[i].Remove();
                 PlayerOnField.splice(i,1);
                 i--;
@@ -626,15 +680,14 @@
             var ImagenEnergy = EnemyEnergy+0;
             if (EnemyAi && EnemyOnField.length<6) {
                 for (let i = 0; i < EnemyHand.length; i++) {
-                    if (EnemyHand[i].Cost<=ImagenEnergy && EnemyOnField.length<6) {
+                    if (EnemyHand[i].Card.Cost<=ImagenEnergy && EnemyOnField.length<6) {
                         ActionsLeftPosable++;
-                        ImagenEnergy-=EnemyHand[i].Cost;
+                        ImagenEnergy-=EnemyHand[i].Card.Cost;
                     }
-                    if (EnemyHand[i].AnimationDone&&EnemyHand[i].Cost<=EnemyEnergy&& EnemyOnField.length<6) {
-
-                        EnemyOnField.push(new Stone(EnemyHand[i].Attack,EnemyHand[i].Health,EnemyHand[i].Texture,document.getElementById("EnemyOnField"),EnemyHand[i].Type,EnemyHand[i].AttackType));
+                    if (EnemyHand[i].AnimationDone&&EnemyHand[i].Card.Cost<=EnemyEnergy&& EnemyOnField.length<6) {
+                        EnemyOnField.push(new Stone(EnemyHand[i].Card,document.getElementById("EnemyOnField")));
                         
-                        EnemyEnergy -= EnemyHand[i].Cost;
+                        EnemyEnergy -= EnemyHand[i].Card.Cost;
                         EnemyHand[i].Remove();
                         EnemyHand.splice(i,1);
                     }
@@ -647,8 +700,7 @@
                         if (PlayerOnField.length>0) {
                             TargetStone = PlayerOnField[Math.floor(Math.random()*PlayerOnField.length)];
                         }
-                        console.log(TargetStone, );
-                        TargetStone.Health -= TargetStone==PlayerAvatar||TargetStone.Type == "Tank"?EnemyOnField[i].Attack/2:EnemyOnField[i].Attack;
+                        TargetStone.Card.Health -= TargetStone==PlayerAvatar||TargetStone.Card.Type == "Tank"?EnemyOnField[i].Card.Attack/2:EnemyOnField[i].Card.Attack;
                         EnemyOnField[i].AttackCooldown++;
                     }
                 }
@@ -657,9 +709,10 @@
                     if (PlayerOnField.length>0) {
                         TargetStone = PlayerOnField[Math.floor(Math.random()*PlayerOnField.length)];
                     }
-                    TargetStone.Health -= TargetStone==PlayerAvatar||TargetStone.Type == "Tank"?EnemyAvatar.Attack/2:EnemyAvatar.Attack;
+                    TargetStone.Card.Health -= TargetStone==PlayerAvatar||TargetStone.Card.Type == "Tank"?EnemyAvatar.Card.Attack/2:EnemyAvatar.Card.Attack;
+                    AttackingStone.ShowAttackAnimationAtEnemy(TargetStone != PlayerAvatar?PlayerOnField.indexOf(TargetStone):"Avatar",true);
                     EnemyAvatar.AttackCooldown++;
-                    if (PlayerAvatar.Health<=0) {
+                    if (PlayerAvatar.Card.Health<=0) {
                         //TODO: Player Death
                     }
                 }
@@ -710,8 +763,8 @@
         }
 
 
-        EnemyAvatar = new Stone(0,5,"Runar",document.getElementById("EnemyAvatar"),"Avatar","Tank");
-        PlayerAvatar = new Stone(5,15,"BOB",document.getElementById("PlayerAvatar"),"","Tank");
+        EnemyAvatar = new Stone({Attack:0,Health:5,Texture:"Runar"},document.getElementById("EnemyAvatar"),"Avatar","Tank");
+        PlayerAvatar = new Stone({Attack:5,Health:15,Texture:"BOB"},document.getElementById("PlayerAvatar"),"","Tank");
 
         GetDeck();
 
@@ -806,17 +859,16 @@
         }
         for (let i = 0; i < Amount; i++) {
             let SelectedCard = FilteredDeck[Math.floor(Math.random() * FilteredDeck.length)];
-            Hand.push(new Card(SelectedCard.Name,SelectedCard.Description,SelectedCard.Cost,SelectedCard.Attack,SelectedCard.Health,SelectedCard.Texture,SelectedCard.Type,SelectedCard.AttackType,i/2,Enemy));
+            Hand.push(new Card({...SelectedCard},i/2,Enemy));
         }
     }
     // Give Random Card Function
     function GiveCard(Hand, SelectedCard) {
-        Hand.push(new Card(SelectedCard.Name,SelectedCard.Description,SelectedCard.Cost,SelectedCard.Attack,SelectedCard.Health,SelectedCard.Texture,SelectedCard.Type,SelectedCard.AttackType,0));
+        Hand.push(new Card({...SelectedCard},0));
     }
     //Place the stone by the position of the Draggable
     function PlaceStone() {
-        if (!yourTurn || PlayerOnField.length>=6 || DraggableCard.Class.Cost>PlayerEnergy) {return;}
-        console.log(DraggableCard.Class.Cost);
+        if (!yourTurn || PlayerOnField.length>=6 || DraggableCard.Class.Card.Cost>PlayerEnergy) {return;}
         var PlayerField = document.getElementById("PlayerOnField");
         var LeftSide = PlayerField.getBoundingClientRect().left;
         var whereInDiv = (MouseX-LeftSide)/PlayerField.offsetWidth;
@@ -825,10 +877,10 @@
 
         PlayerOnField = [
             ...PlayerOnField.slice(0, WhatToSend),
-            new Stone(PlayerHand[SelectedCardIndex].Attack,PlayerHand[SelectedCardIndex].Health,PlayerHand[SelectedCardIndex].Texture,PlayerField,"",PlayerHand[SelectedCardIndex].Type,PlayerHand[SelectedCardIndex].AttackType),
+            new Stone({...PlayerHand[SelectedCardIndex].Card,New:true},PlayerField,""),
             ...PlayerOnField.slice(WhatToSend) 
         ];
-        PlayerEnergy -= PlayerHand[SelectedCardIndex].Cost;
+        PlayerEnergy -= PlayerHand[SelectedCardIndex].Card.Cost;
         PlayerHand[SelectedCardIndex].Remove();
         PlayerHand.splice(SelectedCardIndex,1);
         DropDraggable();
@@ -839,7 +891,7 @@
     function PlaceStoneOnFiled(FieldArray,FieldElement,WhereToPlaceInField,StoneInfo) {
         FieldArray = [
             ...FieldArray.slice(0, WhereToPlaceInField),
-            new Stone(StoneInfo.Attack,StoneInfo.Health,StoneInfo.Texture,FieldElement,WhereToPlaceInField,StoneInfo.Type,StoneInfo.AttackType),
+            new Stone({...StoneInfo,New:true},FieldElement,WhereToPlaceInField),
             ...FieldArray.slice(WhereToPlaceInField) 
         ]
     }
@@ -855,7 +907,7 @@
             if (!DraggableCard.Class) {
                 DropDraggable();
 
-            } else if (DraggableCard.Class.Type == "Projectile") { // Projectile
+            } else if (DraggableCard.Class.Card.Type == "Projectile") { // Projectile
 
             } else { // Stone
                 DraggableCard.Draggable.style.left = MouseX+"px";
@@ -869,7 +921,7 @@
                     DraggableCard.InArea = true;
                     if (!DraggableCard.Stone) {
                         console.log("Create Stone")
-                        DraggableCard.Stone = CreateCharacterStone(DraggableCard.Class.Attack,DraggableCard.Class.Health,DraggableCard.Class.Texture,"",DraggableCard.Class.Type);
+                        DraggableCard.Stone = CreateCharacterStone(DraggableCard.Class.Card.Attack,DraggableCard.Class.Card.Health,DraggableCard.Class.Card.Texture,"",DraggableCard.Class.Card.Type);
                         DraggableCard.Stone.classList.add("Draggable");
                         document.getElementById("DraggableParent").appendChild(DraggableCard.Stone);
                         DraggableCard.Stone.addEventListener('mouseup', ()=>PlaceStone());
@@ -907,7 +959,7 @@
                 if (!TargetClass) {
                     DraggableSelectTarget.SelectedTarget = "";
                 }
-                if (TargetClass && TargetClass.Health-DraggableSelectTarget.Class.Attack<=0) {
+                if (TargetClass && TargetClass.Card.Health-DraggableSelectTarget.Class.Card.Attack<=0) {
                     DraggableSelectTarget.TargetIndicator.style.backgroundImage = "url('images/kill.png');";
                 } else {
                     DraggableSelectTarget.TargetIndicator.style.backgroundImage = "url('images/target.png');";
@@ -926,10 +978,10 @@
             DropDraggable();
         }
         if (!yourTurn) {return;}
-        if (Class.Type == "Projectile") {
+        if (Class.Card.Type == "Projectile") {
             let Draggable = document.createElement("img");
-            Draggable.style = "width:100px:height:100px;background-image:url('images/Projectile/"+Class.Texture+".png')";
-            DraggableCard = {Card:Element,Draggable:Draggable,Class:Class}
+            Draggable.style = "width:100px:height:100px;background-image:url('images/Projectile/"+Class.Card.Texture+".png')";
+            DraggableCard = {Card:Element,Draggable:Draggable,Class:Class};
             DraggableCard.Draggable.style.left = 50+"%";
             DraggableCard.Draggable.style.top = 75+"%";
 
@@ -937,12 +989,12 @@
             var TargetIndicator = document.createElement("img");
             TargetIndicator.classList.add("TargetIndicator");
             TargetIndicator.src = "/images/target.png";
-            DraggableSelectTarget = {Class:Class,TargetIndicator:TargetIndicator,SelectedTarget:""}
+            DraggableSelectTarget = {Class:Class,TargetIndicator:TargetIndicator,SelectedTarget:""};
             document.getElementById("DraggableParent").appendChild(TargetIndicator);
             DraggableSelectTarget.TargetIndicator.style.left = MouseX+"px";
             DraggableSelectTarget.TargetIndicator.style.top = MouseY+"px";
         } else {
-            DraggableCard = {Card:Element,Draggable:Element.cloneNode(true),Stone:null,Class:Class}
+            DraggableCard = {Card:Element,Draggable:Element.cloneNode(true),Stone:null,Class:Class};
             DraggableCard.Draggable.classList.add("Draggable");
             document.getElementById("DraggableParent").appendChild(DraggableCard.Draggable);
             DraggableCard.Draggable.style.left = MouseX+"px";
@@ -963,8 +1015,8 @@
                     Target = EnemyAvatar;
                 }
                 // if player is using a card Projectile to select target
-                if (DraggableCard && DraggableCard.Class.Type == "Projectile") {
-                    Target.Health -= DraggableSelectTarget.SelectedTarget == "Avatar"||Target.Type == "Tank"?AttackingStone.Attack/2:AttackingStone.Attack;
+                if (DraggableCard && DraggableCard.Class.Card.Type == "Projectile") {
+                    Target.Card.Health -= DraggableSelectTarget.SelectedTarget == "Avatar"||Target.Card.Type == "Tank"?AttackingStone.Card.Attack/2:AttackingStone.Card.Attack;
                     // Projctile Visual
                     var Projectile = document.createElement("img");
                     Projectile.classList.add("Projectile");
@@ -977,26 +1029,26 @@
                     // Apply
                     AttackingStone.Remove();
                     PlayerHand.splice(PlayerHand.indexOf(AttackingStone),1);
-                    if (Target.Health<=0 && DraggableSelectTarget.SelectedTarget == "Avatar") {
+                    if (Target.Card.Health<=0 && DraggableSelectTarget.SelectedTarget == "Avatar") {
                         // Player Win TODO: Add Win
                     }
                 } else { // if player is using a stone to select target
-                    Target.Health -= DraggableSelectTarget.SelectedTarget == "Avatar"||Target.Type == "Tank"?AttackingStone.Attack/2:AttackingStone.Attack;
+                    Target.Card.Health -= DraggableSelectTarget.SelectedTarget == "Avatar"||Target.Card.Type == "Tank"?AttackingStone.Card.Attack/2:AttackingStone.Card.Attack;
                     if (UseAttackCooldown) {AttackingStone.AttackCooldown++;}
 
                     // Burst DMG
-                    if (AttackingStone.AttackType && AttackingStone.AttackType == "Burst" && DraggableSelectTarget.SelectedTarget != "Avatar") {
-                        let SelectedAttackIndex = EnemyOnField.indexOf(AttackingStone);
+                    if (AttackingStone.Card.AttackType && AttackingStone.Card.AttackType == "Burst" && DraggableSelectTarget.SelectedTarget != "Avatar") {
+                        let SelectedAttackIndex = EnemyOnField.indexOf(Target);
                         if (SelectedAttackIndex<EnemyOnField.length-1) {
-                            EnemyOnField[SelectedAttackIndex+1].Health -= Target.Type == "Tank"?AttackingStone.Attack/2:AttackingStone.Attack;
+                            EnemyOnField[SelectedAttackIndex+1].Card.Health -= Target.Card.Type == "Tank"?AttackingStone.Attack/2:AttackingStone.Card.Attack;
                         }
                         if (SelectedAttackIndex>0) {
-                            EnemyOnField[SelectedAttackIndex-1].Health -= Target.Type == "Tank"?AttackingStone.Attack/2:AttackingStone.Attack;
+                            EnemyOnField[SelectedAttackIndex-1].Card.Health -= Target.Card.Type == "Tank"?AttackingStone.Attack/2:AttackingStone.Card.Attack;
                         }
                     }
+                    AttackingStone.ShowAttackAnimationAtEnemy(DraggableSelectTarget.SelectedTarget!="Avatar"?EnemyOnField.indexOf(Target):"Avatar",false);
 
-                    if (Target.Health<=0 && DraggableSelectTarget.SelectedTarget == "Avatar") {
-                        
+                    if (Target.Card.Health<=0 && DraggableSelectTarget.SelectedTarget == "Avatar") {
                         // Player Win TODO: Add Win
                         
                     }
@@ -1037,16 +1089,18 @@
             CharacterStone.appendChild(CharacterName);
         }
 
-        //DMG
-        var CharacterStoneDMG = document.createElement("div");
-        CharacterStoneDMG.classList.add("CharacterStoneDMG");
-        CharacterStone.appendChild(CharacterStoneDMG);
-
+        //CardDMG
+        var CardDMG = document.createElement("div");
+        CardDMG.classList.add("CharacterStoneDMG");
+        CharacterStone.appendChild(CardDMG);
+        if (Attack== null || Attack == 0) {
+            CardDMG.style.filter = "opacity(0)"
+        }
         //DMG Display
-        var CharacterStoneDMGText = document.createElement("p");
-        CharacterStoneDMGText.innerHTML = Attack;
-        CharacterStoneDMG.appendChild(CharacterStoneDMGText);
-        FontSizeAdjusterArray.push(CharacterStoneDMGText);
+        var CardDMGText = document.createElement("p");
+        CardDMGText.innerHTML = Attack;
+        CardDMG.appendChild(CardDMGText);
+        FontSizeAdjusterArray.push({Element:CardDMGText,HeightFactor:1});
 
         //CardHealth
         var CharacterStoneHealth = document.createElement("div");
@@ -1057,14 +1111,16 @@
         var CharacterStoneHealthText = document.createElement("p");
         CharacterStoneHealthText.innerHTML = Health;
         CharacterStoneHealth.appendChild(CharacterStoneHealthText);
-        FontSizeAdjusterArray.push(CharacterStoneHealthText);
+        FontSizeAdjusterArray.push({Element:CharacterStoneHealthText,HeightFactor:1});
 
         return CharacterStone;
     }
 
     function UpdateEnergy() {
         if (DraggableCard && DraggableCard.InArea) {
-            SetEnergyLevel(PlayerEnergy-DraggableCard.Class.Cost);
+            SetEnergyLevel(PlayerEnergy-DraggableCard.Class.Card.Cost);
+        } else if (DraggableSelectTarget && DraggableSelectTarget.SelectedTarget != "" && DraggableCard && DraggableCard.Class) {
+            SetEnergyLevel(PlayerEnergy-DraggableCard.Class.Card.Cost);
         } else {
             SetEnergyLevel();
         }
@@ -1114,27 +1170,32 @@
         CardFrame.classList.add("CardFrame");
         Card.appendChild(CardFrame);
 
-        //CardDMG
-        var CardDMG = document.createElement("div");
-        CardDMG.classList.add("CardDMG");
-        Card.appendChild(CardDMG);
+        
+        if (Attack != null && Attack != 0) {
+            //CardDMG
+            var CardDMG = document.createElement("div");
+            CardDMG.classList.add("CardDMG");
+            Card.appendChild(CardDMG);
+            //DMG Display
+            var CardDMGText = document.createElement("p");
+            CardDMGText.innerHTML = Attack;
+            CardDMG.appendChild(CardDMGText);
+            FontSizeAdjusterArray.push({Element:CardDMGText,HeightFactor:1});
+        }
+        
+        if (Health != null) {
+            //CardHealth
+            var CardHealth = document.createElement("div");
+            CardHealth.classList.add("CardHealth");
+            Card.appendChild(CardHealth);
 
-        //DMG Display
-        var CardDMGText = document.createElement("p");
-        CardDMGText.innerHTML = Attack;
-        CardDMG.appendChild(CardDMGText);
-        FontSizeAdjusterArray.push(CardDMGText);
-
-        //CardHealth
-        var CardHealth = document.createElement("div");
-        CardHealth.classList.add("CardHealth");
-        Card.appendChild(CardHealth);
-
-        //Health Display
-        var CardHealthText = document.createElement("p");
-        CardHealthText.innerHTML = Health;
-        CardHealth.appendChild(CardHealthText);
-        FontSizeAdjusterArray.push(CardHealthText);
+            //Health Display
+            var CardHealthText = document.createElement("p");
+            CardHealthText.innerHTML = Health;
+            CardHealth.appendChild(CardHealthText);
+            FontSizeAdjusterArray.push({Element:CardHealthText,HeightFactor:1});
+        }
+        
 
         //CardCost
         var CardCost = document.createElement("div");
@@ -1145,7 +1206,7 @@
         var CardCostText = document.createElement("p");
         CardCostText.innerHTML = Cost;
         CardCost.appendChild(CardCostText);
-        FontSizeAdjusterArray.push(CardCostText);
+        FontSizeAdjusterArray.push({Element:CardCostText,HeightFactor:1});
 
         //CardName
         var CardName = document.createElement("div");
@@ -1156,7 +1217,7 @@
         var CardNameText = document.createElement("p1");
         CardNameText.innerHTML = Name;
         CardName.appendChild(CardNameText);
-        FontSizeAdjusterArray.push(CardNameText);
+        FontSizeAdjusterArray.push({Element:CardNameText});
 
         //CardDescription
         var CardDescription = document.createElement("div");
@@ -1168,25 +1229,30 @@
         CardDescriptionText.innerHTML = Description;
         CardDescriptionText.style.fontSize = "80%";
         CardDescription.appendChild(CardDescriptionText);
-        FontSizeAdjusterArray.push(CardDescriptionText);
+        FontSizeAdjusterArray.push({Element:CardDescriptionText});
 
         return Card;
     }
     function SetAllFontSizeInArray(Array) {
         for (var i = 0; i < Array.length; i++) {
-            const Element = Array[i];
-            
-            var containerHeight = Element.parentNode.clientHeight;
-            var textHeight = Element.scrollHeight;
+            const Element = Array[i].Element;
+            if (Element!= null) {
+                let HightFactor = Array[i].HeightFactor != null ? Array[i].HeightFactor : 0.5;
+                //var containerHeight = Element.parentNode.clientHeight;
+                //var textHeight = Element.scrollHeight;
 
-            //if Number(Element.style.fontSize) > 0 then use else 1, then multiply with fontSize
+                var CharacterAreal = ((Element.parentNode.clientHeight*0.75*HightFactor) * (Element.parentNode.clientWidth))/(100+(Element.innerHTML.length));
 
-            var scaleFactor = (containerHeight*0.50) / textHeight;
+                //if Number(Element.style.fontSize) > 0 then use else 1, then multiply with fontSize
 
-            let fontSize = Number(Element.style.fontSize.slice(0, -3));
-            
-            fontSize = (fontSize>0)?fontSize * (scaleFactor):scaleFactor;
-            Element.style.fontSize = `${fontSize}rem`;
+                //var scaleFactor = (containerHeight*0.50) / textHeight;
+
+                //let fontSize = Number(Element.style.fontSize.slice(0, -3));
+                
+                //fontSize = (fontSize>0)?fontSize * (scaleFactor):scaleFactor;
+                
+                Element.style.fontSize = `${CharacterAreal}px`;
+            }
         }
     }
 
@@ -1202,7 +1268,39 @@
             PlayerDeck = await deck.json();
             DeckImported = true;
         }
-        
+    }
+    function CreateUseCardPrompt(Title,Class) {
+        if (PlayerEnergy<Class.Card.Cost) {return;}
+        if (Class.Card.Type == "Consumable") {
+            var Prompt = document.createElement("div");
+            Prompt.classList.add("Prompt");
+
+            var PromptBox = document.createElement("div");
+            Prompt.appendChild(PromptBox);
+
+            var h1 = document.createElement("h1");
+            h1.innerHTML = Title;
+            PromptBox.appendChild(h1);
+            var Yes = document.createElement("button");
+            Yes.innerHTML = "Yes";
+            Yes.addEventListener("click",()=>{
+                if (Class.Card.Type && Class.Card.Type == "Consumable" && Class.Card.Value) {
+                    GiveRandomCard(PlayerDeck, MaxEnergy, Class.Card.Value);
+                    Class.Body.remove();
+                    PlayerHand.splice(PlayerHand.indexOf(Class),1);
+                }
+                Prompt.remove();
+            });
+            PromptBox.appendChild(Yes);
+            var No = document.createElement("button");
+            No.innerHTML = "No";
+            No.addEventListener("click",()=>{
+                Prompt.remove();
+            });
+            PromptBox.appendChild(No);
+
+            document.body.appendChild(Prompt);
+        }
     }
     // Remove all event listeners from an element
     function removeAllEventListeners(element) {
@@ -1213,42 +1311,31 @@
     }
 
     class Card {
-        constructor(Name,Description,Cost,Attack,Health,Texture,Type=null,AttackType=null,SpawnDelay=0,EnemyCard=false) {
-            this.Cost = Cost;
-            this.Health = Health;
-            this.Attack = Attack;
-            this.Texture = Texture;
-            this.Name = Name;
-            this.Description = Description;
-            this.Type = Type;
-            this.AttackType = AttackType;
+        constructor(_Card,SpawnDelay=0,EnemyCard=false) {
+            this.Card = _Card;
+            this.BodyCreated = false;
             this.EnemyCard = EnemyCard;
 
             setTimeout(() => {
                 this.CreateBody();
                 }, SpawnDelay*500);
         }
-        UpdateVisuals(Name,Description,Cost,Attack,Health,Texture,Type) {
-            this.Cost = Cost;
-            this.Health = Health;
-            this.Attack = Attack;
-            this.Texture = Texture;
-            this.Name = Name;
-            this.Description = Description;
-            this.Type = Type;
+        UpdateVisuals() {
+            if ((DraggableCard == null && this.Body && this.Body.classList.contains("Card") && this.Body.style.display == "none") || (DraggableCard && DraggableCard.Class != this && this.Body && this.Body.classList.contains("Card") && this.Body.style.display == "none")) {
+                this.Body.style.display = "block";
+            }
             if (this.Body && this.Body.classList.contains("Card")) {
-                this.Body.children[0].style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
-                this.Body.children[2].children[0].innerHTML = Attack;
-                this.Body.children[3].children[0].innerHTML = Health;
-                this.Body.children[4].children[0].innerHTML = Cost;
-                this.Body.children[5].children[0].innerHTML = Name;
-                this.Body.children[6].children[0].innerHTML = Description;
-                if (Type=="Projectile") {
+                this.Body.children[0].style.backgroundImage = "url('/images/Cards/"+this.Card.Texture+".png')";
+                this.Body.children[2].children[0].innerHTML = this.Card.Attack;
+                this.Body.children[3].children[0].innerHTML = this.Card.Health;
+                this.Body.children[4].children[0].innerHTML = this.Card.Cost;
+                this.Body.children[5].children[0].innerHTML = this.Card.Name;
+                this.Body.children[6].children[0].innerHTML = this.Card.Description;
+                if (this.Card.Type=="Projectile") {
                     this.Body.children[3].style.display = "none";
                 } else {
                     this.Body.children[3].style.display = "block";
                 }
-                //SetAllFontSizeInArray(FontSizeAdjusterArray);
             }
         }
         Remove() {
@@ -1270,30 +1357,33 @@
                     document.getElementById("EnemyHand").appendChild(this.Body);
                     this.AnimationDone = true;
                 }else {
-                    this.Body = CreateCard(this.Name,this.Description,this.Cost,this.Attack,this.Health,this.Texture);
+                    this.Body = CreateCard(this.Card.Name,this.Card.Description,this.Card.Cost,this.Card.Attack,this.Card.Health,this.Card.Texture);
                     document.getElementById("PlayerHand").appendChild(this.Body);
                     this.Body.classList.add("Selectable");
-
-                    setTimeout(function() {SetAllFontSizeInArray(FontSizeAdjusterArray)}, 100);
-                    this.Body.addEventListener('mousedown', ()=>SelectDraggable(this.Body,this));
+                    if (this.Card.Type != "Consumable") {
+                        this.Body.addEventListener('mousedown', ()=>SelectDraggable(this.Body,this));
+                    } else {
+                        this.Body.addEventListener('click', ()=>CreateUseCardPrompt("Do You Want To Use "+this.Card.Name,this));
+                        this.Body.addEventListener('mousedown', ()=>CreateUseCardPrompt("Do You Want To Use "+this.Card.Name,this));
+                    }
                 }
                 
+                this.BodyCreated = true;
+
+                setTimeout(function() {SetAllFontSizeInArray(FontSizeAdjusterArray)}, 100);
             });
         }
     } 
     class Stone {
-        constructor(Attack,Health,Texture, ParentNode, WhatAmI="", Type=null, AttackType=null) {
-            this.Health = Health;
-            this.Attack = Attack;
-            this.Texture = Texture;
+        constructor(Card, ParentNode, WhatAmI) {
+            this.Card = Card;
             this.AttackCooldown = 1;
-            this.WhatAmI = WhatAmI;
-            this.Type = Type;
-            this.AttackType = AttackType;
+            this.WhatAmI = WhatAmI
 
-            this.Body = CreateCharacterStone(Attack,Health,Texture,"",Type);
+            this.Body = CreateCharacterStone(Card.Attack,Card.Health,Card.Texture,"",Card.Type);
             this.Body.classList.add("Selectable");
             this.Body.addEventListener("mousedown", ()=>this.SelectAttackingStone());
+
             ParentNode.appendChild(this.Body);
         }
         UpdateVisuals() {
@@ -1303,25 +1393,46 @@
                     this.Body = document.getElementById("PlayerOnField").children[BodyIndex];
                     this.Body = removeAllEventListeners(this.Body);
                     this.Body.addEventListener("mousedown", ()=>this.SelectAttackingStone());
-                } // test
+                }
             }
-            if (DraggableSelectTarget && DraggableSelectTarget.SelectedTarget == this.WhatAmI && this.WhatAmI!="") {
-                this.Body.getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = this.Attack;
-                this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = this.Health-(this.Type=="Tank"?DraggableSelectTarget.Class.Attack/2:DraggableSelectTarget.Class.Attack);
+            if (this.Card.New == null) {
+                this.Card.New = true;
+            }
+            if (this.Card.New==true) {
+                this.Body.classList.add("NewStone");
+                this.Body.addEventListener('animationend', () => {
+                    this.Body.classList.remove("NewStone");
+                    this.Card.New==false;
+                });
+            } else if (this.Card.Death==true) {
+                this.Body.classList.add("DestroyStone");
+                this.Body.addEventListener('animationend', () => {
+                    if (!this.Removing) {
+                        this.Body.classList.remove("DestroyStone");
+                        this.Card.Death = false;
+                    }
+                });
+            }
+            if (!this.Card.Death != true) {
+
+            } else if (DraggableSelectTarget && DraggableSelectTarget.SelectedTarget == this.WhatAmI && this.WhatAmI!="") {
+                this.Body.getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = this.Card.Attack;
+                this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = this.Card.Health-(this.Card.Type=="Tank"?DraggableSelectTarget.Class.Card.Attack/2:DraggableSelectTarget.Class.Card.Attack);
                 this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].style.color = "blue";
-            } else if (DraggableSelectTarget && DraggableSelectTarget.Class && DraggableSelectTarget.Class.AttackType == "Burst" &&  this.WhatAmI!="" && typeof(Number(this.WhatAmI)) == "number" && DraggableSelectTarget.SelectedTarget != "" && (Number(DraggableSelectTarget.SelectedTarget) == Number(this.WhatAmI)-1 || Number(DraggableSelectTarget.SelectedTarget) == Number(this.WhatAmI)+1)) {
-                this.Body.getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = this.Attack;
-                this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = this.Health-(this.Type=="Tank"?DraggableSelectTarget.Class.Attack/2:DraggableSelectTarget.Class.Attack);
+            } else if (DraggableSelectTarget && DraggableSelectTarget.Class && DraggableSelectTarget.Class.Card.AttackType == "Burst" &&  this.WhatAmI!="" && typeof(Number(this.WhatAmI)) == "number" && DraggableSelectTarget.SelectedTarget != "" && (Number(DraggableSelectTarget.SelectedTarget) == Number(this.WhatAmI)-1 || Number(DraggableSelectTarget.SelectedTarget) == Number(this.WhatAmI)+1)) {
+                this.Body.getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = this.Card.Attack;
+                this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = this.Card.Health-(this.Card.Type=="Tank"?DraggableSelectTarget.Class.Card.Attack/2:DraggableSelectTarget.Class.Card.Attack);
                 this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].style.color = "rgb(0,0,100)";
             } else {
-                this.Body.getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = this.Attack;
-                this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = this.Health;
+                this.Body.getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = this.Card.Attack;
+                this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = this.Card.Health;
                 this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].style.color = "black";
             }
-            if (this.Type != null && this.Type == "Tank") {
-                this.Body.style.backgroundImage = "url('/images/Cards/"+this.Texture+".png'), url('/images/shield.png')";
+            if (this.Card.Type != null && this.Card.Type == "Tank") {
+                this.Body.style.backgroundImage = "url('/images/Cards/"+this.Card.Texture+".png'), url('/images/shield.png')";
             } else 
-                this.Body.style.backgroundImage = "url('/images/Cards/"+this.Texture+".png')";
+                this.Body.style.backgroundImage = "url('/images/Cards/"+this.Card.Texture+".png')";
+
             if (this.AttackCooldown>0) {
                 this.Body.classList.add("OnCooldown");
             } else {
@@ -1329,7 +1440,17 @@
             }
         }
         Remove() {
-            this.Body.remove();
+            if (this.Body) {
+                if (this.Card.Death!=true) {
+                    this.Body.classList.add("DestroyStone");
+                }
+                
+                this.Removing = true;
+                let Body = this.Body;
+                setTimeout(function() {
+                    Body.remove();
+                }, 500);
+            }
         }
         SelectAttackingStone() {
             if (DraggableSelectTarget) {
@@ -1344,6 +1465,25 @@
             document.getElementById("DraggableParent").appendChild(TargetIndicator);
             DraggableSelectTarget.TargetIndicator.style.left = MouseX+"px";
             DraggableSelectTarget.TargetIndicator.style.top = MouseY+"px";
+        }
+        ShowAttackAnimationAtEnemy(TargetIndex, ThisEnemy = false) {
+            this.Body.style.height = this.Body.parentNode.clientHeight+"px";
+            var TargetEnemy = ThisEnemy ? PlayerAvatar.Body : EnemyAvatar.Body;
+            var TargetField = ThisEnemy ? PlayerOnField : EnemyOnField;
+            if (TargetIndex != null && typeof TargetIndex == "number" && TargetField.length>TargetIndex && TargetField >=0) {
+                TargetEnemy = TargetField[TargetIndex].Body;
+            }
+            this.Body.style.transition = "2s ease-out";
+            this.Body.style.position = "fixed";
+            this.Body.Top = TargetEnemy.getBoundingClientRect().top - (TargetEnemy.offsetHeight)/2 + "px";
+            this.Body.left = TargetEnemy.getBoundingClientRect().left + (TargetEnemy.offsetWidth)/2 + "px";
+            console.log("Start Moving")
+            setTimeout(()=>{
+                this.Body.style.position = "";
+                this.Body.Top = "";
+                this.Body.left = "";
+                console.log("Reset")
+            },2000);
         }
     }
     // Text Boble 

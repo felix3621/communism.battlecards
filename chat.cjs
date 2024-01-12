@@ -70,7 +70,7 @@ webSocketServer.on('connection', async(socket, request) => {
     let username = await authorizeSocket(socket, request);
     if (!username) return;
 
-    if (JSON.parse(fr('./settings.json')).lockdown) {
+    if (JSON.parse(fr.read('./settings.json')).lockdown) {
         let ud = await client.db("communism_battlecards").collection("accounts").findOne({username: username})
         if (!ud.admin && !ud.root) {
             socket.close(1008, "LOCKDOWN")
@@ -86,17 +86,17 @@ webSocketServer.on('connection', async(socket, request) => {
         var message = JSON.parse(message);
         let PlayerMessage = ""
         if (user.root) {
-            PlayerMessage+="<p style='color:red;'>"+user.display_name+"</p> ";
+            PlayerMessage+="<p style='color:red;'>&#60;"+user.display_name+"&#62;</p>&nbsp;";
         } else if (user.admin) {
-            PlayerMessage+="<p style='color:blue;'>"+user.display_name+"</p> ";
+            PlayerMessage+="<p style='color:rgb(0,255,255);'>&#60;"+user.display_name+"&#62;</p>&nbsp;";
         } else {
-            PlayerMessage+="<p style='color:yellow;'>"+user.display_name+"</p> ";
+            PlayerMessage+="<p style='color:rgb(255,170,0);'>&#60;"+user.display_name+"&#62;</p>&nbsp;";
         }
         PlayerMessage += message.Text;
 
         webSocketServer.clients.forEach((client) => {
             if (client.readyState === WebSocket.OPEN) {
-                client.send(JSON.stringify(PlayerMessage));
+                client.send(JSON.stringify({PlayerMessage:PlayerMessage}));
             }
         });
     });

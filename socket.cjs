@@ -739,25 +739,28 @@ async function tick() {
     }
     //if players in queue: join open battles, or create new battle
     if (queuedUsers.length > 0) {
-        let added = false
-        if (battles.length > 0 && !battles[battles.length-1].active) {
-            for (let i = battles.length - 1; i >= 0; i--) {
-                if (!battles[i].active && !battles[i].private) {
-                    battles[i].SetP2(queuedUsers[0].username)
-                    added = true;
-                    break;
+        for (let i = 0; i < queuedUsers.length; i++) {
+            let added = false;
+            if (battles.length > 0 && !battles[battles.length-1].active) {
+                for (let i1 = battles.length - 1; i1 >= 0; i1--) {
+                    if (!battles[i1].active && !battles[i1].private) {
+                        battles[i1].SetP2(queuedUsers[i].username)
+                        added = true;
+                        break;
+                    }
                 }
             }
+            if (!added) {
+                battles.push(new Battle());
+                battles[battles.length-1].code = auth.encrypt("game_"+gameID)
+                log.push("<"+queuedUsers[i].username+"> created game: "+auth.encrypt("game_"+gameID))
+                battles[battles.length-1].SetP1(queuedUsers[i].username);
+                gameID++
+            }
+            battleUsers.push(queuedUsers[i]);
+            queuedUsers.splice(i,1);
+            i--;
         }
-        if (!added) {
-            battles.push(new Battle());
-            battles[battles.length-1].code = auth.encrypt("game_"+gameID)
-            log.push("<"+queuedUsers[0].username+"> created game: "+auth.encrypt("game_"+gameID))
-            battles[battles.length-1].SetP1(queuedUsers[0].username);
-            gameID++
-        }
-        battleUsers.push(queuedUsers[0]);
-        queuedUsers.splice(0,1);
     }
     
     //update all battles
@@ -935,7 +938,7 @@ webSocketServer.on('connection', async(socket, request) => {
     let username = await authorizeSocket(socket, request);
     if (!username) return;
 
-    if (JSON.parse(fr('./settings.json')).lockdown) {
+    if (JSON.parse(fr.read('./settings.json')).lockdown) {
         let ud = await client.db("communism_battlecards").collection("accounts").findOne({username: username})
         if (!ud.admin && !ud.root) {
             socket.close(1008, "LOCKDOWN")
@@ -947,8 +950,13 @@ webSocketServer.on('connection', async(socket, request) => {
 
     if (search.get("admin") && decodeURIComponent(search.get("admin")) == "true") {
         var privileged = await isAdmin(username)
-        if (!privileged)
-            socket.close(1008, 'Admin required');
+        if (!privileged) {
+            if (!JSON.parse(fr.read('./settings.json')).publicView) {
+                socket.close(1008, 'Admin required');
+                return;
+            }
+        }
+
         let old = viewer.find(obj => obj.username == username)
         if (old) {
             old.socket.close(1008, "another instance logged on")

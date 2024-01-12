@@ -14,7 +14,7 @@ router.post('/login', auth.checkUser, (req, res) => {
     res.json(req.user)
 })
 router.post('/signup', async(req, res) => {
-    let settings = JSON.parse(fr('./settings.json'))
+    let settings = JSON.parse(fr.read('./settings.json'))
     let username = req.body.username;
     let password = req.body.password;
     let display_name = req.body.display_name;
@@ -23,7 +23,7 @@ router.post('/signup', async(req, res) => {
         password = auth.encrypt(password)
         let base = client.db("communism_battlecards").collection("accounts")
         let check = await base.findOne({username: username})
-        if (!check) {
+        if (!check && !(/^test_\d+/).test(username)) { //does not exist AND will not interfere with testusers
             let result = await base.insertOne({username: username, password: password, display_name: display_name, avatar: settings.defaultAvatar, deck: settings.defaultDeck, inventory: settings.defaultInventory, xp: settings.defaultXp})
 
             let userToken = auth.encrypt(JSON.stringify([auth.encrypt(username), auth.encrypt(password)]))

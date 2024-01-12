@@ -434,6 +434,11 @@
             filter: opacity(1) drop-shadow(0 0mm 0mm rgba(0, 0, 0,0));
         }
     }
+    #GoHome {
+        position: fixed;
+        top: 0;
+        left:0;
+    }
 </style>
 <hr id="MidleLine">
 <div id="EnemyAvatar"><h1 id="EnemyName">Waiting for Player...</h1></div>
@@ -457,6 +462,7 @@
     </div>
     <div id="TournamentGameList"></div>
 </div>
+<button id="GoHome" on:click={()=>{window.location.href="/"}}>Go Home</button>
 <script>
     import { onMount } from "svelte";
 
@@ -951,7 +957,10 @@
         var CharacterStoneDMGText = document.createElement("p");
         CharacterStoneDMGText.innerHTML = Attack;
         CharacterStoneDMG.appendChild(CharacterStoneDMGText);
-        FontSizeAdjusterArray.push(CharacterStoneDMGText);
+        FontSizeAdjusterArray.push({Element:CharacterStoneDMGText,HeightFactor:1});
+        if (Attack== null || Attack == 0) {
+            CardDMG.style.filter = "opacity(0)"
+        }
 
         //CardHealth
         var CharacterStoneHealth = document.createElement("div");
@@ -962,7 +971,7 @@
         var CharacterStoneHealthText = document.createElement("p");
         CharacterStoneHealthText.innerHTML = Health;
         CharacterStoneHealth.appendChild(CharacterStoneHealthText);
-        FontSizeAdjusterArray.push(CharacterStoneHealthText);
+        FontSizeAdjusterArray.push({Element:CharacterStoneHealthText,HeightFactor:1});
 
         return CharacterStone;
     }
@@ -1021,27 +1030,31 @@
         CardFrame.classList.add("CardFrame");
         Card.appendChild(CardFrame);
 
-        //CardDMG
-        var CardDMG = document.createElement("div");
-        CardDMG.classList.add("CardDMG");
-        Card.appendChild(CardDMG);
+        if (Attack != null) {
+            //CardDMG
+            var CardDMG = document.createElement("div");
+            CardDMG.classList.add("CardDMG");
+            Card.appendChild(CardDMG);
 
-        //DMG Display
-        var CardDMGText = document.createElement("p");
-        CardDMGText.innerHTML = Attack;
-        CardDMG.appendChild(CardDMGText);
-        FontSizeAdjusterArray.push(CardDMGText);
+            //DMG Display
+            var CardDMGText = document.createElement("p");
+            CardDMGText.innerHTML = Attack;
+            CardDMG.appendChild(CardDMGText);
+            FontSizeAdjusterArray.push({Element:CardDMGText,HeightFactor:1});
+        }
+        
+        if (Health != null) {
+            //CardHealth
+            var CardHealth = document.createElement("div");
+            CardHealth.classList.add("CardHealth");
+            Card.appendChild(CardHealth);
 
-        //CardHealth
-        var CardHealth = document.createElement("div");
-        CardHealth.classList.add("CardHealth");
-        Card.appendChild(CardHealth);
-
-        //Health Display
-        var CardHealthText = document.createElement("p");
-        CardHealthText.innerHTML = Health;
-        CardHealth.appendChild(CardHealthText);
-        FontSizeAdjusterArray.push(CardHealthText);
+            //Health Display
+            var CardHealthText = document.createElement("p");
+            CardHealthText.innerHTML = Health;
+            CardHealth.appendChild(CardHealthText);
+            FontSizeAdjusterArray.push({Element:CardHealthText,HeightFactor:1});
+        }
 
         //CardCost
         var CardCost = document.createElement("div");
@@ -1052,7 +1065,7 @@
         var CardCostText = document.createElement("p");
         CardCostText.innerHTML = Cost;
         CardCost.appendChild(CardCostText);
-        FontSizeAdjusterArray.push(CardCostText);
+        FontSizeAdjusterArray.push({Element:CardCostText,HeightFactor:1});
 
         //CardName
         var CardName = document.createElement("div");
@@ -1063,7 +1076,7 @@
         var CardNameText = document.createElement("p1");
         CardNameText.innerHTML = Name;
         CardName.appendChild(CardNameText);
-        FontSizeAdjusterArray.push(CardNameText);
+        FontSizeAdjusterArray.push({Element:CardNameText});
 
         //CardDescription
         var CardDescription = document.createElement("div");
@@ -1075,26 +1088,30 @@
         CardDescriptionText.innerHTML = Description;
         CardDescriptionText.style.fontSize = "80%";
         CardDescription.appendChild(CardDescriptionText);
-        FontSizeAdjusterArray.push(CardDescriptionText);
+        FontSizeAdjusterArray.push({Element:CardDescriptionText});
 
         return Card;
     }
     function SetAllFontSizeInArray(Array) {
         for (var i = 0; i < Array.length; i++) {
-            const Element = Array[i];
-            
-            var containerHeight = Element.parentNode.clientHeight;
-            var textHeight = Element.scrollHeight;
-            console.log(textHeight, containerHeight)
+            const Element = Array[i].Element;
+            if (Element!= null) {
+                let HightFactor = Array[i].HeightFactor != null ? Array[i].HeightFactor : 0.5;
+                //var containerHeight = Element.parentNode.clientHeight;
+                //var textHeight = Element.scrollHeight;
 
-            //if Number(Element.style.fontSize) > 0 then use else 1, then multiply with fontSize
+                var CharacterAreal = ((Element.parentNode.clientHeight*0.75*HightFactor) * (Element.parentNode.clientWidth))/(100+(Element.innerHTML.length));
 
-            var scaleFactor = (containerHeight*0.50) / textHeight;
+                //if Number(Element.style.fontSize) > 0 then use else 1, then multiply with fontSize
 
-            let fontSize = Number(Element.style.fontSize.slice(0, -3));
-            
-            fontSize = (fontSize>0)?fontSize * (scaleFactor):scaleFactor;
-            Element.style.fontSize = `${fontSize}rem`;
+                //var scaleFactor = (containerHeight*0.50) / textHeight;
+
+                //let fontSize = Number(Element.style.fontSize.slice(0, -3));
+                
+                //fontSize = (fontSize>0)?fontSize * (scaleFactor):scaleFactor;
+                
+                Element.style.fontSize = `${CharacterAreal}px`;
+            }
         }
     }
     function CreateUseCardPrompt(Title,Class) {

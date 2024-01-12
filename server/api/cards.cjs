@@ -14,7 +14,7 @@ connectDB()
 
 router.get('/getAllCards', auth.checkUser, async (req, res) => {
     try {
-        let settings = JSON.parse(fr('./settings.json'))
+        let settings = JSON.parse(fr.read('./settings.json'))
         if (settings.getAllCards || req.user.admin) {
             let result = await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username})
     
@@ -39,7 +39,7 @@ router.get('/getAllCards', auth.checkUser, async (req, res) => {
 
 router.get('/getXp', auth.checkUser, async (req, res) => {
     try {
-        var settings = JSON.parse(fr('./settings.json'))
+        var settings = JSON.parse(fr.read('./settings.json'))
         if (settings.getXp || req.user.admin) {
             await client.db("communism_battlecards").collection("accounts").updateOne({username: req.user.username},{$set:{xp: settings.getXpAmount}})
             

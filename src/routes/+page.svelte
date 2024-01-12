@@ -30,12 +30,29 @@
     #gamePanel {
         position: fixed;
         left:10%;
-        top:40%;
+        top:35%;
         right:60%;
-        bottom: 35%;
+        bottom: 45%;
+    }
+    
+    #tournamentPanel {
+        position: fixed;
+        left:60%;
+        top:35%;
+        right:10%;
+        bottom: 45%;
+    }
+    .panel {
         background-color: rgb(50, 50, 50);
         border-radius: 25px;
         outline: 5px black solid;
+        width: 100%;
+        height: 100%;
+    }
+    .content {
+        width: 100%;
+        height: 100%;
+        top: -0;
     }
     #Panel2 {
         position: fixed;
@@ -45,8 +62,6 @@
         bottom: 5%;
     }
     .PanelTitle {
-        position: fixed;
-        transform: translate(0,-45px);
         margin: 0px;
         text-align: center;
     }
@@ -158,49 +173,43 @@
         background-color: #b3b3b3;
     }
     #quickPlay {
-        width: 95%;
-        margin-left: 2.5%;
-        margin-top: 2.5%;
-        height: 30%;
-        transform: translate(0,-37.5px);
+        width: 100%;
+        height: 100%;
         border-radius: 25px 25px 0 0;
         font-size: 200%;
         font-weight: bolder;
         padding: 0;
     }
     #privateGame {
-        width: 95%;
-        margin-left: 2.5%;
-        margin-top: 1%;
-        height: 30%;
-        transform: translate(0,-37.5px);
-        font-size: 200%;
-        font-weight: bolder;
-        padding: 0;
-    }
-    .joinByCode {
-        width: 95%;
-        margin-left: 2.5%;
-        height: 30%;
-        transform: translate(0,-37.5px);
-        font-size: 200%;
-        font-weight: bolder;
-        padding: 0;
-        overflow: hidden;
-    }
-    .joinByCode *{
-        width: 45%;
+        width: 100%;
         height: 100%;
-        font-size: 125%;
+        font-size: 200%;
+        font-weight: bolder;
+        padding: 0;
     }
-    .joinByCode input {
+    #gameCode, #tournamentCode {
+        width: 100%;
+        height: 100%;
+        font-size: 200%;
+        font-weight: bolder;
         padding: 0;
         border-radius: 0 0 0 25px;
     }
-    .joinByCode button {
-        position: fixed;
-        margin-left: 10%;
+    #JoinByCodeBtn, #JoinTournamentCodeBtn {
+        width: 100%;
+        height: 100%;
+        font-size: 200%;
+        font-weight: bolder;
+        padding: 0;
         border-radius: 0 0 25px 0;
+    }
+    #createTournament {
+        width: 100%;
+        height: 100%;
+        border-radius: 25px 25px 0 0;
+        font-size: 200%;
+        font-weight: bolder;
+        padding: 0;
     }
     .Icon {
         aspect-ratio: 1/1;
@@ -313,27 +322,6 @@
         background-color: #414141;
         outline: 5px rgb(77, 77, 77) solid;
         border-radius: 25px;
-    }
-    #tournamentPanel {
-        position: fixed;
-        left:60%;
-        top:40%;
-        right:10%;
-        bottom: 35%;
-        background-color: rgb(50, 50, 50);
-        border-radius: 25px;
-        outline: 5px black solid;
-    }
-    #createTournament {
-        width: 95%;
-        margin-left: 2.5%;
-        margin-top: 2.5%;
-        height: 30%;
-        transform: translate(0,-37.5px);
-        border-radius: 25px 25px 0 0;
-        font-size: 200%;
-        font-weight: bolder;
-        padding: 0;
     }
     :global(#SettingsDropDown) {
         display: grid;
@@ -496,7 +484,7 @@
         position: fixed;
         left: 0;
         bottom: 0px;
-        width: 50%;
+        width: 40%;
         height: 20%;
     }
     #Chat input{
@@ -515,15 +503,21 @@
         bottom: 20px;
         width: 100%;
         top: 0;
-        display: grid;
-        grid-template-columns: auto;
-        grid-template-rows: repeat(auto,minmax(10px,20px));
+        display: flex;
+        flex-direction: column-reverse;
         overflow-x: hidden;
         overflow-y: scroll;
         background-color: #1f1e1e;
         outline: 5px black solid;
         border-radius: 0px 25px 0px 0px;
         color: white;
+        padding-bottom: 5px;
+    }
+    :global(#MessagesDisplay p) {
+        margin: 0;
+        width: max-content;
+        float: left;
+        max-width: 100%;
     }
 </style>
 <img id="logo" src="images/BattlecardsLogo.png">
@@ -566,20 +560,48 @@
 <!--Select Match-->
 <div id="gamePanel">
     <h1 class="PanelTitle" style="position: relative"><b>Game</b></h1>
-    <button id="quickPlay" class="btn" on:click={() => window.location.href = "/game"}>Quick Play</button>
-    <button id="privateGame" class="btn" on:click={() => window.location.href = "/game?private=true"}>Private Game</button>
-    <div class="joinByCode" id="gameCode">
-        <input type="text" placeholder="Code">
-        <button id="JoinByCodeBtn" class="btn" on:click={() => window.location.href = "/game?code="+encodeURIComponent(document.getElementById("gameCode").children[0].value)}>Join</button>
+    <div class="panel">
+        <table class="content">
+            <tr>
+                <td colspan="2">
+                    <button id="quickPlay" class="btn" on:click={() => window.location.href = "/game"}>Quick Play</button>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <button id="privateGame" class="btn" on:click={() => window.location.href = "/game?private=true"}>Private Game</button>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 50%;">
+                    <input type="text" placeholder="code" id="gameCode">
+                </td>
+                <td style="width: 50%;">
+                    <button id="JoinByCodeBtn" class="btn" on:click={() => window.location.href = "/game?code="+encodeURIComponent(document.getElementById("gameCode").value)}>Join</button>
+                </td>
+            </tr>
+        </table>
     </div>
 </div>
 <!--Select tournament-->
 <div id="tournamentPanel">
     <h1 class="PanelTitle" style="position: relative"><b>Tournament</b></h1>
-    <button class="btn" id="createTournament" on:click={() => window.location.href = "/game?tournament=new"}>New tournament</button>
-    <div class="joinByCode" style="position: absolute; bottom: -17.5%; " id="tournamentCode">
-        <input type="text" placeholder="Code">
-        <button id="JoinTournamentCodeBtn" class="btn" on:click={() => window.location.href = "/game?tournament="+encodeURIComponent(document.getElementById("tournamentCode").children[0].value)}>Join</button>
+    <div class="panel">
+        <table class="content">
+            <tr>
+                <td colspan="2">
+                    <button class="btn" id="createTournament" on:click={() => window.location.href = "/game?tournament=new"}>New tournament</button>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 50%;">
+                    <input type="text" placeholder="code" id="tournamentCode">
+                </td>
+                <td style="width: 50%;">
+                    <button id="JoinTournamentCodeBtn" class="btn" on:click={() => window.location.href = "/game?tournament="+encodeURIComponent(document.getElementById("tournamentCode").value)}>Join</button>
+                </td>
+            </tr>
+        </table>
     </div>
 </div>
 
@@ -590,7 +612,7 @@
 </div>
 <div id="Chat">
     <div id="MessagesDisplay"></div>
-    <input type="text" id="ChatInputFiled" on:keydown={MessagesSendOnEnter}>
+    <input type="text" id="ChatInputFiled" on:keydown={MessagesSendOnEnter} placeholder="Type to text...">
 </div>
 <div id="AvatarPanel" style="display:none;">
     <button style="position: fixed;right:0;top:0;font-size:50px" class="btn" on:click={()=>document.getElementById("AvatarPanel").style.display="none"}>Back</button>
@@ -658,11 +680,10 @@
         });
     }
     function MessagesSendOnEnter(event) {
-        if (event.key === 'Enter') {
+        if (event.key === 'Enter' && socket != null) {
             // Handle the Enter key press here
-            console.log('Enter key pressed. Value:', inputValue);
-            console.log("Test")
-            document.getElementById("MessagesDisplay");
+            socket.send(JSON.stringify({Text:document.getElementById("ChatInputFiled").value}))
+            document.getElementById("ChatInputFiled").value = ""
         }
 
     };
@@ -680,7 +701,7 @@
             var data = event.data;
             if (data) {
                 data = JSON.parse(data);
-                MessagesStored.push(data);
+                MessagesStored.push(data.PlayerMessage);
                 while (MessagesStored.length>=100) {
                     MessagesStored.splice(0,1);
                 }
@@ -688,10 +709,10 @@
                 for (let i = 0; i < MessagesStored.length || i < MessageParent.children.length; i++) {
                     if (i < MessagesStored.length && i >= MessageParent.children.length) {
                         let Text = document.createElement("p");
-                        Text.innerHTML = MessagesStored[i];
+                        Text.innerHTML = MessagesStored[MessagesStored.length-1-i];
                         MessageParent.appendChild(Text);
-                    } else if (i < MessageParent.children.length) {
-                        MessageParent.children[i].innerHTML = MessagesStored[i];
+                    } else if (i < MessagesStored.length && i < MessageParent.children.length) {
+                        MessageParent.children[i].innerHTML = MessagesStored[MessagesStored.length-1-i];
                     } else {
                         MessageParent.children[i].remove();
                     }
@@ -711,32 +732,30 @@
     }
 
     onMount(async() => {
-        console.log("starting")
         const user = await fetch(window.location.origin+'/api/account/login', {
             method: 'POST',
             headers: {
 	    		'Content-Type': 'application/json',
 	    	}
         });
-        console.log(user)
         if (user.ok) {
             let ud = await user.json()
-            //CreateSocketConnection();
+            CreateSocketConnection();
             if (ud.rewards) {
                 OppenRewardCrate(ud.rewards);
             }
             if (ud.admin) {
-                let viewLink = document.createElement("a");
-                viewLink.setAttribute("href","view");
-                viewLink.innerText = "View";
-                viewLink.classList.add("adminButton");
-                document.getElementById("SettingsDropDown").appendChild(viewLink);
-                
                 let adminLink = document.createElement("a");
                 adminLink.setAttribute("href","admin");
                 adminLink.innerText = "Admin";
                 adminLink.classList.add("adminButton");
                 document.getElementById("SettingsDropDown").appendChild(adminLink);
+            }
+            if (ud.view) {
+                let viewLink = document.createElement("a");
+                viewLink.setAttribute("href","view");
+                viewLink.innerText = "View";
+                document.getElementById("SettingsDropDown").appendChild(viewLink);
             }
             if (ud.getAllCards) {
                 let gac = document.createElement("a");
@@ -819,7 +838,7 @@
         var CharacterStoneDMGText = document.createElement("p");
         CharacterStoneDMGText.innerHTML = Attack;
         CharacterStoneDMG.appendChild(CharacterStoneDMGText);
-        FontSizeAdjusterArray.push(CharacterStoneDMGText);
+        FontSizeAdjusterArray.push({Element:CharacterStoneDMGText,HeightFactor:1});
 
         //CardHealth
         var CharacterStoneHealth = document.createElement("div");
@@ -830,7 +849,7 @@
         var CharacterStoneHealthText = document.createElement("p");
         CharacterStoneHealthText.innerHTML = Health;
         CharacterStoneHealth.appendChild(CharacterStoneHealthText);
-        FontSizeAdjusterArray.push(CharacterStoneHealthText);
+        FontSizeAdjusterArray.push({Element:CharacterStoneHealthText,HeightFactor:1});
 
         return CharacterStone;
     }
@@ -852,26 +871,31 @@
         Card.appendChild(CardFrame);
 
         //CardDMG
-        var CardDMG = document.createElement("div");
-        CardDMG.classList.add("CardDMG");
-        Card.appendChild(CardDMG);
+        if (Attack != null && Attack != 0) {
+            var CardDMG = document.createElement("div");
+            CardDMG.classList.add("CardDMG");
+            Card.appendChild(CardDMG);
 
-        //DMG Display
-        var CardDMGText = document.createElement("p");
-        CardDMGText.innerHTML = Attack;
-        CardDMG.appendChild(CardDMGText);
-        FontSizeAdjusterArray.push(CardDMGText);
+            //DMG Display
+            var CardDMGText = document.createElement("p");
+            CardDMGText.innerHTML = Attack;
+            CardDMG.appendChild(CardDMGText);
+            FontSizeAdjusterArray.push({Element:CardDMGText,HeightFactor:1});
+        }
+        
+        if (Health != null) {
+            //CardHealth
+            var CardHealth = document.createElement("div");
+            CardHealth.classList.add("CardHealth");
+            Card.appendChild(CardHealth);
 
-        //CardHealth
-        var CardHealth = document.createElement("div");
-        CardHealth.classList.add("CardHealth");
-        Card.appendChild(CardHealth);
-
-        //Health Display
-        var CardHealthText = document.createElement("p");
-        CardHealthText.innerHTML = Health;
-        CardHealth.appendChild(CardHealthText);
-        FontSizeAdjusterArray.push(CardHealthText);
+            //Health Display
+            var CardHealthText = document.createElement("p");
+            CardHealthText.innerHTML = Health;
+            CardHealth.appendChild(CardHealthText);
+            FontSizeAdjusterArray.push({Element:CardHealthText,HeightFactor:1});
+        }
+        
 
         //CardCost
         var CardCost = document.createElement("div");
@@ -882,7 +906,7 @@
         var CardCostText = document.createElement("p");
         CardCostText.innerHTML = Cost;
         CardCost.appendChild(CardCostText);
-        FontSizeAdjusterArray.push(CardCostText);
+        FontSizeAdjusterArray.push({Element:CardCostText,HeightFactor:1});
 
         //CardName
         var CardName = document.createElement("div");
@@ -893,7 +917,7 @@
         var CardNameText = document.createElement("p1");
         CardNameText.innerHTML = Name;
         CardName.appendChild(CardNameText);
-        FontSizeAdjusterArray.push(CardNameText);
+        FontSizeAdjusterArray.push({Element:CardNameText, FullWidth:true});
 
         //CardDescription
         var CardDescription = document.createElement("div");
@@ -905,25 +929,30 @@
         CardDescriptionText.innerHTML = Description;
         CardDescriptionText.style.fontSize = "80%";
         CardDescription.appendChild(CardDescriptionText);
-        FontSizeAdjusterArray.push(CardDescriptionText);
+        FontSizeAdjusterArray.push({Element:CardDescriptionText});
 
         return Card;
     }
-    // Adjust All Font-Sizes in Array To Fit
     function SetAllFontSizeInArray(Array) {
         for (var i = 0; i < Array.length; i++) {
-            const Element = Array[i];
-            
-            var containerHeight = Element.parentNode.clientHeight;
-            var textHeight = Element.scrollHeight;
+            const Element = Array[i].Element;
+            if (Element!= null) {
+                let HightFactor = Array[i].HeightFactor != null ? Array[i].HeightFactor : 0.5;
+                //var containerHeight = Element.parentNode.clientHeight;
+                //var textHeight = Element.scrollHeight;
 
-            var scaleFactor = (containerHeight*0.50) / textHeight;
+                var CharacterAreal = ((Element.parentNode.clientHeight*0.75*HightFactor) * (Element.parentNode.clientWidth))/(100+(Element.innerHTML.length));
 
-            let fontSize = Number(Element.style.fontSize.slice(0, -3));
+                //if Number(Element.style.fontSize) > 0 then use else 1, then multiply with fontSize
 
-            fontSize = (fontSize>0)?fontSize * (scaleFactor):scaleFactor;
-            Element.style.fontSize = `${fontSize}rem`;
+                //var scaleFactor = (containerHeight*0.50) / textHeight;
 
+                //let fontSize = Number(Element.style.fontSize.slice(0, -3));
+                
+                //fontSize = (fontSize>0)?fontSize * (scaleFactor):scaleFactor;
+                
+                Element.style.fontSize = `${CharacterAreal}px`;
+            }
         }
     }
 
