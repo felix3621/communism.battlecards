@@ -4,6 +4,7 @@ const auth = require('../authentication.cjs');
 const db = require('../database.cjs');
 const cards = require('../Cards.json');
 const fr = require('../fileReader.cjs');
+const logger = require('../logger.cjs');
 
 
 var client;
@@ -17,6 +18,9 @@ router.get('/getAllCards', auth.checkUser, async (req, res) => {
         let settings = JSON.parse(fr.read('./settings.json'))
         if (settings.getAllCards || req.user.admin) {
             let result = await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username})
+
+            let old_deck = result.deck
+            let old_inventory = result.inventory
     
             result.inventory = []
     
@@ -25,6 +29,11 @@ router.get('/getAllCards', auth.checkUser, async (req, res) => {
             for (let i = 0; i < cards.length; i++) {
                 result.deck.push(i)
             }
+
+            logger.info(
+                req.user.username + ": old_deck="+JSON.stringify(old_deck)+", old_inventory="+JSON.stringify(old_inventory)+", new_deck="+JSON.stringify(result.deck)+", new_inventory="+JSON.stringify(result.inventory),
+                req.originalUrl
+            )
     
             await client.db("communism_battlecards").collection("accounts").updateOne({username: req.user.username},{$set:result})
             
@@ -41,6 +50,12 @@ router.get('/getXp', auth.checkUser, async (req, res) => {
     try {
         var settings = JSON.parse(fr.read('./settings.json'))
         if (settings.getXp || req.user.admin) {
+
+            logger.info(
+                req.user.username + ": old_xp="+req.user.xp.totalXp+", new_xp="+settings.getXpAmount,
+                req.originalUrl
+            )
+
             await client.db("communism_battlecards").collection("accounts").updateOne({username: req.user.username},{$set:{xp: settings.getXpAmount}})
             
             res.status(200).send("Cards changed")

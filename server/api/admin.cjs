@@ -6,6 +6,7 @@ const cards = require('../Cards.json');
 const avatars = require('../Avatars.json');
 const fr = require('../fileReader.cjs');
 const xp = require('../xp.cjs');
+const logger = require('../logger.cjs');
 
 var client;
 async function connectDB() {
@@ -73,6 +74,10 @@ router.post('/setDeck', async (req, res) => {
             }
     
             if (getResult) {
+                logger.warn(
+                    req.user.username + "->"+req.body.user+": old_deck="+JSON.stringify(getResult.deck)+", new_deck="+JSON.stringify(req.body.deck)+"",
+                    req.originalUrl
+                )
                 await client.db("communism_battlecards").collection("accounts").updateOne({username: req.body.user},{$set: {deck: req.body.deck}});
                 res.json(req.body.deck)
             } else {
@@ -89,34 +94,38 @@ router.post('/setDeck', async (req, res) => {
 
 router.post('/setInventory', async (req, res) => {
     // Validator 
-if (req.body.user && req.body.inventory instanceof Array) {
-    var valid = true;
-    for (let i = 0; i < req.body.inventory.length; i++) {
-        if (typeof req.body.inventory[i] != "object" || typeof req.body.inventory[i].card != "number" || typeof req.body.inventory[i].count != "number" || req.body.inventory[i].count < 1 || req.body.inventory[i].card<0 || req.body.inventory[i].card >= cards.length) {
-            valid = false;
+    if (req.body.user && req.body.inventory instanceof Array) {
+        var valid = true;
+        for (let i = 0; i < req.body.inventory.length; i++) {
+            if (typeof req.body.inventory[i] != "object" || typeof req.body.inventory[i].card != "number" || typeof req.body.inventory[i].count != "number" || req.body.inventory[i].count < 1 || req.body.inventory[i].card<0 || req.body.inventory[i].card >= cards.length) {
+                valid = false;
+            }
         }
-    }
-    // Set Inventory
-    if (valid) {
-        var getResult;
-        if (req.user.root == true) {
-            getResult = await client.db("communism_battlecards").collection("accounts").findOne({username: req.body.user});
-        } else {
-            getResult = await client.db("communism_battlecards").collection("accounts").findOne({username: req.body.user, admin: {$exists: false}, root: {$exists: false}});
-        }
+        // Set Inventory
+        if (valid) {
+            var getResult;
+            if (req.user.root == true) {
+                getResult = await client.db("communism_battlecards").collection("accounts").findOne({username: req.body.user});
+            } else {
+                getResult = await client.db("communism_battlecards").collection("accounts").findOne({username: req.body.user, admin: {$exists: false}, root: {$exists: false}});
+            }
 
-        if (getResult) {
-            await client.db("communism_battlecards").collection("accounts").updateOne({username: req.body.user},{$set: {inventory: req.body.inventory}});
-            res.json(req.body.inventory)
+            if (getResult) {
+                logger.warn(
+                    req.user.username + "->"+req.body.user+": old_inventory="+JSON.stringify(getResult.inventory)+", new_inventory="+JSON.stringify(req.body.inventory),
+                    req.originalUrl
+                )
+                await client.db("communism_battlecards").collection("accounts").updateOne({username: req.body.user},{$set: {inventory: req.body.inventory}});
+                res.json(req.body.inventory)
+            } else {
+                res.status(404).send("Not found");
+            }
         } else {
-            res.status(404).send("Not found");
+            res.status(500).send("invalid input");
         }
     } else {
         res.status(500).send("invalid input");
     }
-} else {
-    res.status(500).send("invalid input");
-}
 })
 
 router.post('/setAvatar', async (req, res) => {
@@ -134,6 +143,10 @@ router.post('/setAvatar', async (req, res) => {
             }
     
             if (getResult) {
+                logger.warn(
+                    req.user.username + "->"+req.body.user+": old_avatar="+getResult.avatar+", new_avatar="+req.body.avatar,
+                    req.originalUrl
+                )
                 await client.db("communism_battlecards").collection("accounts").updateOne({username: req.body.user},{$set: {avatar: req.body.avatar}});
                 res.json(req.body.avatar)
             } else {
@@ -162,6 +175,10 @@ router.post('/setXp', async (req, res) => {
             }
     
             if (getResult) {
+                logger.warn(
+                    req.user.username + "->"+req.body.user+": old_xp="+getResult.xp+", new_xp="+req.body.xp,
+                    req.originalUrl
+                )
                 await client.db("communism_battlecards").collection("accounts").updateOne({username: req.body.user},{$set: {xp: req.body.xp}});
                 res.json(req.body.xp)
             } else {
@@ -190,6 +207,10 @@ router.post('/setDisplayName', async (req, res) => {
             }
     
             if (getResult) {
+                logger.warn(
+                    req.user.username + "->"+req.body.user+": old_display_name=\""+getResult.display_name+"\", new_display_name=\""+req.body.displayName+"\"",
+                    req.originalUrl
+                )
                 await client.db("communism_battlecards").collection("accounts").updateOne({username: req.body.user},{$set: {display_name: req.body.displayName}});
                 res.json(req.body.displayName)
             } else {
@@ -237,8 +258,15 @@ router.post('/resetUser', async (req, res) => {
             await client.db("communism_battlecards").collection("accounts").deleteOne({username: req.body.user});
             await client.db("communism_battlecards").collection("accounts").insertOne(newUser);
 
-            delete newUser.password;
             delete newUser._id;
+            delete getResult._id;
+
+            logger.warn(
+                req.user.username + "->"+req.body.user+": old_user="+JSON.stringify(getResult)+", new_user="+JSON.stringify(newUser),
+                req.originalUrl
+            )
+
+            delete newUser.password;
 
             if (!req.user.root && newUser.admin) {
                 delete newUser.admin
@@ -268,6 +296,10 @@ router.post('/setAdmin', rootCheck, async (req, res) => {
         getResult = await client.db("communism_battlecards").collection("accounts").findOne({username: req.body.user});
 
         if (getResult && !getResult.root) {
+            logger.warn(
+                req.user.username + "->"+req.body.user+": old_admin="+(getResult.admin === undefined ? "false" : getResult.admin)+", new_admin="+req.body.admin,
+                req.originalUrl
+            )
             await client.db("communism_battlecards").collection("accounts").updateOne({username: req.body.user},{$set: {admin: req.body.admin}});
             res.send(req.body.admin)
         } else {
@@ -283,6 +315,11 @@ router.post('/deleteUser', rootCheck, async (req, res) => {
         getResult = await client.db("communism_battlecards").collection("accounts").findOne({username: req.body.user});
 
         if (getResult) {
+            delete getResult._id;
+            logger.warn(
+                req.user.username + "->"+req.body.user+": old_user="+JSON.stringify(getResult),
+                req.originalUrl
+            )
             await client.db("communism_battlecards").collection("accounts").deleteOne({username: req.body.user});
             res.status(200).send("User deleted")
         } else {
@@ -307,6 +344,10 @@ router.post('/settings', rootCheck, async (req, res) => {
     })
 
     if (edited) {
+        logger.warn(
+            req.user.username+": old_settings="+JSON.stringify(original_settings)+", new_settings="+JSON.stringify(settings),
+            req.originalUrl
+        )
         fr.write('./settings.json', JSON.stringify(settings, null, 4))
     }
 
