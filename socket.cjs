@@ -961,9 +961,9 @@ async function tick() {
 webSocketServer.on('connection', async(socket, request) => {
     let username = await authorizeSocket(socket, request);
     if (!username) return;
+    let ud = await client.db("communism_battlecards").collection("accounts").findOne({username: username})
 
     if (JSON.parse(fr.read('./settings.json')).lockdown) {
-        let ud = await client.db("communism_battlecards").collection("accounts").findOne({username: username})
         if (!ud.admin && !ud.root) {
             socket.close(1008, "LOCKDOWN")
         }
@@ -986,83 +986,90 @@ webSocketServer.on('connection', async(socket, request) => {
             old.socket.close(1008, "another instance logged on")
         }
         viewer.push({username: username, socket: socket})
-    } else if (search.get("tournament") && decodeURIComponent(search.get("tournament")) == "new") {
-        for (let i = 0; i < tournaments.length; i++) {
-            let user = tournaments[i].Sockets.find(obj => obj.username == username)
-            if (user) {
-                user.socket.close(1008, 'Another instance logged on')
-                let index = tournaments[i].Sockets.indexOf(obj => obj.username == username)
-                tournaments[i].Sockets.splice(index, 1)
-                break
-            }
-        }
-        //new tournament
-        tournaments.push(new Tournament())
-        tournaments[tournaments.length-1].code = auth.encrypt("tournament"+tournamentID);
-        log.push("<"+username+"> created tournament: "+auth.encrypt("tournament"+tournamentID))
-        logger.debug("<"+username+"> created tournament: "+auth.encrypt("tournament"+tournamentID), "gamesocket/tournament");
-        tournamentID++;
-        tournaments[tournaments.length-1].addSocket(username,socket);
-    } else if (search.get("tournament")) {
-        //join tournament
-        let tournamentSearch = tournaments.find(obj => obj.code == decodeURIComponent(search.get("tournament")) && !obj.active)
-        if (tournamentSearch) {
-            let user = tournamentSearch.Sockets.find(obj => obj.username == username)
-            if (user) {
-                if (user.socket)
-                    user.socket.close(1008, 'Another instance logged on')
-                user.socket = socket
-            } else {
-                tournamentSearch.addSocket(username, socket)
-            }
-        } else 
-            socket.close(1008, 'Game not found')
     } else {
-        // if already logged on with same account, kick that account, and take it's place
-        let queueUser = queuedUsers.find(obj => obj.username == username)
-        if (queueUser) {
-            //already in queue
-            if (queueUser.socket) {
-                queueUser.socket.close(1008, 'Another instance logged on')
-            }
-            queueUser.socket = socket;
-        } else {
-            let battleUser = battleUsers.find(obj => obj.username == username)
-            if (battleUser) {
-                //already in battle
-                if (battleUser.socket) {
-                    battleUser.socket.close(1008, 'Another instance logged on')
+        if (ud.deck.length == 0) {
+            socket.close(1008, 'Deck required');
+            return;
+        }
+        
+        if (search.get("tournament") && decodeURIComponent(search.get("tournament")) == "new") {
+            for (let i = 0; i < tournaments.length; i++) {
+                let user = tournaments[i].Sockets.find(obj => obj.username == username)
+                if (user) {
+                    user.socket.close(1008, 'Another instance logged on')
+                    let index = tournaments[i].Sockets.indexOf(obj => obj.username == username)
+                    tournaments[i].Sockets.splice(index, 1)
+                    break
                 }
-                if (!search.get("private") && !search.get("code"))
-                    battleUser.socket = socket;
-                else {
-                    let game = battles.find(obj => (obj.p1 && obj.p1.UserName == username) || (obj.p2 && obj.p2.UserName == username))
-                    if (game)
-                        game.PlayerDisconnected(username)
-                }
-            } else if (!search.get("private") && !search.get("code")) { 
-                //add to queue
-                queuedUsers.push({username: username, socket: socket, reconnectTime: 30})
             }
-    
-            if (search.get("private")) {
-                battles.push(new Battle());
-                battles[battles.length-1].code = auth.encrypt("game_"+gameID)
-                battleUsers.push({username: username, socket: socket, reconnectTime: 30})
-                battles[battles.length-1].SetP1(username);
-                battles[battles.length-1].private = true;
-                log.push("<"+username+"> created private game: "+auth.encrypt("game_"+gameID))
-                logger.debug("<"+username+"> created private game: "+auth.encrypt("game_"+gameID),"gamesocket/game")
-                gameID++
-            } else if (search.get("code")) {
-                let battle = battles.find(obj => obj.code == decodeURIComponent(search.get("code")))
-                if (battle) {
-                    if (!battle.p2 || battle.p2.UserName == username) {
-                        battleUsers.push({username: username, socket: socket, reconnectTime: 30})
-                        battle.SetP2(username)
-                    }
+            //new tournament
+            tournaments.push(new Tournament())
+            tournaments[tournaments.length-1].code = auth.encrypt("tournament"+tournamentID);
+            log.push("<"+username+"> created tournament: "+auth.encrypt("tournament"+tournamentID))
+            logger.debug("<"+username+"> created tournament: "+auth.encrypt("tournament"+tournamentID), "gamesocket/tournament");
+            tournamentID++;
+            tournaments[tournaments.length-1].addSocket(username,socket);
+        } else if (search.get("tournament")) {
+            //join tournament
+            let tournamentSearch = tournaments.find(obj => obj.code == decodeURIComponent(search.get("tournament")) && !obj.active)
+            if (tournamentSearch) {
+                let user = tournamentSearch.Sockets.find(obj => obj.username == username)
+                if (user) {
+                    if (user.socket)
+                        user.socket.close(1008, 'Another instance logged on')
+                    user.socket = socket
                 } else {
-                    socket.close(1008, 'game not found');
+                    tournamentSearch.addSocket(username, socket)
+                }
+            } else 
+                socket.close(1008, 'Game not found')
+        } else {
+            // if already logged on with same account, kick that account, and take it's place
+            let queueUser = queuedUsers.find(obj => obj.username == username)
+            if (queueUser) {
+                //already in queue
+                if (queueUser.socket) {
+                    queueUser.socket.close(1008, 'Another instance logged on')
+                }
+                queueUser.socket = socket;
+            } else {
+                let battleUser = battleUsers.find(obj => obj.username == username)
+                if (battleUser) {
+                    //already in battle
+                    if (battleUser.socket) {
+                        battleUser.socket.close(1008, 'Another instance logged on')
+                    }
+                    if (!search.get("private") && !search.get("code"))
+                        battleUser.socket = socket;
+                    else {
+                        let game = battles.find(obj => (obj.p1 && obj.p1.UserName == username) || (obj.p2 && obj.p2.UserName == username))
+                        if (game)
+                            game.PlayerDisconnected(username)
+                    }
+                } else if (!search.get("private") && !search.get("code")) { 
+                    //add to queue
+                    queuedUsers.push({username: username, socket: socket, reconnectTime: 30})
+                }
+        
+                if (search.get("private")) {
+                    battles.push(new Battle());
+                    battles[battles.length-1].code = auth.encrypt("game_"+gameID)
+                    battleUsers.push({username: username, socket: socket, reconnectTime: 30})
+                    battles[battles.length-1].SetP1(username);
+                    battles[battles.length-1].private = true;
+                    log.push("<"+username+"> created private game: "+auth.encrypt("game_"+gameID))
+                    logger.debug("<"+username+"> created private game: "+auth.encrypt("game_"+gameID),"gamesocket/game")
+                    gameID++
+                } else if (search.get("code")) {
+                    let battle = battles.find(obj => obj.code == decodeURIComponent(search.get("code")))
+                    if (battle) {
+                        if (!battle.p2 || battle.p2.UserName == username) {
+                            battleUsers.push({username: username, socket: socket, reconnectTime: 30})
+                            battle.SetP2(username)
+                        }
+                    } else {
+                        socket.close(1008, 'game not found');
+                    }
                 }
             }
         }
