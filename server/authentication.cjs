@@ -8,7 +8,7 @@ const logger = require('./logger.cjs');
 
 async function deleteUsers () {
     await client.db("communism_battlecards").collection("accounts").deleteMany({testUser: true})
-    console.log("testusers deleted")
+    logger.debug("Deleted previous testusers","authentication")
 }
 setTimeout(deleteUsers,1000);
 

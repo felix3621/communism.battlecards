@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const ld = require('lodash');
 
 const dir = "../log"
 const extension = ".log"
@@ -14,15 +15,17 @@ function getDate(time) {
 function log(level, msg, trace) {
     let time = new Date();
 
-    let string = "["
-    string += getDate(time)
-    string += " "
-    string += String(time.getHours()).padStart(2, "0")
-    string += ":"
-    string += String(time.getMinutes()).padStart(2, "0")
-    string += ":"
-    string += String(time.getSeconds()).padStart(2, "0")
-    string += "] ["
+    let strBase = "["
+    strBase += getDate(time)
+    strBase += " "
+    strBase += String(time.getHours()).padStart(2, "0")
+    strBase += ":"
+    strBase += String(time.getMinutes()).padStart(2, "0")
+    strBase += ":"
+    strBase += String(time.getSeconds()).padStart(2, "0")
+    strBase += "] "
+
+    let string = strBase+"["
     string += (trace ? trace+"/" : "")
     string += level
     string += "]: "
@@ -39,6 +42,55 @@ function log(level, msg, trace) {
         fs.writeFileSync(filePath, string);
     } else {
         fs.appendFileSync(filePath, '\n' + string);
+    }
+
+    //delete logs over 1 week old
+    time.setDate(time.getDate() - 7);
+
+    try {
+        fs.readdir(directoryPath, (err, files) => {
+            if (err) {
+                let errMSG = strBase + "[log/ERROR]: " + err
+                console.log(errMSG);
+                fs.appendFileSync(filePath, '\n' + errMSG);
+                return;
+            }
+    
+            files.forEach((file) => {
+                let fp = path.join(directoryPath, file);
+                let stat = fs.statSync(fp);
+    
+                if (stat.isFile()) {
+                    let fileDate = ld.cloneDeep(time)
+                    let fnArray = file.split(".")[0].split("-")
+    
+                    fileDate.setFullYear(fnArray[0])
+                    fileDate.setMonth(fnArray[1]-1)
+                    fileDate.setDate(fnArray[2])
+    
+                    if (fileDate < time) {
+                        fs.unlink(fp, (unlinkErr) => {
+                            if (unlinkErr) {
+                                let errMSG = strBase + `[log/ERROR]: Error deleting log "${fp}": ` + unlinkErr
+                                console.log(errMSG);
+                                fs.appendFileSync(filePath, '\n' + errMSG);
+                            } else {
+                                console.log(`Deleted log: ${fp}`);
+
+                                
+                                let msg = strBase + `[log/INFO]: Deleted log: ${fp}`
+                                console.log(msg);
+                                fs.appendFileSync(filePath, '\n' + msg);
+                            }
+                        });
+                    }
+                }
+            })
+        });
+    } catch (e) {
+        let errMSG = strBase + "[log/ERROR]: LogDeletionError: " + e.mmessage
+        console.log(errMSG);
+        fs.appendFileSync(filePath, '\n' + errMSG);
     }
 }
 
