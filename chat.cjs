@@ -60,6 +60,14 @@ async function authorizeSocket(socket, request) {
     return username
 }
 
+setTimeout(() => {
+    webSocketServer.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send("Keep Alive");
+        }
+    });
+}, 1000);
+
 // Handle WebSocket connections
 webSocketServer.on('connection', async(socket, request) => {
     let username = await authorizeSocket(socket, request);
