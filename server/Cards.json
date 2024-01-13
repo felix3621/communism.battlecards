@@ -1,7 +1,7 @@
 [
     {
         "Name":"Bandit",
-        "Description":"A Bandit Ready to kill",
+        "Description":"A Bandit Ready To Kill",
         "Attack":2,
         "Health":3,
         "Cost":3,
@@ -10,7 +10,7 @@
     },
     {
         "Name":"PurpleSlime",
-        "Description":"A wild Slime",
+        "Description":"A Wild Slime",
         "Attack":1,
         "Health":1,
         "Cost":0,
@@ -34,7 +34,7 @@
     },
     {
         "Name":"Bloob",
-        "Description":"Its a Bloob that for some reason become a tank and does burst DMG",
+        "Description":"It's a Bloob That For Some Reason Become A Tank And Does Burst DMG",
         "Attack":1,
         "Health":2,
         "Cost":2,
@@ -44,7 +44,7 @@
     },
     {
         "Name":"Biden",
-        "Description":"Oh no Biden is going crazy... and is throwing ice cream?",
+        "Description":"Oh No Biden Is Going Crazy... And He Is Throwing Ice Cream?",
         "Attack":3,
         "Health":5,
         "Cost":4,
@@ -52,7 +52,7 @@
     },
     {
         "Name":"Svein",
-        "Description":"SVEIN HAS OPPEND POWERSHELL RUN!",
+        "Description":"Svein Has Opened Powershell, RUN!",
         "Attack":6,
         "Health":10,
         "Cost":8,
@@ -60,7 +60,7 @@
     },
     {
         "Name":"Runar",
-        "Description":"Runar talks his way into battle!",
+        "Description":"Runar Talks His Way Through Battles!",
         "Attack":4,
         "Health":12,
         "Cost":8,
@@ -68,7 +68,7 @@
     },
     {
         "Name":"Goblin",
-        "Description":"Green and Ugly!",
+        "Description":"Green And Ugly!",
         "Attack":3,
         "Health":3,
         "Cost":3,
@@ -76,7 +76,7 @@
     },
     {
         "Name":"Sand Slime",
-        "Description":"Sandy and Slimy!",
+        "Description":"Sandy And Slimy!",
         "Attack":1,
         "Health":3,
         "Cost":2,
@@ -84,7 +84,7 @@
     },
     {
         "Name":"Sand Slime Tamer",
-        "Description":"Slimy and sandy tamer!",
+        "Description":"A Slimy And Sandy Tamer!",
         "Attack":4,
         "Health":4,
         "Cost":4,
@@ -92,7 +92,7 @@
     },
     {
         "Name":"Sfpro20",
-        "Description":"A Furry but Minecraft!",
+        "Description":"A Furry But Minecraft!",
         "Attack":2,
         "Health":4,
         "Cost":3,
@@ -100,7 +100,7 @@
     },
     {
         "Name":"HolyBook",
-        "Description":"The power of christ compels you!",
+        "Description":"The Power Of Jesus Christ Compels You!",
         "Attack":8,
         "Health":null,
         "Cost":4,
@@ -109,7 +109,7 @@
     },
     {
         "Name":"FireBall",
-        "Description":"Fix says BURN!!",
+        "Description":"Fix Says BURN!!",
         "Attack":3,
         "Health":null,
         "Cost":2,
@@ -128,7 +128,7 @@
     },
     {
         "Name":"Litten",
-        "Description":"The cat",
+        "Description":"The Cat",
         "Attack":9,
         "Health":11,
         "Cost":5,
@@ -136,7 +136,7 @@
     },
     {
         "Name":"Loot crate",
-        "Description":"A lootcrate, but for battle",
+        "Description":"A Loot Crate, But For Battle?",
         "Attack":0,
         "Health":20,
         "Cost":7,
@@ -144,7 +144,7 @@
     },
     {
         "Name":"Pepe",
-        "Description":"The meme lord",
+        "Description":"The Meme Lord",
         "Attack":3,
         "Health":3,
         "Cost":4,
@@ -152,7 +152,7 @@
     },
     {
         "Name":"Pokeball",
-        "Description":"A ball is a deadly weapon, if used correctly. Got to catch em all!",
+        "Description":"A Ball Is A Deadly Weapon, If Used Correctly. Gotta Catch 'Em All!",
         "Attack":15,
         "Health":null,
         "Cost":7,
@@ -161,7 +161,7 @@
     },
     {
         "Name":"Pope",
-        "Description":"The pope has joined the battle",
+        "Description":"The Pope Has Joined",
         "Attack":10,
         "Health":10,
         "Cost":10,
@@ -169,7 +169,7 @@
     },
     {
         "Name":"Geometry Dash",
-        "Description":"there is nothing called wrong game",
+        "Description":"There Is Nothing Called Wrong Game",
         "Attack":6,
         "Health":9,
         "Cost":5,
@@ -177,7 +177,7 @@
     },
     {
         "Name":"Snail",
-        "Description":"Will you snail?",
+        "Description":"Will You Snail?",
         "Attack":2,
         "Health":4,
         "Cost":3,
@@ -186,7 +186,7 @@
     },
     {
         "Name":"Car",
-        "Description":"Drive over your enemy with the power of anime",
+        "Description":"Drive Over Your Enemy With The Power Of Anime",
         "Attack":10,
         "Health":null,
         "Cost":5,
@@ -195,7 +195,7 @@
     },
     {
         "Name":"Goblin Slayer",
-        "Description":"Here to delete all the goblins from the enemy",
+        "Description":"Here To Delete All The Goblins From The Enemy",
         "Attack":3,
         "AttackType":"Burst",
         "Health":7,
@@ -204,7 +204,7 @@
     },
     {
         "Name":"Kristian",
-        "Description":"A wild Kristian has appeared",
+        "Description":"A wild Kristian Has Appeared",
         "Attack":5,
         "Health":11,
         "Cost":8,
@@ -212,7 +212,7 @@
     },
     {
         "Name":"Tor Steinar",
-        "Description":"How did he get here",
+        "Description":"How Did He Get Here",
         "Attack":5,
         "Health":10,
         "Cost":8,
@@ -220,7 +220,7 @@
     },
     {
         "Name":"BAD",
-        "Description":"Big Airship of Doom",
+        "Description":"Big Airship Of Doom",
         "Attack":15,
         "Health":null,
         "Cost":10,
@@ -229,7 +229,7 @@
     },
     {
         "Name":"Monke",
-        "Description":"Le monke",
+        "Description":"Le Monke",
         "Attack":1,
         "Health":5,
         "Cost":3,
@@ -237,7 +237,7 @@
     },
     {
         "Name":"Bloon",
-        "Description":"A bloon of destruction",
+        "Description":"A Bloon Of Destruction",
         "Attack":1,
         "Health":1,
         "Cost":1,
@@ -245,7 +245,7 @@
     },
     {
         "Name":"Uganda Knuckles",
-        "Description":"Do u kno da wae",
+        "Description":"Do U Kno Da Wae",
         "Attack":2,
         "Health":4,
         "Cost":3,
@@ -253,7 +253,7 @@
     },
     {
         "Name":"Duolingo",
-        "Description":"Enemy has forgotten their duolingo lesson",
+        "Description":"Enemy Has Forgotten Their Duolingo Lesson",
         "Attack":3,
         "Health":5,
         "Cost":4,
@@ -261,7 +261,7 @@
     },
     {
         "Name":"Ohio",
-        "Description":"Welcome to ohio",
+        "Description":"Welcome To Ohio",
         "Attack":0,
         "Health":10,
         "Cost":4,
@@ -269,7 +269,7 @@
     },
     {
         "Name":"Offensive Duolingo",
-        "Description":"You did not complete your lessons, so you know what happens now",
+        "Description":"Enemy Did Not Complete Their Lessons, So You Know What Happens To Them Now",
         "Attack":9,
         "Health":5,
         "Cost":7,
@@ -277,7 +277,7 @@
     },
     {
         "Name":"Technoblade",
-        "Description":"Technoblade never dies!<br>Blood for the Blood God!",
+        "Description":"Technoblade Never Dies!<br>Blood For The Blood God!",
         "Attack":15,
         "Health":15,
         "Cost":10,

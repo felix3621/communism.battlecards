@@ -10,7 +10,7 @@
         "TimedPlay":false
     },
     {
-        "Text":"Welcome To Battle Cards.<br>Let Me Show You Haw To Play.",
+        "Text":"Welcome To Battle Cards.<br>Let Me Show You How To Play This Game.",
         "Sender":"Opponent",
         "GamePause": true,
         "Duration":5
@@ -26,54 +26,54 @@
         "Text":"First Things First. <br>Place Out A Card.",
         "Sender":"Opponent",
         "GamePause": false,
-        "Duration":6,
+        "Duration":4,
         "Invoke":"GiveCard(PlayerHand,{Name:'Svæin',Description:'Trainer',Attack:2,Health:2,Cost:1,Texture:'Svein'})",
-        "Objective":{"Title":"Place Card", "Description":"Drag Your Card Out To You Play Field.<br>(Right Above Your Avatar)", "CompletionTrigger":"PlayerOnField.length>0"}
+        "Objective":{"Title":"Place Card", "Description":"Drag Your Card Out To Your Field.<br>(Right Above Your Avatar)", "CompletionTrigger":"PlayerOnField.length>0"}
     },
     {
-        "Text":"Dide You See That It Used Up Some Energy When You Placed It Down (right Corner)",
+        "Text":"Did You See That It Used Up Some Energy When You Placed It Down (Bottom-Right Corner)",
         "Sender":"Opponent",
         "GamePause": true,
-        "Duration":6,
+        "Duration":7,
         "UseAttackCooldown":false,
         "Function":{"Function":"ShowEnergy","Value":5}
     },
     {
-        "Text":"Now Attack My Minion",
+        "Text":"Now Attack My Card",
         "Sender":"Opponent",
         "GamePause": false,
-        "Duration":5,
+        "Duration":4,
         "UseAttackCooldown":true,
         "Invoke":"EnemyOnField.push(new Stone({Attack:1,Health:2,Texture:'Goblin',New:true},document.getElementById('EnemyOnField'),'0'))",
-        "Objective":{"Title":"Attack", "Description":"Hold Down On Your Placed Stone And Move The Target Indicator To The Goblin And Let Go.","CompletionTrigger":"EnemyOnField.length==0"}
+        "Objective":{"Title":"Attack", "Description":"Click And Drag From Your Placed Card, To The Goblin, And Let Go (Attack Indicator Will Show Where You Attack)","CompletionTrigger":"EnemyOnField.length==0"}
     },
     {
-        "Text":"Remember You Can Attack using Your Avatar",
+        "Text":"Remember You Can Attack Using Your Avatar As Well",
         "Sender":"Opponent",
         "GamePause": true,
-        "Duration":3,
+        "Duration":5,
         "UseAttackCooldown":false
     },
     {
-        "Text":"Try To Kill My Second One. Look At It Being A Little Diffrent",
+        "Text":"Try To Kill My Second Card. It Looks A Bit Different, Doesn't It?",
         "Sender":"Opponent",
         "GamePause": false,
-        "Duration":3,
+        "Duration":5,
         "EnemyAi":false,
         "Invoke":"EnemyOnField.push(new Stone({Attack:1,Health:2,Texture:'Bloob',Type:'Tank',New:true},document.getElementById('EnemyOnField'),'0'))",
         "UseAttackCooldown": true,
-        "Objective":{"Title":"Kill Minion", "Description":"Use Your Cards And Destroy Bloob.<br> The Shield Around the Bloob makes it take Half Damage","CompletionTrigger":"EnemyOnField.length==0"}
+        "Objective":{"Title":"Kill Card", "Description":"Use Your Cards To Kill Bloob.<br> The Shield Around The Bloob Makes It Take Half Damage","CompletionTrigger":"EnemyOnField.length==0"}
     },
     {
-        "Text":"Dide You See That It Took Longer To Kill It Then Normall. <br>That Is Becuse It Hade That Shield On It.<br>Diffrent Card Have Diffrent Classes And This One Was A Tank.",
+        "Text":"Did You See That It Took More To Kill It Than Normal. <br>That Is Because It Had That Shield On It.<br>Different Cards Have Different Classes And This One Was A Tank.",
         "Sender":"Opponent",
         "GamePause": true,
-        "Duration":5,
+        "Duration":12,
         "UseAttackCooldown": false,
         "EnemyAi":false
     },
     {
-        "Text":"Now Attack Me Using Your Avatar And Minion. Butt I Will Fight Back So Be Aware",
+        "Text":"Now Attack Me Using Your Avatar And Cards. But Beware, I Will Try To Fight Back",
         "Sender":"Opponent",
         "GamePause": false,
         "Duration":8,
@@ -82,20 +82,20 @@
         "UseAttackCooldown": true,
         "CanEndTurn":true,
         "TimedPlay":true,
-        "Objective":{"Title":"Kill Runar", "Description":"Use Your Cards And Kill His Minions To Then Kill Runar<br>End Your Turn When You Cant Attack Any More","CompletionTrigger":"EnemyAvatar.Card.Health<=4"}
+        "Objective":{"Title":"Kill Runar", "Description":"Use Your Cards To Kill Runar's Cards And Then Kill Runar Himself<br>End Your Turn When You Can't Attack Any More, By Pressing EndTurn On The Right","CompletionTrigger":"EnemyAvatar.Card.Health<=4"}
     },
     {
-        "Text":"Och",
+        "Text":"Ouch",
         "Sender":"Opponent",
         "Duration":4,
-        "Objective":{"Title":"Kill Runar", "Description":"Use Your Cards And Kill His Minions To Then Kill Runar","CompletionTrigger":"EnemyAvatar.Card.Health<=0"}
+        "Objective":{"Title":"Kill Runar", "Description":"Use Your Cards To Kill Runar's Cards And Then Kill Runar Himself<br>End Your Turn When You Can't Attack Any More, By Pressing EndTurn On The Right","CompletionTrigger":"EnemyAvatar.Card.Health<=0"}
     },
     {
-        "Text":"Congratulations Tutorial Done",
+        "Text":"Congratulations. This Tutorial Is Now Done",
         "Sender":"Opponent",
         "GamePause": true,
-        "Duration":5,
+        "Duration":7,
         "EnemyAi":false,
-        "Invoke":"setTimeout(()=>window.location.href='/',5000)"
+        "Invoke":"setTimeout(()=>window.location.href='/',7500)"
     }
 ]

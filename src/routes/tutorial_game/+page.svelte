@@ -595,14 +595,14 @@
                 if (Tutorial.Stages[Tutorial.Stage].UseAttackCooldown != null) {
                     UseAttackCooldown = Tutorial.Stages[Tutorial.Stage].UseAttackCooldown;
                 }
-                if (Tutorial.Stages[Tutorial.Stage].Function != null) { // Run Function TODO: 
+                if (Tutorial.Stages[Tutorial.Stage].Function != null) {
                     try {
                         eval(Tutorial.Stages[Tutorial.Stage].Function.Function+"("+Tutorial.Stages[Tutorial.Stage].Function.Value!=null?Tutorial.Stages[Tutorial.Stage].Function.Value:""+")");
                     } catch (error) {
                         console.error('Error executing code:', error);
                     }
                 }
-                if (Tutorial.Stages[Tutorial.Stage].Invoke != null) { // Run Function TODO: 
+                if (Tutorial.Stages[Tutorial.Stage].Invoke != null) {
                     try {
                         eval(Tutorial.Stages[Tutorial.Stage].Invoke);
                     } catch (error) {
@@ -1020,9 +1020,6 @@
                     // Apply
                     AttackingStone.Remove();
                     PlayerHand.splice(PlayerHand.indexOf(AttackingStone),1);
-                    if (Target.Card.Health<=0 && DraggableSelectTarget.SelectedTarget == "Avatar") {
-                        // Player Win TODO: Add Win
-                    }
                 } else { // if player is using a stone to select target
                     Target.Card.Health -= DraggableSelectTarget.SelectedTarget == "Avatar"||Target.Card.Type == "Tank"?AttackingStone.Card.Attack/2:AttackingStone.Card.Attack;
                     if (UseAttackCooldown) {AttackingStone.AttackCooldown++;}
@@ -1038,10 +1035,6 @@
                         }
                     }
                     AttackingStone.ShowAttackAnimationAtEnemy(DraggableSelectTarget.SelectedTarget!="Avatar"?EnemyOnField.indexOf(Target):"Avatar",false);
-
-                    if (Target.Card.Health<=0 && DraggableSelectTarget.SelectedTarget == "Avatar") {
-                        // Player Win TODO: Add Win
-                        
                     }
                 }
             }
