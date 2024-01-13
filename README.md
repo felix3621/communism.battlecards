@@ -1,7 +1,10 @@
 # Battlecards
 
-start everything by: ```npm start```
-
+start everything by: ```npm start-all```
+start chatSocket by: ```npm chat```
+start gameSocket by: ```npm socket```
+start API by: ```npm server```
+start webpage AND proxy by: ```npm dev```
 
 
 # website documentation

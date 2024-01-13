@@ -6,7 +6,7 @@
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
-		"start": "npm-run-all -p dev server socket chat",
+		"start-all": "npm-run-all -p dev server socket chat",
 		"server": "node server.cjs",
 		"socket": "node socket.cjs",
 		"chat": "node chat.cjs"

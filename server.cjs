@@ -17,3 +17,19 @@ app.listen(port, () => {
 });
 
 logger.debug(`Server started on port ${port}`,"api");
+
+process.on('SIGINT', () => {
+    logger.error(`api killed by user`,"api");
+})
+
+process.on('SIGTERM', () => {
+    logger.error(`api killed by system`,"api");
+})
+
+process.on('unhandledRejection', (reason, promise) => {
+    logger.error(`unhandledRejection at: ${promise}\nReason: ${reason}`,"api");
+})
+
+process.on('uncaughtException', (error) => {
+    logger.error(`uncaughtException: ${error}`,"api");
+})
