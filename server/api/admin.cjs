@@ -314,7 +314,7 @@ router.post('/deleteUser', rootCheck, async (req, res) => {
     if (req.body.user && req.body.user != req.user.username) {
         getResult = await client.db("communism_battlecards").collection("accounts").findOne({username: req.body.user});
 
-        if (getResult) {
+        if (getResult && !getResult.root) {
             delete getResult._id;
             logger.warn(
                 req.user.username + "->"+req.body.user+": old_user="+JSON.stringify(getResult),

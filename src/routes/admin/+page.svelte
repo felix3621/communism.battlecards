@@ -658,7 +658,7 @@
                     document.getElementById("DU_danger_zone").appendChild(container);
                 }
 
-                if (displayedUser.username != self.username) {
+                if (displayedUser.username != self.username && !displayedUser.root) {
                     let deleteDiv = document.createElement("div");
 
                     let deleteBtn = document.createElement("button");
