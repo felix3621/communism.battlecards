@@ -13,10 +13,9 @@ app.use(cookieParser());
 app.use('/api', require('./server/api/routes.cjs'));
 
 app.listen(port, () => {
-    console.log(`api running on port ${port}`);
+    logger.debug(`Server started on port ${port}`,"api");
 });
 
-logger.debug(`Server started on port ${port}`,"api");
 
 process.on('SIGINT', () => {
     logger.error(`api killed by user`,"api");

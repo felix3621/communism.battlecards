@@ -3,9 +3,11 @@ const WebSocket = require('ws');
 const auth = require('./server/authentication.cjs');
 const db = require('./server/database.cjs');
 const fr = require('./server/fileReader.cjs');
+const logger = require('./server/logger.cjs');
 
 const avatar = require('./server/Avatars.json')
 const cards = require('./server/Cards.json');
+const port = 3000;
 
 //admin
 var viewer = new Array();
@@ -270,6 +272,7 @@ class Battle {
                 client.db("communism_battlecards").collection("accounts").updateOne({username: this.p2.UserName},{$set:{previousGame: {won: true, rewardXp: winPoints}}})
                 
                 log.push(this.code+" ended, looser: <"+this.p1.UserName+">, winner: <"+this.p2.UserName+">")
+                logger.debug(this.code+" ended, looser: <"+this.p1.UserName+">, winner: <"+this.p2.UserName+">","gamesocket/game");
             } else if (this.p2 && this.p2.UserName == looser && this.p1) {
                 giveRewards(this.p1.UserName)
 
@@ -280,8 +283,10 @@ class Battle {
                 client.db("communism_battlecards").collection("accounts").updateOne({username: this.p1.UserName},{$set:{previousGame: {won: true, rewardXp: winPoints}}})
 
                 log.push(this.code+" ended, looser: <"+this.p2.UserName+">, winner: <"+this.p1.UserName+">")
+                logger.debug(this.code+" ended, looser: <"+this.p2.UserName+">, winner: <"+this.p1.UserName+">","gamesocket/game");
             } else {
                 log.push(this.code+" died")
+                logger.debug(this.code+" died","gamesocket/game");
             }
         } else if (this.Tournament) {
             this.looser = looser;
@@ -294,6 +299,7 @@ class Battle {
                 client.db("communism_battlecards").collection("accounts").updateOne({username: this.p2.UserName},{$inc:{previousTournament: {rewardXp: winPoints}}})
 
                 log.push(this.Tournament.code+" had a game end, looser: <"+this.p1.UserName+">, winner: <"+this.p2.UserName+">")
+                logger.debug(this.Tournament.code+" had a game end, looser: <"+this.p1.UserName+">, winner: <"+this.p2.UserName+">","gamesocket/tournament");
             } else if (this.p2 && this.p2.UserName == looser && this.p1) {
                 giveRewards(this.p1.UserName)
 
@@ -303,6 +309,7 @@ class Battle {
                 client.db("communism_battlecards").collection("accounts").updateOne({username: this.p1.UserName},{$inc:{previousTournament: {rewardXp: winPoints}}})
 
                 log.push(this.Tournament.code+" had a game end, looser: <"+this.p2.UserName+">, winner: <"+this.p1.UserName+">")
+                logger.debug(this.Tournament.code+" had a game end, looser: <"+this.p2.UserName+">, winner: <"+this.p1.UserName+">","gamesocket/tournament");
             }
         }
         this.dead = true;
@@ -568,6 +575,7 @@ class Tournament {
                             client.db("communism_battlecards").collection("accounts").updateOne({username: Players[0].username},{$set:{previousTournament: {win: true}}})
 
                             log.push(this.code+" has ended, winner: <"+Players[0].username+">");
+                            logger.debug(this.code+" has ended, winner: <"+Players[0].username+">","gamesocket/tournament");
                         }
 
                         while (this.Sockets.length > 0) {
@@ -769,6 +777,7 @@ async function tick() {
                 battles.push(new Battle());
                 battles[battles.length-1].code = auth.encrypt("game_"+gameID)
                 log.push("<"+queuedUsers[i].username+"> created game: "+auth.encrypt("game_"+gameID))
+                logger.debug("<"+queuedUsers[i].username+"> created game: "+auth.encrypt("game_"+gameID),"gamesocket/game");
                 battles[battles.length-1].SetP1(queuedUsers[i].username);
                 gameID++
             }
@@ -991,6 +1000,7 @@ webSocketServer.on('connection', async(socket, request) => {
         tournaments.push(new Tournament())
         tournaments[tournaments.length-1].code = auth.encrypt("tournament"+tournamentID);
         log.push("<"+username+"> created tournament: "+auth.encrypt("tournament"+tournamentID))
+        logger.debug("<"+username+"> created tournament: "+auth.encrypt("tournament"+tournamentID), "gamesocket/tournament");
         tournamentID++;
         tournaments[tournaments.length-1].addSocket(username,socket);
     } else if (search.get("tournament")) {
@@ -1042,6 +1052,7 @@ webSocketServer.on('connection', async(socket, request) => {
                 battles[battles.length-1].SetP1(username);
                 battles[battles.length-1].private = true;
                 log.push("<"+username+"> created private game: "+auth.encrypt("game_"+gameID))
+                logger.debug("<"+username+"> created private game: "+auth.encrypt("game_"+gameID),"gamesocket/game")
                 gameID++
             } else if (search.get("code")) {
                 let battle = battles.find(obj => obj.code == decodeURIComponent(search.get("code")))
@@ -1138,6 +1149,6 @@ httpServer.on('upgrade', (request, socket, head) => {
 });
 
 // Listen on port 3000
-httpServer.listen(3000, () => {
-    console.log('game-socket running on port 3000');
+httpServer.listen(port, () => {
+    logger.debug(`Server started on port ${port}`,"chatsocket");
 });

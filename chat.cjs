@@ -3,6 +3,8 @@ const WebSocket = require('ws');
 const auth = require('./server/authentication.cjs');
 const db = require('./server/database.cjs');
 const fr = require('./server/fileReader.cjs');
+const logger = require('./server/logger.cjs');
+const port = 3001;
 
 
 var client;
@@ -58,13 +60,6 @@ async function authorizeSocket(socket, request) {
     return username
 }
 
-async function isAdmin(username) {
-    var data = await client.db("communism_battlecards").collection("accounts").findOne({username: username})
-    if (data.admin == true || data.root == true)
-        return true
-    return false
-}
-
 // Handle WebSocket connections
 webSocketServer.on('connection', async(socket, request) => {
     let username = await authorizeSocket(socket, request);
@@ -114,6 +109,6 @@ httpServer.on('upgrade', (request, socket, head) => {
 });
 
 // Listen on port 3001
-httpServer.listen(3001, () => {
-    console.log('chat-socket running on port 3001');
+httpServer.listen(port, () => {
+    logger.debug(`Server started on port ${port}`,"chatsocket");
 });
