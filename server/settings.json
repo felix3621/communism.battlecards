@@ -6,7 +6,10 @@
     "testUsers": false,
     "publicView": true,
     "defaultAvatar": 0,
-    "defaultDeck": [0,1],
+    "defaultDeck": [
+        0,
+        1
+    ],
     "defaultInventory": [],
     "defaultXp": 0
 }

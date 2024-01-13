@@ -120,7 +120,7 @@ if (req.body.user && req.body.inventory instanceof Array) {
 })
 
 router.post('/setAvatar', async (req, res) => {
-    if (req.body.user && req.body.avatar) {
+    if (req.body.user && req.body.avatar != null) {
         if (typeof req.body.avatar == "number" && req.body.avatar >= 0 && req.body.avatar < avatars.length) {
             var getResult;
             if (req.user.root == true) {
@@ -176,7 +176,7 @@ router.post('/setXp', async (req, res) => {
 })
 
 router.post('/setDisplayName', async (req, res) => {
-    if (req.body.user && req.body.displayName) {
+    if (req.body.user && req.body.displayName != undefined) {
         if (typeof req.body.displayName == "string") {
             var getResult;
             if (req.user.root == true) {
@@ -298,16 +298,16 @@ router.post('/settings', rootCheck, async (req, res) => {
     settings = {...original_settings};
 
     edited = false
-
-    for (let key in Object.keys(settings)) {
-        if (req.body[key]) {
+    
+    Object.entries(settings).forEach(([key, value]) => {
+        if (req.body[key] != undefined) {
             settings[key] = req.body[key];
             edited = true
         }
-    }
+    })
 
     if (edited) {
-        fr.write('./settings.json', JSON.stringify({settings}, null, 4))
+        fr.write('./settings.json', JSON.stringify(settings, null, 4))
     }
 
     res.json(settings)

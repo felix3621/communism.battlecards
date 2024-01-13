@@ -229,6 +229,29 @@
     :global(#reset:active) {
         background-color: rgb(75,75,75);
     }
+    :global(#DU_danger_zone > *) {
+        width: 45%;
+        float: left;
+        padding: 2.5%
+    }
+    :global(#DU_danger_zone > * > *) {
+        margin-left: 50%;
+        transform: translate(-50%,0)
+    }
+    #configError {
+        width: 100%;
+        text-align: center;
+        color: red;
+    }
+    #configEditor {
+        height: auto;
+        min-height: 50px;
+        width: 100%;
+    }
+    #configSave {
+        margin-left: 50%;
+        transform: translate(-50%,0)
+    }
 </style>
 <img id="logo" src="images/BattlecardsLogo.png" on:click={()=>window.location.href="/"}>
 
@@ -254,13 +277,19 @@
                     <p class="contentHeader">Raw:</p>
                     <div id="DU_properties"></div>
                     <p class="contentHeader RootLocked" style="color: red;font-weight: bold">Danger Zone:</p>
-                    <div id="DU_danger_zone" class="RootLocked"></div>
+                    <div class="RootLocked" id="DU_danger_zone"></div>
                 </div>
             </div>
         </td>
         <td class="RootLocked" style="width: 25%;">
-            <div class="panel"></div>
-            <div class="content"></div>
+            <div class="panel">
+                <p class="title"><b>Config</b></p>
+                <div class="content">
+                    <div id="configError"></div>
+                    <textarea id="configEditor" oninput="this.style.height = 'auto';this.style.height = (this.scrollHeight + 2) + 'px';"></textarea>
+                    <button id="configSave">Save</button>
+                </div>
+            </div>
         </td>
     </tr>
 </table>
@@ -277,6 +306,8 @@
     var FontSizeArray = new Array();
 
     var self;
+
+    var settings;
 
     function createOptions(element, ...options) {
 
@@ -400,8 +431,6 @@
                         displayName: document.getElementById("DU_title").children[0].value
                     })
                 });
-                displayedUser.display_name = document.getElementById("DU_title").children[0].value;
-                userList.find(obj => obj.username == displayedUser.username).display_name = document.getElementById("DU_title").children[0].value;
                 update()
             }
             document.getElementById("DU_title").children[4].onclick = async () => {
@@ -414,8 +443,6 @@
                         user: displayedUser.username
                     })
                 })).json()
-                displayedUser = newUser;
-                userList[userList.indexOf(obj => obj.username == displayedUser.username)] = newUser;
                 update()
             }
             
@@ -426,32 +453,33 @@
             document.getElementById("DU_avatarList").innerHTML = ""
             
             for (let i = 0; i < avatars.length; i++) {
-                if (avatars[i].unlockRequirements) {
-                    if (displayedUser.level >= avatars[i].unlockRequirements) {
-                        document.getElementById("DU_avatarList").appendChild(CreateCharacterStone(avatars[i].Attack, avatars[i].Health, avatars[i].Texture))
-                    } else {
-                        document.getElementById("DU_avatarList").innerHTML += "<img src='/images/locked.png' style='width: 100%'>"
-                    }
-                } else {
-                    document.getElementById("DU_avatarList").appendChild(CreateCharacterStone(avatars[i].Attack, avatars[i].Health, avatars[i].Texture))
+                let element = CreateCharacterStone(avatars[i].Attack, avatars[i].Health, avatars[i].Texture)
+
+                element.onclick = async () => {
+                    await fetch(window.location.origin+'/api/admin/setAvatar', {
+                        method: 'POST',
+                        headers: {
+                            "Content-Type": "application/json"
+                        }, 
+                        body: JSON.stringify({
+                            user: displayedUser.username,
+                            avatar: i
+                        })
+                    });
+                    update()
                 }
 
-                if (document.getElementById("DU_avatarList").children[i].classList.contains("CharacterStone"))  {
-                    document.getElementById("DU_avatarList").children[i].onclick = async () => {
-                        await fetch(window.location.origin+'/api/admin/setAvatar', {
-                            method: 'POST',
-                            headers: {
-                                "Content-Type": "application/json"
-                            }, 
-                            body: JSON.stringify({
-                                user: displayedUser.username,
-                                avatar: i
-                            })
-                        });
-                        displayedUser.avatar = i;
-                        userList.find(obj => obj.username == displayedUser.username).avatar = i;
-                        update()
+                if (avatars[i].unlockRequirements) {
+                    if (displayedUser.level >= avatars[i].unlockRequirements) {
+                        document.getElementById("DU_avatarList").appendChild(element);
+                    } else {
+                        let locked = document.createElement("img");
+                        locked.src = "/images/locked.png";
+                        locked.style.width = "100%";
+                        document.getElementById("DU_avatarList").appendChild(locked);
                     }
+                } else {
+                    document.getElementById("DU_avatarList").appendChild(element);
                 }
             }
 
@@ -467,8 +495,6 @@
                         xp: Number(document.getElementById("DU_xp").children[1].value)
                     })
                 });
-                displayedUser.xp = document.getElementById("DU_xp").children[1].value;
-                userList.find(obj => obj.username == displayedUser.username).xp = document.getElementById("DU_xp").children[1].value;
                 update()
             }
 
@@ -498,7 +524,6 @@
                                 deck: displayedUser.deck
                             })
                         });
-
                         update();
                     }
                 })
@@ -599,9 +624,8 @@
                     let setAdminLabel = document.createElement("label");
                     setAdminLabel.innerText = "Admin";
                     setAdminLabel.setAttribute("for", "adminCheck");
+                    setAdminLabel.style.color = "white";
                     setAdminDiv.appendChild(setAdminLabel);
-
-                    CreateTooltipEvent(setAdminLabel, "Set admin", "Hold shift to change")
 
                     let setAdminCheck = document.createElement("input");
                     setAdminCheck.type = "checkbox";
@@ -622,14 +646,16 @@
                                 admin: setAdminCheck.checked
                             })
                         });
-                        displayedUser.admin = await rtn.json()
                         update()
                     }
                     setAdminDiv.appendChild(setAdminCheck);
 
-                    CreateTooltipEvent(setAdminCheck, "Set admin", "Shift-click to change this property")
+                    CreateTooltipEvent(setAdminDiv, "Set admin", "Shift-click to change this property")
+
+                    let container = document.createElement("div");
+                    container.appendChild(setAdminDiv)
                     
-                    document.getElementById("DU_danger_zone").appendChild(setAdminDiv);
+                    document.getElementById("DU_danger_zone").appendChild(container);
                 }
 
                 if (displayedUser.username != self.username) {
@@ -720,6 +746,40 @@
         }
     }
 
+    async function generateConfig() {
+        //id: config
+        let settings = await (await fetch(window.location.origin+'/api/admin/settings', {
+            method: 'POST',
+            headers: {
+		    	'Content-Type': 'application/json',
+    	    }
+        })).json();
+
+        document.getElementById("configEditor").value = JSON.stringify(settings, null, 4);
+        document.getElementById("configEditor").dispatchEvent(new Event('input'));
+
+        document.getElementById("configSave").onclick = async () => {
+            let data;
+            try {
+                data = JSON.parse(document.getElementById("configEditor").value);
+            } catch (e) {
+                document.getElementById("configError").innerText = e.message;
+            }
+
+            if (data) {
+                document.getElementById("configError").innerText = "";
+                await fetch(window.location.origin+'/api/admin/settings', {
+                    method: 'POST',
+                    headers: {
+		    	        'Content-Type': 'application/json',
+    	            },
+                    body: JSON.stringify(data)
+                });
+                update();
+            }
+        }
+    }
+
     async function update() {
         let users = await fetch(window.location.origin+'/api/admin/users', {
             method: 'get',
@@ -732,8 +792,15 @@
             userList = await users.json();
         }
 
-        generateUserList()
-        updateDisplayedUser()
+        if (displayedUser)
+            displayedUser = userList.find(obj => obj.username == displayedUser.username)
+
+        generateUserList();
+        updateDisplayedUser();
+
+        if (self.root)
+            generateConfig();
+
         SetAllFontSizeInArray(FontSizeArray);
     }
 
@@ -756,11 +823,11 @@
             avatars = await (await fetch(window.location.origin+'/api/admin/avatars',{method:'GET',headers: {'Content-Type': 'application/json'}})).json()
 
             let rootItems = document.getElementsByClassName("RootLocked");
-            for (let i = 0; i < rootItems.length; i++) {
+            Object.entries(rootItems).forEach(([id, obj]) => {
                 if (!ud.root) {
-                    rootItems[i].remove();
+                    obj.remove();
                 }
-            }
+            })
 
             let widthAdjustItems = document.getElementsByClassName("widthAdjust");
             for (let i = 0; i < widthAdjustItems.length; i++) {
@@ -770,17 +837,6 @@
                 } else {
                     element.style.width = element.getAttribute("adminWidth")
                 }
-            }
-
-            let users = await fetch(window.location.origin+'/api/admin/users', {
-                method: 'get',
-                headers: {
-	    	    	'Content-Type': 'application/json',
-	    	    }
-            });
-
-            if (users.ok) {
-                userList = await users.json();
             }
             update()
         } else {
