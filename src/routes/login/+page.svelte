@@ -143,11 +143,24 @@
         if (user.ok) {
             window.location.href = '/';
         }
+        
+        document.getElementById('login_username').addEventListener("keypress",(e) => sendOnEnter(e, login))
+        document.getElementById('login_password').addEventListener("keypress",(e) => sendOnEnter(e, login))
+
+        document.getElementById('signup_username').addEventListener("keypress",(e) => sendOnEnter(e, signup))
+        document.getElementById('signup_display_name').addEventListener("keypress",(e) => sendOnEnter(e, signup))
+        document.getElementById('signup_password').addEventListener("keypress",(e) => sendOnEnter(e, signup))
     })
 
     function switchTab() {
         document.getElementById("Login").classList.toggle("hidden")
         document.getElementById("SignUp").classList.toggle("hidden")
+    }
+
+    function sendOnEnter(event, func) {
+        if (event.key === 'Enter') {
+            func()
+        }
     }
 
     async function login() {
