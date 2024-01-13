@@ -5,7 +5,7 @@ const db = require('../database.cjs');
 const cards = require('../Cards.json');
 const fr = require('../fileReader.cjs');
 const logger = require('../logger.cjs');
-
+const ld = require('lodash');
 
 var client;
 async function connectDB() {
@@ -93,8 +93,8 @@ router.get('/getInventory', auth.checkUser, async (req, res) => {
 })
 
 router.post('/addToDeck', auth.checkUser, async (req, res) => {
-    //Database
     let result = await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username})
+    let old_result = ld.cloneDeep(result)
     if (result.inventory[req.body.WhatItemIndex]) { // Check if item exsist
         if (result.deck[req.body.WhatIndexToReplace]>=0&&result.deck.length>req.body.WhatIndexToReplace) { // check if card exsist in deck
             var temp = result.deck[req.body.WhatIndexToReplace]; 
@@ -123,7 +123,11 @@ router.post('/addToDeck', auth.checkUser, async (req, res) => {
         result.deck.splice(req.body.WhatIndexToReplace,1);
     }
 
-
+    logger.debug(
+        req.user.username + ": old_deck="+JSON.stringify(old_result.deck)+", old_inventory="+JSON.stringify(old_result.inventory)+", new_deck="+JSON.stringify(result.deck)+", new_inventory="+JSON.stringify(result.inventory),
+        req.originalUrl
+    )
+    
 
     await client.db("communism_battlecards").collection("accounts").updateOne({username: req.user.username},{$set:result})
 

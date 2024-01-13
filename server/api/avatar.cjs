@@ -4,7 +4,7 @@ const auth = require('../authentication.cjs');
 const db = require('../database.cjs');
 const avatars = require('../Avatars.json');
 const xp = require('../xp.cjs');
-
+const logger = require('../logger.cjs');
 
 var client;
 async function connectDB() {
@@ -40,6 +40,12 @@ router.get('/get', auth.checkUser, async (req, res) => {
 router.post('/select', auth.checkUser, async (req, res) => {
     let result = await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username})
     if (avatars[req.body.newCard] && (req.body.newCard == 0 || avatars[req.body.newCard].unlockRequirements<=xp.getLevel(result.xp))) {
+
+        logger.debug(
+            req.user.username + ": old_avatar="+result.avatar+", new_avatar="+req.body.newCard,
+            req.originalUrl
+        )
+
         await client.db("communism_battlecards").collection("accounts").updateOne({username: req.user.username},{$set:{avatar: req.body.newCard}})
         res.status(200).send("Action completed")
     } else {

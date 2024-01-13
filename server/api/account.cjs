@@ -3,6 +3,7 @@ const router = express.Router();
 const auth = require('../authentication.cjs');
 const db = require('../database.cjs');
 const fr = require('../fileReader.cjs');
+const logger = require('../logger.cjs');
 
 var client;
 async function connectDB() {
@@ -24,7 +25,22 @@ router.post('/signup', async(req, res) => {
         let base = client.db("communism_battlecards").collection("accounts")
         let check = await base.findOne({username: username})
         if (!check && !(/^test_\d+/).test(username)) { //does not exist AND will not interfere with testusers
-            let result = await base.insertOne({username: username, password: password, display_name: display_name, avatar: settings.defaultAvatar, deck: settings.defaultDeck, inventory: settings.defaultInventory, xp: settings.defaultXp})
+            let user = {
+                username: username,
+                password: password,
+                display_name: display_name,
+                avatar: settings.defaultAvatar,
+                deck: settings.defaultDeck,
+                inventory: settings.defaultInventory,
+                xp: settings.defaultXp
+            }
+
+            logger.debug(
+                JSON.stringify(user),
+                req.originalUrl
+            )
+
+            let result = await base.insertOne(user)
 
             let userToken = auth.encrypt(JSON.stringify([auth.encrypt(username), auth.encrypt(password)]))
             res.cookie('userToken', userToken, { httpOnly: true });

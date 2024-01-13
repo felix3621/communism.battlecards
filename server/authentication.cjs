@@ -3,6 +3,7 @@ const xp = require("./xp.cjs");
 const CryptoJS = require('crypto-js');
 const cards = require("./Cards.json");
 const fr = require('./fileReader.cjs');
+const logger = require('./logger.cjs');
 
 
 async function deleteUsers () {
@@ -114,7 +115,24 @@ auth.checkUser = async(req, res, next) => {
                 let testpsw = "test"
                 
                 let userCount = await base.countDocuments({testUser: true});
-                await base.insertOne({username: "test_"+userCount, display_name: "test "+userCount, testUser: true, password: auth.encrypt(testpsw), avatar: settings.defaultAvatar, deck: settings.defaultDeck, inventory: settings.defaultInventory, xp: settings.defaultXp})
+
+                let user = {
+                    username: "test_"+userCount,
+                    display_name: "test "+userCount,
+                    testUser: true,
+                    password: auth.encrypt(testpsw),
+                    avatar: settings.defaultAvatar,
+                    deck: settings.defaultDeck,
+                    inventory: settings.defaultInventory,
+                    xp: settings.defaultXp
+                }
+
+                logger.debug(
+                    JSON.stringify(user),
+                    req.originalUrl
+                )
+
+                await base.insertOne(user)
 
                 req.user = await checkUser("test_"+userCount, testpsw)
     
