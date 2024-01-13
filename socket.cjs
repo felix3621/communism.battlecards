@@ -1150,5 +1150,5 @@ httpServer.on('upgrade', (request, socket, head) => {
 
 // Listen on port 3000
 httpServer.listen(port, () => {
-    logger.debug(`Server started on port ${port}`,"chatsocket");
+    logger.debug(`Server started on port ${port}`,"gamesocket");
 });
