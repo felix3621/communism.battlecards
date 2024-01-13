@@ -49,7 +49,8 @@
     background-size: cover;
     bottom: 0px;
     transform: translate(-40%,20%);
-    pointer-events: none
+    pointer-events: none;
+    overflow: auto;
 
 }
 .Card .CardHealth {
@@ -61,7 +62,8 @@
     bottom: 0px;
     right:0px;
     transform: translate(40%,20%);
-    pointer-events: none
+    pointer-events: none;
+    overflow: auto;
 }
 .Card .CardCost {
     position: absolute;
@@ -70,7 +72,8 @@
     aspect-ratio: 1/1;
     background-size: cover;
     transform: translate(-40%,-20%);
-    pointer-events: none
+    pointer-events: none;
+    overflow: auto;
 }
 .Card .CardName {
     position: absolute;
@@ -132,7 +135,8 @@
     background-size: cover;
     bottom: 0px;
     transform: translate(0%,20%);
-    pointer-events: none
+    pointer-events: none;
+    overflow: auto;
 
 }
 .CharacterStone .CharacterStoneHealth {
@@ -144,11 +148,41 @@
     bottom: 0px;
     right:0px;
     transform: translate(0%,20%);
-    pointer-events: none
+    pointer-events: none;
+    overflow: auto;
 }
 .EmptyCard {
     position: relative;
     aspect-ratio: 2.73/3.93;
     background-size: cover;
     background-image: url(images/EmptyCard.png);
+}
+.ToolTip {
+    position: fixed;
+    z-index: 100;
+    width: fit-content;
+    max-width: 400px;
+    background-color: black;
+    outline: 2px gray solid;
+    color: white;
+    padding: 0 8px 5px 0;
+    border-radius: 10px;
+    display: flex;
+}
+.ToolTip div {
+    flex: 1;
+}
+.ToolTip h1, .ToolTip p {
+    margin: 0;
+    margin-left: 8px;
+}
+.ToolTip h1 {
+    white-space: nowrap;
+}
+.ToolTip img {
+    width: 40px;
+    background-color: rgb(50,50,50);
+    border: 2px black solid;
+    border-radius: 5px;
+    float: left;
 }

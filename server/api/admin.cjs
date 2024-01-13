@@ -51,7 +51,7 @@ router.get('/avatars', (req, res) => {
 })
 
 router.post('/setDeck', async (req, res) => {
-    if (req.body.user && typeof req.body.deck == "object") {
+    if (req.body.user && req.body.deck instanceof Array) {
         // Validator 
         var valid = true;
         for (let i = 0; i < req.body.deck.length; i++) {
@@ -84,6 +84,39 @@ router.post('/setDeck', async (req, res) => {
     } else {
         res.status(500).send("invalid input")
     }
+})
+
+
+router.post('/setInventory', async (req, res) => {
+    // Validator 
+if (req.body.user && req.body.inventory instanceof Array) {
+    var valid = true;
+    for (let i = 0; i < req.body.inventory.length; i++) {
+        if (typeof req.body.inventory[i] != "object" || typeof req.body.inventory[i].card != "number" || typeof req.body.inventory[i].count != "number" || req.body.inventory[i].count < 1 || req.body.inventory[i].card<0 || req.body.inventory[i].card >= cards.length) {
+            valid = false;
+        }
+    }
+    // Set Inventory
+    if (valid) {
+        var getResult;
+        if (req.user.root == true) {
+            getResult = await client.db("communism_battlecards").collection("accounts").findOne({username: req.body.user});
+        } else {
+            getResult = await client.db("communism_battlecards").collection("accounts").findOne({username: req.body.user, admin: {$exists: false}, root: {$exists: false}});
+        }
+
+        if (getResult) {
+            await client.db("communism_battlecards").collection("accounts").updateOne({username: req.body.user},{$set: {inventory: req.body.inventory}});
+            res.json(req.body.inventory)
+        } else {
+            res.status(404).send("Not found");
+        }
+    } else {
+        res.status(500).send("invalid input");
+    }
+} else {
+    res.status(500).send("invalid input");
+}
 })
 
 router.post('/setAvatar', async (req, res) => {
@@ -186,10 +219,34 @@ router.post('/resetUser', async (req, res) => {
         if (getResult) {
             settings = JSON.parse(fr.read('./settings.json'))
 
-            await client.db("communism_battlecards").collection("accounts").deleteOne({username: req.body.user});
-            await client.db("communism_battlecards").collection("accounts").insertOne({username: getResult.username, password: getResult.password, display_name: getResult.display_name, avatar: settings.defaultAvatar, deck: settings.defaultDeck, inventory: settings.defaultInventory, xp: settings.defaultXp});
+            let newUser = {
+                username: getResult.username,
+                password: getResult.password,
+                display_name: getResult.display_name,
+                avatar: settings.defaultAvatar,
+                deck: settings.defaultDeck,
+                inventory: settings.defaultInventory,
+                xp: settings.defaultXp
+            }
 
-            res.status(200).send("User reset")
+            if (getResult.admin)
+                newUser.admin = getResult.admin;
+            if (getResult.root)
+                newUser.root = getResult.root;
+
+            await client.db("communism_battlecards").collection("accounts").deleteOne({username: req.body.user});
+            await client.db("communism_battlecards").collection("accounts").insertOne(newUser);
+
+            delete newUser.password;
+            delete newUser._id;
+
+            if (!req.user.root && newUser.admin) {
+                delete newUser.admin
+            }
+
+            newUser.level = xp.getLevel(newUser.xp)
+
+            res.json(newUser)
         } else {
             res.status(404).send("Not found");
         }
@@ -210,7 +267,7 @@ router.post('/setAdmin', rootCheck, async (req, res) => {
     if (req.body.user && typeof req.body.admin == 'boolean') {
         getResult = await client.db("communism_battlecards").collection("accounts").findOne({username: req.body.user});
 
-        if (getResult) {
+        if (getResult && !getResult.root) {
             await client.db("communism_battlecards").collection("accounts").updateOne({username: req.body.user},{$set: {admin: req.body.admin}});
             res.send(req.body.admin)
         } else {
@@ -222,7 +279,7 @@ router.post('/setAdmin', rootCheck, async (req, res) => {
 })
 
 router.post('/deleteUser', rootCheck, async (req, res) => {
-    if (req.body.user) {
+    if (req.body.user && req.body.user != req.user.username) {
         getResult = await client.db("communism_battlecards").collection("accounts").findOne({username: req.body.user});
 
         if (getResult) {

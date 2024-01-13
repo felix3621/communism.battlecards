@@ -66,7 +66,7 @@
         height: 33.3%;
     }
     #DU_title {
-        height: calc(10% - 5px);
+        height: calc(15% - 5px);
         border-bottom: 5px solid black;
     }
     #DU_avatar {
@@ -128,6 +128,7 @@
     }
     :global(#options *:hover) {
         background-color: rgb(60,60,60);
+        color: rgb(175,175,175)
     }
     :global(#NewCard) {
         background-color: #414141;
@@ -189,14 +190,44 @@
     :global(.CharacterStone, .Card) {
         cursor: pointer;
     }
+    :global(#DU_inventory table) {
+        margin-left: 50%;
+        transform: translate(-50%, 0);
+    }
+    :global(#DU_inventory td button) {
+        width: 100%;
+    }
+    :global(#DU_inventory td input) {
+        width: calc(100% - 8px);
+    }
     #DU_properties {
         color: white;
+        padding-bottom: 5%;
     }
     :global(#DU_properties p) {
         margin:0;
+        float: left;
     }
-    :global(#DU_properties * div) {
+    :global(#DU_properties > * > div) {
+        margin-left:20px;
+    }
+    :global(#DU_properties > * > div div) {
         margin-left:10px;
+    }
+    :global(#reset) {
+        background-color: rgb(100,100,100);
+        outline:0;
+        border:2.5px solid black;
+        padding:2.5px 5px 2.5px 5px;
+        border-radius:10px;
+        color:white;
+        transition: 0.1s;
+    }
+    :global(#reset:hover) {
+        background-color: rgb(125,125,125);
+    }
+    :global(#reset:active) {
+        background-color: rgb(75,75,75);
     }
 </style>
 <img id="logo" src="images/BattlecardsLogo.png" on:click={()=>window.location.href="/"}>
@@ -212,14 +243,18 @@
         <td adminWidth="66.7%" rootWidth="50%" class="widthAdjust">
             <div class="panel">
                 <p class="title" id="DU_title"></p>
-                <div class="content" style="height:90%">
+                <div class="content" style="height:85%">
                     <div id="DU_avatar"></div>
                     <div id="DU_avatarList"></div>
                     <div id="DU_xp"></div>
                     <p class="contentHeader">Deck:</p>
                     <div id="DU_deck" class="DU_cardContainer"></div>
-                    <p class="contentHeader">Properties:</p>
+                    <p class="contentHeader">Inventory:</p>
+                    <div id="DU_inventory"></div>
+                    <p class="contentHeader">Raw:</p>
                     <div id="DU_properties"></div>
+                    <p class="contentHeader RootLocked" style="color: red;font-weight: bold">Danger Zone:</p>
+                    <div id="DU_danger_zone" class="RootLocked"></div>
                 </div>
             </div>
         </td>
@@ -240,6 +275,8 @@
 
     var userList; 
     var FontSizeArray = new Array();
+
+    var self;
 
     function createOptions(element, ...options) {
 
@@ -345,7 +382,13 @@
 
     function updateDisplayedUser() {
         if (displayedUser) {
-            document.getElementById("DU_title").innerHTML = "<input style='text-align:center;' value='"+displayedUser.display_name+"'><br><i style='color: rgb(175,175,175'>"+displayedUser.username+"</i>";
+            document.getElementById("DU_title").innerHTML = `
+                <input style='text-align:center;' value='`+displayedUser.display_name+`'>
+                <br>
+                <i style='color: rgb(175,175,175'>`+displayedUser.username+`</i>
+                <br>
+                <button id="reset">Reset</button>
+            `;
             document.getElementById("DU_title").children[0].onblur = async () => {
                 await fetch(window.location.origin+'/api/admin/setDisplayName', {
                     method: 'POST',
@@ -359,6 +402,20 @@
                 });
                 displayedUser.display_name = document.getElementById("DU_title").children[0].value;
                 userList.find(obj => obj.username == displayedUser.username).display_name = document.getElementById("DU_title").children[0].value;
+                update()
+            }
+            document.getElementById("DU_title").children[4].onclick = async () => {
+                let newUser = await(await fetch(window.location.origin+'/api/admin/resetUser', {
+                    method: 'POST',
+                    headers: {
+                        "Content-Type": "application/json"
+                    }, 
+                    body: JSON.stringify({
+                        user: displayedUser.username
+                    })
+                })).json()
+                displayedUser = newUser;
+                userList[userList.indexOf(obj => obj.username == displayedUser.username)] = newUser;
                 update()
             }
             
@@ -445,28 +502,165 @@
                         update();
                     }
                 })
-                if (i != 0)
-                    options.push({
-                        name: "Insert Before",
-                        func: () => addCard(i)
-                    })
-                options.push({
-                    name: "Insert After",
-                    func: () => addCard(i+1)
-                })
                 
                 createOptions(element, ...options)
                 document.getElementById("DU_deck").appendChild(element)
             }
-                var AddNewCard = document.createElement("div");
-                AddNewCard.id = "NewCard";
-                var AddButton = document.createElement("div");
-                AddNewCard.appendChild(AddButton);
-                AddNewCard.addEventListener("click",() => addCard(displayedUser.deck.length));
-                document.getElementById("DU_deck").appendChild(AddNewCard);
+            var AddNewCard = document.createElement("div");
+            AddNewCard.id = "NewCard";
+            var AddButton = document.createElement("div");
+            AddNewCard.appendChild(AddButton);
+            AddNewCard.addEventListener("click",() => addCard(displayedUser.deck.length));
+            document.getElementById("DU_deck").appendChild(AddNewCard);
 
-                document.getElementById("DU_properties").innerHTML = ""
-                document.getElementById("DU_properties").appendChild(GenerateProperties(displayedUser));
+            document.getElementById("DU_inventory").innerHTML = ""
+            document.getElementById("DU_inventory").appendChild(document.createElement("table"));
+            for (let i = 0; i < displayedUser.inventory.length; i++) {
+                let invElement = document.createElement("tr");
+
+                let cardCell = document.createElement("td");
+                let card = document.createElement("button");
+                card.innerText = cards[displayedUser.inventory[i].card].Name
+                card.onclick = () => selectCard(async (id) => {
+                    displayedUser.inventory[i].card = id;
+                    await fetch(window.location.origin+'/api/admin/setInventory', {
+                        method: 'POST',
+                        headers: {
+                            "Content-Type": "application/json"
+                        }, 
+                        body: JSON.stringify({
+                            user: displayedUser.username,
+                            inventory: displayedUser.inventory
+                        })
+                    });
+                    update()
+                })
+                cardCell.appendChild(card);
+                invElement.appendChild(cardCell);
+                
+                let countCell = document.createElement("td");
+                let count = document.createElement("input");
+                count.type = "number"
+                count.value = displayedUser.inventory[i].count
+                count.onblur = async () => {
+                    displayedUser.inventory[i].count = Number(count.value);
+                    if (displayedUser.inventory[i].count == 0) [
+                        displayedUser.inventory.splice(i, 1)
+                    ]
+                    await fetch(window.location.origin+'/api/admin/setInventory', {
+                        method: 'POST',
+                        headers: {
+                            "Content-Type": "application/json"
+                        }, 
+                        body: JSON.stringify({
+                            user: displayedUser.username,
+                            inventory: displayedUser.inventory
+                        })
+                    });
+                    update()
+                }
+                countCell.appendChild(count);
+                invElement.appendChild(countCell);
+                
+                document.getElementById("DU_inventory").children[0].appendChild(invElement);
+            }
+
+            let addInvRow = document.createElement("tr");
+            let addInvCell = document.createElement("td");
+            addInvCell.colSpan = 2;
+            let addInvBtn = document.createElement("button")
+            addInvBtn.innerText = "Add new card"
+            addInvBtn.onclick = async () => {
+                displayedUser.inventory.push({card: 0, count: 1})
+                await fetch(window.location.origin+'/api/admin/setInventory', {
+                    method: 'POST',
+                    headers: {
+                        "Content-Type": "application/json"
+                    }, 
+                    body: JSON.stringify({
+                        user: displayedUser.username,
+                        inventory: displayedUser.inventory
+                    })
+                });
+                update()
+            }
+            addInvCell.appendChild(addInvBtn);
+            addInvRow.appendChild(addInvCell);
+            document.getElementById("DU_inventory").children[0].appendChild(addInvRow)
+
+            document.getElementById("DU_properties").innerHTML = ""
+            document.getElementById("DU_properties").appendChild(GenerateViewableProperties(displayedUser));
+
+            if (document.getElementById("DU_danger_zone")) {
+                document.getElementById("DU_danger_zone").innerHTML = ""
+                if (!displayedUser.root) {
+                    let setAdminDiv = document.createElement("div");
+
+                    let setAdminLabel = document.createElement("label");
+                    setAdminLabel.innerText = "Admin";
+                    setAdminLabel.setAttribute("for", "adminCheck");
+                    setAdminDiv.appendChild(setAdminLabel);
+
+                    CreateTooltipEvent(setAdminLabel, "Set admin", "Hold shift to change")
+
+                    let setAdminCheck = document.createElement("input");
+                    setAdminCheck.type = "checkbox";
+                    setAdminCheck.id = "adminCheck";
+                    setAdminCheck.checked = displayedUser.admin || false;
+                    setAdminCheck.onclick = async (e) => {
+                        e.preventDefault();
+                        if (!e.shiftKey)
+                            return
+
+                        let rtn = await fetch(window.location.origin+'/api/admin/setAdmin', {
+                            method: 'POST',
+                            headers: {
+                                "Content-Type": "application/json"
+                            }, 
+                            body: JSON.stringify({
+                                user: displayedUser.username,
+                                admin: setAdminCheck.checked
+                            })
+                        });
+                        displayedUser.admin = await rtn.json()
+                        update()
+                    }
+                    setAdminDiv.appendChild(setAdminCheck);
+
+                    CreateTooltipEvent(setAdminCheck, "Set admin", "Shift-click to change this property")
+                    
+                    document.getElementById("DU_danger_zone").appendChild(setAdminDiv);
+                }
+
+                if (displayedUser.username != self.username) {
+                    let deleteDiv = document.createElement("div");
+
+                    let deleteBtn = document.createElement("button");
+                    deleteBtn.innerText = "Delete";
+                    deleteBtn.onclick = async (e) => {
+                        if (!e.shiftKey || !e.ctrlKey)
+                            return
+
+                        let rtn = await fetch(window.location.origin+'/api/admin/deleteUser', {
+                            method: 'POST',
+                            headers: {
+                                "Content-Type": "application/json"
+                            }, 
+                            body: JSON.stringify({
+                                user: displayedUser.username
+                            })
+                        });
+                        displayedUser = undefined;
+                        CloseAllToolTips()
+                        update()
+                    }
+                    CreateTooltipEvent(deleteBtn, "Delete account", "Hold <code>shift</code> and <code>ctrl</code> while clicking to delete user")
+
+                    deleteDiv.appendChild(deleteBtn);
+
+                    document.getElementById("DU_danger_zone").appendChild(deleteDiv);
+                }
+            }
         } else {
             document.getElementById("DU_title").innerHTML = ""
             
@@ -480,12 +674,14 @@
 
             document.getElementById("DU_deck").innerHTML = ""
 
+            document.getElementById("DU_inventory").innerHTML = ""
+
             document.getElementById("DU_properties").innerHTML = ""
+            
+            if (document.getElementById("DU_danger_zone")) {
+                document.getElementById("DU_danger_zone").innerHTML = ""
+            }
         }
-        /*
-        deck
-        inventory
-        */
     }
 
     function generateUserList() {
@@ -536,8 +732,8 @@
             userList = await users.json();
         }
 
-        updateDisplayedUser()
         generateUserList()
+        updateDisplayedUser()
         SetAllFontSizeInArray(FontSizeArray);
     }
 
@@ -553,6 +749,8 @@
             if (!ud.admin) {
                 window.location.href = '/login';
             }
+
+            self = ud;
 
             cards = await (await fetch(window.location.origin+'/api/admin/cards',{method:'GET',headers: {'Content-Type': 'application/json'}})).json()
             avatars = await (await fetch(window.location.origin+'/api/admin/avatars',{method:'GET',headers: {'Content-Type': 'application/json'}})).json()
@@ -595,27 +793,38 @@
         })
     })
 
-    function GenerateProperties(object, _array = false) {
+    function GenerateViewableProperties(object, _nTop = false) {
         var ParentElement = document.createElement("div");
-        ParentElement.innerHTML = "<p>{</p>"
+
+        if (!_nTop)
+            ParentElement.innerHTML = "<p>{</p><br>"
+
         var element = document.createElement("div");
         Object.entries(object).forEach(([key, value]) => {
-            element.innerHTML += "<p>"+key+":</p>"
+            element.innerHTML += "<p style='display: inline'>"+key+":&nbsp;</p>"
 
             if (value instanceof Array) {
-
+                element.innerHTML += "<p>[</p><br>"
+                element.appendChild(GenerateViewableProperties(value, true));
+                element.innerHTML += "<p>],</p>"
             } else if (typeof value =="object") {
-                element.appendChild(GenerateProperties(value));
+                element.innerHTML += "<p>{</p><br>"
+                element.appendChild(GenerateViewableProperties(value, true));
+                element.innerHTML += "<p>},</p>"
             } else if (typeof value =="string") {
-
-            } else if (typeof value =="float") {
-
+                element.innerHTML += "<p>\""+value+"\",</p>"
+            } else if (typeof value =="number") {
+                element.innerHTML += "<p>"+value+",</p>"
             } else if (typeof value =="boolean") {
- 
+                element.innerHTML += "<p>"+value+",</p>"
             }
+            element.innerHTML += "<br>"
         });
         ParentElement.appendChild(element)
-        ParentElement.innerHTML += "<p>}</p>"
+        
+        if (!_nTop)
+            ParentElement.innerHTML += "<p>}</p>"
+
         return ParentElement;
     }
 
@@ -754,5 +963,67 @@
                 Element.style.fontSize = `${CharacterAreal}px`;
             }
         }
+    }
+
+    
+    // Show ToolTip
+    function ToolTip(Element, Title, Text, DisplayImagePath = null) {
+        CloseAllToolTips();
+        var ToolTip = document.createElement("div");
+        ToolTip.classList.add("ToolTip");
+
+        if (DisplayImagePath!=null) {
+            // Flex Container
+            var FlexContainerImage = document.createElement("div");
+            FlexContainerImage.style.order = 1;
+            FlexContainerImage.style.width = "40px";
+            ToolTip.appendChild(FlexContainerImage);
+            var Image = document.createElement("img");
+            Image.style.width = "40px";
+            Image.src = DisplayImagePath;
+            FlexContainerImage.appendChild(Image);
+        }
+        // Flex Container
+        var FlexContainer = document.createElement("div");
+        FlexContainer.style.order = 2;
+        ToolTip.appendChild(FlexContainer);
+
+        // Title
+        var TitleElement = document.createElement("h1");
+        TitleElement.innerHTML = Title;
+        FlexContainer.appendChild(TitleElement);
+        //Text
+        var TextElement = document.createElement("p");
+        TextElement.innerHTML = Text;
+        FlexContainer.appendChild(TextElement);
+
+        document.body.appendChild(ToolTip);
+
+        // Set Pos
+        let BoundRec = Element.getBoundingClientRect();
+        if (BoundRec.top<ToolTip.offsetHeight) { // Down
+            ToolTip.style.top = BoundRec.bottom + "px";
+        } else { // Place Above
+            ToolTip.style.top = BoundRec.top-ToolTip.offsetHeight-8 + "px";
+        }
+        if (BoundRec.right>document.body.offsetWidth) { // Move right 0
+            ToolTip.style.left = document.body.offsetWidth - ToolTip.offsetWidth +"px";
+        } else if (BoundRec.left+(BoundRec.right-BoundRec.left)/2<ToolTip.offsetWidth) { // Move Left 0
+            ToolTip.style.left = "0px";
+        } else { // Center Left
+            ToolTip.style.left = BoundRec.left+(BoundRec.right-BoundRec.left)/2 - ToolTip.offsetWidth/2 + "px";
+        }
+    }
+    // Remove All ToolTips
+    function CloseAllToolTips() {
+        var ToolTips = document.getElementsByClassName("ToolTip");
+        for (let i = 0; i < ToolTips.length; i++) {
+            ToolTips[i].remove();
+        }
+    }
+    // Add Tooltip Event To Element
+    function CreateTooltipEvent(Element, Title, Text, DisplayImagePath = null) {
+        Element.addEventListener("mouseover",()=> {ToolTip(Element,Title,Text, DisplayImagePath);});
+        Element.addEventListener("mouseout",()=> {CloseAllToolTips();});
     }
 </script>

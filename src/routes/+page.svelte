@@ -327,35 +327,6 @@
         display: grid;
         grid-template-columns: repeat(auto, 100%);
     }
-    :global(.ToolTip) {
-        position: fixed;
-        z-index: 100;
-        width: fit-content;
-        max-width: 400px;
-        background-color: black;
-        outline: 2px gray solid;
-        color: white;
-        padding: 0 8px 5px 0;
-        border-radius: 10px;
-        display: flex;
-    }
-    :global(.ToolTip div) {
-        flex: 1;
-    }
-    :global(.ToolTip h1, .ToolTip p) {
-        margin: 0;
-        margin-left: 8px;
-    }
-    :global(.ToolTip h1) {
-        white-space: nowrap;
-    }
-    :global(.ToolTip img) {
-        width: 40px;
-        background-color: rgb(50,50,50);
-        border: 2px black solid;
-        border-radius: 5px;
-        float: left;
-    }
     #profile {
         background-color: rgb(50,50,50);
         position: fixed;
@@ -838,7 +809,7 @@
         var CharacterStoneDMGText = document.createElement("p");
         CharacterStoneDMGText.innerHTML = Attack;
         CharacterStoneDMG.appendChild(CharacterStoneDMGText);
-        FontSizeAdjusterArray.push({Element:CharacterStoneDMGText,HeightFactor:1});
+        FontSizeAdjusterArray.push({Element:CharacterStoneDMGText,ScaleFactor:0.5});
 
         //CardHealth
         var CharacterStoneHealth = document.createElement("div");
@@ -849,7 +820,7 @@
         var CharacterStoneHealthText = document.createElement("p");
         CharacterStoneHealthText.innerHTML = Health;
         CharacterStoneHealth.appendChild(CharacterStoneHealthText);
-        FontSizeAdjusterArray.push({Element:CharacterStoneHealthText,HeightFactor:1});
+        FontSizeAdjusterArray.push({Element:CharacterStoneHealthText,ScaleFactor:0.5});
 
         return CharacterStone;
     }
@@ -879,7 +850,7 @@
         var CardDMGText = document.createElement("p");
         CardDMGText.innerHTML = Attack;
         CardDMG.appendChild(CardDMGText);
-        FontSizeAdjusterArray.push({Element:CardDMGText,HeightFactor:1});
+        FontSizeAdjusterArray.push({Element:CardDMGText,ScaleFactor:0.5});
         if(Attack == null || Attack == 0) {
             CardDMG.style.filter = "opacity(0)";
         }
@@ -893,7 +864,7 @@
         var CardHealthText = document.createElement("p");
         CardHealthText.innerHTML = Health;
         CardHealth.appendChild(CardHealthText);
-        FontSizeAdjusterArray.push({Element:CardHealthText,HeightFactor:1});
+        FontSizeAdjusterArray.push({Element:CardHealthText,ScaleFactor:0.5});
         if(Health == null || Health == 0) {
             CardHealth.style.filter = "opacity(0)";
         }
@@ -907,7 +878,7 @@
         var CardCostText = document.createElement("p");
         CardCostText.innerHTML = Cost;
         CardCost.appendChild(CardCostText);
-        FontSizeAdjusterArray.push({Element:CardCostText,HeightFactor:1});
+        FontSizeAdjusterArray.push({Element:CardCostText,ScaleFactor:0.5});
 
         //CardName
         var CardName = document.createElement("div");
@@ -918,7 +889,7 @@
         var CardNameText = document.createElement("p1");
         CardNameText.innerHTML = Name;
         CardName.appendChild(CardNameText);
-        FontSizeAdjusterArray.push({Element:CardNameText, FullWidth:true});
+        FontSizeAdjusterArray.push({Element:CardNameText});
 
         //CardDescription
         var CardDescription = document.createElement("div");
@@ -938,23 +909,23 @@
         for (var i = 0; i < Array.length; i++) {
             const Element = Array[i].Element;
             if (Element!= null) {
-                let HeightFactor = Array[i].HeightFactor != null ? Array[i].HeightFactor : 0.5;
-                //var containerHeight = Element.parentNode.clientHeight;
-                //var textHeight = Element.scrollHeight;
+                let i1 = 1 // let's start with 12px
+                let overflow = false
+                const maxSize = 200 // very huge text size
+                var ScaleFactor = (Array[i] != null && Array[i].ScaleFactor != null) ? Array[i].ScaleFactor : 1;
+                while (!overflow && i1 < maxSize) {
+                    Element.style.fontSize = `${i1}px`;
+                    overflow = isOverflown(Element.parentNode);
+                    if (!overflow) i1++
+                }
 
-                var CharacterAreal = ((Element.parentNode.clientHeight*0.75*HeightFactor) * (Element.parentNode.clientWidth))/(100+(Element.innerHTML.length));
-
-                //if Number(Element.style.fontSize) > 0 then use else 1, then multiply with fontSize
-
-                //var scaleFactor = (containerHeight*0.50) / textHeight;
-
-                //let fontSize = Number(Element.style.fontSize.slice(0, -3));
-                
-                //fontSize = (fontSize>0)?fontSize * (scaleFactor):scaleFactor;
-                
-                Element.style.fontSize = `${CharacterAreal}px`;
+                // revert to last state where no overflow happened:
+                Element.style.fontSize = `${i1*ScaleFactor - 1}px`;
             }
         }
+    }
+    function isOverflown(element) {
+        return element.scrollHeight > element.clientHeight || element.scrollWidth > element.clientWidth;
     }
 
     async function ShowDeck() {
@@ -969,7 +940,6 @@
             window.location.reload();
 
         var Deck = await deck.json();
-        console.log(Deck)
 
         //Remove the add new card from the end if it exsist
         var newCardElementToRemove = document.getElementById("NewCard");
@@ -1015,7 +985,7 @@
                     });
                     CreateTooltipEvent(CurrentChild, Deck[i].Name, Deck[i].Description+"<br>Cost: "+Deck[i].Cost);
                 })(i);
-                AddAllOfElementTypeToArray(CurrentChild,"p",FontSizeAdjusterArray,1);
+                AddAllOfElementTypeToArray(CurrentChild,"p",FontSizeAdjusterArray,0.5);
                 AddAllOfElementTypeToArray(CurrentChild,"p1",FontSizeAdjusterArray,null);
             }
             if (i>=Deck.length) {
@@ -1157,12 +1127,12 @@
             RemoveAllRefensesFromArray(Element.children[i], Array);
         }
     }
-    function AddAllOfElementTypeToArray(Element, ElementType, Array, HeightFactor = null) {
+    function AddAllOfElementTypeToArray(Element, ElementType, Array, ScaleFactor = null) {
         if (Element.tagName.toLowerCase() === ElementType) {
-            Array.push({Element:Element, HeightFactor:HeightFactor});
+            Array.push({Element:Element, ScaleFactor:ScaleFactor});
         }
         for (let i = 0; i < Element.children.length; i++) {
-            AddAllOfElementTypeToArray(Element.children[i],ElementType, Array, HeightFactor);
+            AddAllOfElementTypeToArray(Element.children[i],ElementType, Array, ScaleFactor);
         }
     }
 
@@ -1185,7 +1155,7 @@
         SelectedAvatar = removeAllEventListeners(SelectedAvatar);
         UpdateStone(SelectedAvatar,Avatars.selected.Attack,Avatars.selected.Health,Avatars.selected.Texture,"Tank");
         CreateTooltipEvent(SelectedAvatar,Avatars.selected.Name,Avatars.selected.Description);
-        AddAllOfElementTypeToArray(SelectedAvatar,"p",FontSizeAdjusterArray)
+        AddAllOfElementTypeToArray(SelectedAvatar,"p",FontSizeAdjusterArray, 0.5)
         // Update The Ability Stone
         if (Avatars.selected.AbilityStone) {
             document.getElementById("AvatarAbility").style.opacity = 1;
@@ -1193,7 +1163,7 @@
             removeAllEventListeners(document.getElementById("AvatarAbility"));
             document.getElementById("AvatarAbility").style.backgroundImage = "url('/images/Ability/"+Avatars.selected.AbilityStone.Texture+".png')";
             CreateTooltipEvent(document.getElementById("AvatarAbility"),Avatars.selected.AbilityStone.Name,Avatars.selected.AbilityStone.Description+"<br>Cost: "+Avatars.selected.AbilityStone.Cost,"/images/Ability/"+Avatars.selected.AbilityStone.Texture+".png");
-            AddAllOfElementTypeToArray(document.getElementById("AvatarAbility"),"p",FontSizeAdjusterArray);
+            AddAllOfElementTypeToArray(document.getElementById("AvatarAbility"),"p",FontSizeAdjusterArray, 0.5);
             document.getElementById("AvatarAbility").children[0].children[0].innerHTML = Avatars.selected.AbilityStone.Cost;
         } else {
             document.getElementById("AvatarAbility").style.opacity = 0;

@@ -378,23 +378,6 @@
         border-radius: 10px;
         display: flex;
     }
-    :global(.ToolTip div) {
-        flex: 1;
-    }
-    :global(.ToolTip h1, .ToolTip p) {
-        margin: 0;
-        margin-left: 8px;
-    }
-    :global(.ToolTip h1) {
-        white-space: nowrap;
-    }
-    :global(.ToolTip img) {
-        width: 40px;
-        background-color: rgb(50,50,50);
-        border: 2px black solid;
-        border-radius: 5px;
-        float: left;
-    }
     :global(.TextBoble) {
         position: fixed;
         color: white;
@@ -1010,7 +993,6 @@
             DraggableCard.Draggable.style.top = MouseY+"px";
         }
         Element.style.display = "none";
-        
     }
 
     function DropDraggable() {
@@ -1109,7 +1091,7 @@
         var CardDMGText = document.createElement("p");
         CardDMGText.innerHTML = Attack;
         CardDMG.appendChild(CardDMGText);
-        FontSizeAdjusterArray.push({Element:CardDMGText,HeightFactor:1});
+        FontSizeAdjusterArray.push({Element:CardDMGText,ScaleFactor:0.5});
 
         //CardHealth
         var CharacterStoneHealth = document.createElement("div");
@@ -1120,7 +1102,7 @@
         var CharacterStoneHealthText = document.createElement("p");
         CharacterStoneHealthText.innerHTML = Health;
         CharacterStoneHealth.appendChild(CharacterStoneHealthText);
-        FontSizeAdjusterArray.push({Element:CharacterStoneHealthText,HeightFactor:1});
+        FontSizeAdjusterArray.push({Element:CharacterStoneHealthText,ScaleFactor:0.5});
 
         return CharacterStone;
     }
@@ -1189,7 +1171,7 @@
             var CardDMGText = document.createElement("p");
             CardDMGText.innerHTML = Attack;
             CardDMG.appendChild(CardDMGText);
-            FontSizeAdjusterArray.push({Element:CardDMGText,HeightFactor:1});
+            FontSizeAdjusterArray.push({Element:CardDMGText, ScaleFactor:0.5});
         }
         
         if (Health != null) {
@@ -1202,7 +1184,7 @@
             var CardHealthText = document.createElement("p");
             CardHealthText.innerHTML = Health;
             CardHealth.appendChild(CardHealthText);
-            FontSizeAdjusterArray.push({Element:CardHealthText,HeightFactor:1});
+            FontSizeAdjusterArray.push({Element:CardHealthText,ScaleFactor:0.5});
         }
         
 
@@ -1215,7 +1197,7 @@
         var CardCostText = document.createElement("p");
         CardCostText.innerHTML = Cost;
         CardCost.appendChild(CardCostText);
-        FontSizeAdjusterArray.push({Element:CardCostText,HeightFactor:1});
+        FontSizeAdjusterArray.push({Element:CardCostText,ScaleFactor:0.5});
 
         //CardName
         var CardName = document.createElement("div");
@@ -1246,23 +1228,23 @@
         for (var i = 0; i < Array.length; i++) {
             const Element = Array[i].Element;
             if (Element!= null) {
-                let HightFactor = Array[i].HeightFactor != null ? Array[i].HeightFactor : 0.5;
-                //var containerHeight = Element.parentNode.clientHeight;
-                //var textHeight = Element.scrollHeight;
+                let i1 = 1 // let's start with 12px
+                let overflow = false
+                const maxSize = 200 // very huge text size
+                var ScaleFactor = (Array[i] != null && Array[i].ScaleFactor != null) ? Array[i].ScaleFactor : 1;
+                while (!overflow && i1 < maxSize) {
+                    Element.style.fontSize = `${i1}px`;
+                    overflow = isOverflown(Element.parentNode);
+                    if (!overflow) i1++
+                }
 
-                var CharacterAreal = ((Element.parentNode.clientHeight*0.75*HightFactor) * (Element.parentNode.clientWidth))/(100+(Element.innerHTML.length));
-
-                //if Number(Element.style.fontSize) > 0 then use else 1, then multiply with fontSize
-
-                //var scaleFactor = (containerHeight*0.50) / textHeight;
-
-                //let fontSize = Number(Element.style.fontSize.slice(0, -3));
-                
-                //fontSize = (fontSize>0)?fontSize * (scaleFactor):scaleFactor;
-                
-                Element.style.fontSize = `${CharacterAreal}px`;
+                // revert to last state where no overflow happened:
+                Element.style.fontSize = `${i1*ScaleFactor - 1}px`;
             }
         }
+    }
+    function isOverflown(element) {
+        return element.scrollHeight > element.clientHeight || element.scrollWidth > element.clientWidth;
     }
 
     // Get Player Current Deck
