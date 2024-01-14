@@ -5,8 +5,7 @@ export default defineConfig({
     server: {
         proxy: {
 			'/api': 'http://localhost:3000',
-            '/gamesocket': 'ws://localhost:3001',
-            '/chatsocket': 'ws://localhost:3002'
+            '/socket': 'ws://localhost:3001'
         }
     },
 	plugins: [sveltekit()]

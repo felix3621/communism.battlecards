@@ -1,11 +1,7 @@
-const http = require('http');
 const WebSocket = require('ws');
-const auth = require('./modules/authentication.cjs');
-const db = require('./modules/database.cjs');
-const fr = require('./modules/fileReader.cjs');
-const logger = require('./modules/logger.cjs');
-const processHandler = require('./modules/processErrorHandler.cjs');
-const port = 3002;
+const auth = require('../modules/authentication.cjs');
+const db = require('../modules/database.cjs');
+const fr = require('../modules/fileReader.cjs');
 
 
 var client;
@@ -13,12 +9,6 @@ async function connectDB() {
     client = await db.connect();
 }
 connectDB()
-
-// Create an HTTP server
-const httpServer = http.createServer((req, res) => {
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end('WebSocket server is running.');
-});
 
 // Create a WebSocket server and attach it to the HTTP server
 const webSocketServer = new WebSocket.Server({ noServer: true });
@@ -110,16 +100,4 @@ webSocketServer.on('connection', async(socket, request) => {
     });
 });
 
-// Upgrade the connection to WebSocket when a WebSocket request is received
-httpServer.on('upgrade', (request, socket, head) => {
-    webSocketServer.handleUpgrade(request, socket, head, (socket) => {
-        webSocketServer.emit('connection', socket, request);
-    });
-});
-
-// Listen on specified
-httpServer.listen(port, () => {
-    logger.debug(`Server started on port ${port}`,"chatsocket");
-});
-
-processHandler(process, "chatsocket")
+module.exports = webSocketServer;

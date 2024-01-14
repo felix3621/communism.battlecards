@@ -1035,7 +1035,6 @@
                         }
                     }
                     AttackingStone.ShowAttackAnimationAtEnemy(DraggableSelectTarget.SelectedTarget!="Avatar"?EnemyOnField.indexOf(Target):"Avatar",false);
-                    }
                 }
             }
             

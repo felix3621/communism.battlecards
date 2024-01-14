@@ -53,4 +53,5 @@ router.use('/cards', require('./cards.cjs'))
 router.use('/avatar', require('./avatar.cjs'))
 router.use('/tutorials', require('./tutorials.cjs'))
 router.use('/admin', require('./admin.cjs'))
+router.use('/friend', require('./friend.cjs'))
 module.exports = router;

@@ -509,7 +509,7 @@
             }
         }
 
-        socket = new WebSocket(`wss://${window.location.host}/gamesocket?${query}`);
+        socket = new WebSocket(`wss://${window.location.host}/socket/game?${query}`);
 
         // Event listener for when the connection is established
         socket.onopen = () => {

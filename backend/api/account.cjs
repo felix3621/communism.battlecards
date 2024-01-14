@@ -42,7 +42,7 @@ router.post('/login', auth.checkUser, (req, res) => {
     res.json(req.user)
 })
 router.post('/signup', async(req, res) => {
-    let settings = JSON.parse(fr.read('./settings.json'))
+    let settings = JSON.parse(fr.read('../settings.json'))
     let username = req.body.username;
     let password = req.body.password;
     let display_name = req.body.display_name;

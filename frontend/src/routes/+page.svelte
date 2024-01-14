@@ -338,6 +338,7 @@
         padding: 10px 10px 10px 1px;
         border-radius: 0 10px 10px 0;
         color: white;
+        transition: 5s ease-out;
     }
     #profile p {
         margin: 0;
@@ -490,31 +491,85 @@
         float: left;
         max-width: 100%;
     }
+    #ProfilePage {
+        position: fixed;
+        left: 0;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0,0,0,1);
+        display: none;
+    }
+    #FriendList {
+        position: fixed;
+        top: 25%;
+        left: 0;
+        bottom: 25%;
+        width: 200px;
+        max-width: 9%;
+        min-width: 10px;
+        outline: 2px rgb(56, 56, 56) solid;
+        background-color: #1f1e1e;
+        border-radius: 0px 25px 25px 0px;
+        display: grid;
+        grid-template-columns: minmax(10px,200px);
+        grid-template-rows: repeat(auto, 20px);
+    }
+    #ProfileWindow {
+        position: fixed;
+        top: 15%;
+        left: 10%;
+        right: 10%;
+        bottom: 15%;
+        background-color: #1f1e1e;
+        outline: 2px rgb(56, 56, 56) solid;
+    }
+    #TopTabs {
+        position: absolute;
+        left: 0;
+        top: 0;
+        right: 0;
+        height: 35px;
+        display: flex;
+        flex-direction: row;
+    }
+    :global(#TopTabs > button) {
+        height: 100%;
+        width: fit-content;
+        font-size: large;
+        color: white;
+        background-color: #1f1e1e;
+        margin: 0;
+        outline: 3px black solid;
+    }   
 </style>
 <img id="logo" src="images/BattlecardsLogo.png">
-<div id="profile">
-    <table>
-        <tr>
-            <td rowspan=2 style="aspect-ratio: 1/1;" id="pfp_row">
-                <div id="pfp">
+<div id="MainProfileHoldre">
+    <div id="profile">
+        <table>
+            <tr>
+                <td rowspan=2 style="aspect-ratio: 1/1;" id="pfp_row">
+                    <div id="pfp" on:click={OpenProfileMenu}>
 
-                </div>
-            </td>
-            <td>
-                <p id="display_displayName" style="text-decoration: underline; font-weight: bold; font-size: 20px;"></p>
-                <p id="display_userName" style="color:rgb(175,175,175)"></p>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <div id="level_display"></div>
-                <div id="EXP_Bar">
-                    <div id="EXP_FilLevel"></div>
-                </div>
-            </td>
-        </tr>
-    </table>
+                    </div>
+                </td>
+                <td>
+                    <p id="display_displayName" style="text-decoration: underline; font-weight: bold; font-size: 20px;"></p>
+                    <p id="display_userName" style="color:rgb(175,175,175)"></p>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div id="level_display"></div>
+                    <div id="EXP_Bar">
+                        <div id="EXP_FilLevel"></div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
 </div>
+
 <div id="SettingsMenu">
     <div id="SettingsDropDown" style="display: none;">
         <a on:click={() => logOut()}>Logout</a>
@@ -606,6 +661,21 @@
     <div id="RewardDisplay"></div>
     <button on:click={()=>{document.getElementById("ResultPage").style.display="none";fetch(window.location.origin+'/api/account/clearRewards', {method: 'POST',headers: {'Content-Type': 'application/json'}});}}>Okay</button>
 </div>
+<div id="ProfilePage">
+    <div id="ProfileHolderProfilePage"></div>
+    <button style="position: fixed;right:0;top:0;font-size:50px" class="btn" on:click={()=>CloseProfileMenu()}>X</button>
+    <div id="FriendList"></div>
+    <div id="ProfileWindow">
+        <div id="TopTabs">
+            <button>Stats</button>
+            <button>Leader Bords</button>
+            <button>Quests</button>
+            <button>Achievements</button>
+            <button>Search Profiles</button>
+        </div>
+        <div id="TabsContent"></div>
+    </div>
+</div>
 
 
 <script>
@@ -617,6 +687,16 @@
     var socket;
     var MessagesStored = new Array();
 
+    async function OpenProfileMenu() {
+        document.getElementById("ProfilePage").style.display = "block";
+        document.getElementById("ProfileHolderProfilePage").appendChild(document.getElementById("profile"));
+        document.getElementById("profile").style.top = "0px";
+    }
+    function CloseProfileMenu() {
+        document.getElementById("ProfilePage").style.display = "none";
+        document.getElementById("MainProfileHoldre").appendChild(document.getElementById("profile"));
+        document.getElementById("profile").style.top = "";
+    }
     async function updateProfilePicture() {
         var avatar_data = await (await fetch(window.location.origin+'/api/avatar/get', {
             method: 'GET',
@@ -660,7 +740,7 @@
 
     };
     function CreateSocketConnection() {
-        socket = new WebSocket(`wss://${window.location.host}/chatsocket`);
+        socket = new WebSocket(`wss://${window.location.host}/socket/chat`);
 
         // Event listener for when the connection is established
         socket.onopen = () => {

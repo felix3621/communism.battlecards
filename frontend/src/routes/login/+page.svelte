@@ -144,11 +144,8 @@
             window.location.href = '/';
         }
         
-        document.getElementById('login_username').addEventListener("keypress",(e) => sendOnEnter(e, login))
         document.getElementById('login_password').addEventListener("keypress",(e) => sendOnEnter(e, login))
 
-        document.getElementById('signup_username').addEventListener("keypress",(e) => sendOnEnter(e, signup))
-        document.getElementById('signup_display_name').addEventListener("keypress",(e) => sendOnEnter(e, signup))
         document.getElementById('signup_password').addEventListener("keypress",(e) => sendOnEnter(e, signup))
     })
 

@@ -5,8 +5,7 @@
     "scripts": {
         "server": "node server.cjs",
         "socket": "node socket.cjs",
-        "chat": "node chat.cjs",
-        "start": "npm-run-all -p server socket chat"
+        "start": "npm-run-all -p server socket"
     },
 	"type": "module",
     "dependencies": {
