@@ -19,12 +19,12 @@ httpServer.on('upgrade', (request, socket, head) => {
     path = url.parse(request.url).pathname
 
     if (path == "/socket/chat") {
-        chat.handleUpgrade(request, socket, head, (socket) => {
-            chat.emit('connection', socket, request);
+        chat.wss.handleUpgrade(request, socket, head, (socket) => {
+            chat.wss.emit('connection', socket, request);
         });
     } else if (path == "/socket/game") {
-        game.handleUpgrade(request, socket, head, (socket) => {
-            game.emit('connection', socket, request);
+        game.wss.handleUpgrade(request, socket, head, (socket) => {
+            game.wss.emit('connection', socket, request);
         });
     } else {
         socket.destroy();

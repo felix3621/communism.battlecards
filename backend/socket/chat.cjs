@@ -100,4 +100,6 @@ webSocketServer.on('connection', async(socket, request) => {
     });
 });
 
-module.exports = webSocketServer;
+module.exports = {
+    wss: webSocketServer
+};

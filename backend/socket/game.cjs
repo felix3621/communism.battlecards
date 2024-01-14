@@ -1140,4 +1140,8 @@ webSocketServer.on('connection', async(socket, request) => {
 
 setInterval(tick, 1000*tickSpeed);
 
-module.exports = webSocketServer;
+module.exports = {
+    wss: webSocketServer,
+    battles: battles,
+    tournaments: tournaments
+};
