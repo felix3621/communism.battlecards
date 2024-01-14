@@ -1,9 +1,9 @@
 const express = require('express');
+const auth = require('../modules/authentication.cjs');
+const db = require('../modules/database.cjs');
+const fr = require('../modules/fileReader.cjs');
+const logger = require('../modules/logger.cjs');
 const router = express.Router();
-const auth = require('../authentication.cjs');
-const db = require('../database.cjs');
-const fr = require('../fileReader.cjs');
-const logger = require('../logger.cjs');
 
 var client;
 async function connectDB() {

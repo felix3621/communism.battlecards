@@ -1,11 +1,11 @@
 const express = require('express');
-const router = express.Router();
-const auth = require('../authentication.cjs');
-const db = require('../database.cjs');
-const cards = require('../Cards.json');
-const fr = require('../fileReader.cjs');
-const logger = require('../logger.cjs');
 const ld = require('lodash');
+const auth = require('../modules/authentication.cjs');
+const db = require('../modules/database.cjs');
+const fr = require('../modules/fileReader.cjs');
+const logger = require('../modules/logger.cjs');
+const cards = require('../../shared/Cards.json');
+const router = express.Router();
 
 var client;
 async function connectDB() {
@@ -15,7 +15,7 @@ connectDB()
 
 router.get('/getAllCards', auth.checkUser, async (req, res) => {
     try {
-        let settings = JSON.parse(fr.read('./settings.json'))
+        let settings = JSON.parse(fr.read('../settings.json'))
         if (settings.getAllCards || req.user.admin) {
             let result = await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username})
 
@@ -48,7 +48,7 @@ router.get('/getAllCards', auth.checkUser, async (req, res) => {
 
 router.get('/getXp', auth.checkUser, async (req, res) => {
     try {
-        var settings = JSON.parse(fr.read('./settings.json'))
+        var settings = JSON.parse(fr.read('../settings.json'))
         if (settings.getXp || req.user.admin) {
 
             logger.info(
@@ -81,8 +81,6 @@ router.get('/getDeck', auth.checkUser, async (req, res) => {
 })
 router.get('/getInventory', auth.checkUser, async (req, res) => {
     let result = await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username})
-
-
 
     let inventory = new Array()
     for (let i = 0; i < result.inventory.length; i++) {

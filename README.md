@@ -1,14 +1,10 @@
 # Battlecards
 
-start everything by: ```npm start-all```
+start everything by: ```npm run start```
 
-start chatSocket by: ```npm chat```
+start frontend by: ```npm run frontend```
 
-start gameSocket by: ```npm socket```
-
-start API by: ```npm server```
-
-start webpage AND proxy by: ```npm dev```
+start backend by: ```npm run backend```
 
 
 # website documentation

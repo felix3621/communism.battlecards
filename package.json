@@ -3,37 +3,11 @@
 	"version": "0.0.1",
 	"private": true,
 	"scripts": {
-		"dev": "vite dev",
-		"build": "vite build",
-		"preview": "vite preview",
-		"start-all": "npm-run-all -p dev server socket chat",
-		"server": "node server.cjs",
-		"socket": "node socket.cjs",
-		"chat": "node chat.cjs"
+		"frontend": "cd frontend && npm run dev",
+		"backend": "cd backend && npm run start",
+		"start": "npm-run-all -p frontend backend"
 	},
 	"devDependencies": {
-		"@rollup/plugin-commonjs": "^25.0.7",
-		"@rollup/plugin-node-resolve": "^15.2.3",
-		"@sveltejs/adapter-auto": "^2.0.0",
-		"@sveltejs/kit": "^1.27.4",
-		"npm-run-all": "^4.1.5",
-		"rollup-plugin-copy": "^3.5.0",
-		"rollup-plugin-livereload": "^2.0.5",
-		"rollup-plugin-terser": "^7.0.2",
-		"sirv-cli": "^2.0.2",
-		"svelte": "^4.2.7",
-		"vite": "^4.4.2"
-	},
-	"type": "module",
-	"dependencies": {
-		"body-parser": "^1.20.2",
-		"cookie-parser": "^1.4.6",
-		"cors": "^2.8.5",
-		"crypto-js": "^4.2.0",
-		"express": "^4.18.2",
-		"lodash": "^4.17.21",
-		"mongodb": "^6.3.0",
-		"rollup-plugin-svelte": "^7.1.6",
-		"ws": "^8.14.2"
+		"npm-run-all": "^4.1.5"
 	}
 }

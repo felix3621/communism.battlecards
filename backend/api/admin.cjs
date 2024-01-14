@@ -1,12 +1,12 @@
 const express = require('express');
+const auth = require('../modules/authentication.cjs');
+const db = require('../modules/database.cjs');
+const fr = require('../modules/fileReader.cjs');
+const xp = require('../modules/xp.cjs');
+const logger = require('../modules/logger.cjs');
+const cards = require('../../shared/Cards.json');
+const avatars = require('../../shared/Avatars.json');
 const router = express.Router();
-const auth = require('../authentication.cjs');
-const db = require('../database.cjs');
-const cards = require('../Cards.json');
-const avatars = require('../Avatars.json');
-const fr = require('../fileReader.cjs');
-const xp = require('../xp.cjs');
-const logger = require('../logger.cjs');
 
 var client;
 async function connectDB() {
@@ -238,7 +238,7 @@ router.post('/resetUser', async (req, res) => {
         }
 
         if (getResult) {
-            settings = JSON.parse(fr.read('./settings.json'))
+            settings = JSON.parse(fr.read('../settings.json'))
 
             let newUser = {
                 username: getResult.username,
@@ -331,7 +331,7 @@ router.post('/deleteUser', rootCheck, async (req, res) => {
 })
 
 router.post('/settings', rootCheck, async (req, res) => {
-    original_settings = JSON.parse(fr.read('./settings.json'));
+    original_settings = JSON.parse(fr.read('../settings.json'));
     settings = {...original_settings};
 
     edited = false
@@ -348,7 +348,7 @@ router.post('/settings', rootCheck, async (req, res) => {
             req.user.username+": old_settings="+JSON.stringify(original_settings)+", new_settings="+JSON.stringify(settings),
             req.originalUrl
         )
-        fr.write('./settings.json', JSON.stringify(settings, null, 4))
+        fr.write('../settings.json', JSON.stringify(settings, null, 4))
     }
 
     res.json(settings)

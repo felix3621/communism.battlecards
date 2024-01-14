@@ -1,10 +1,10 @@
 const express = require('express');
+const auth = require('../modules/authentication.cjs');
+const db = require('../modules/database.cjs');
+const xp = require('../modules/xp.cjs');
+const logger = require('../modules/logger.cjs');
+const avatars = require('../../shared/Avatars.json');
 const router = express.Router();
-const auth = require('../authentication.cjs');
-const db = require('../database.cjs');
-const avatars = require('../Avatars.json');
-const xp = require('../xp.cjs');
-const logger = require('../logger.cjs');
 
 var client;
 async function connectDB() {

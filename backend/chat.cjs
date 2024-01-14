@@ -1,10 +1,10 @@
 const http = require('http');
 const WebSocket = require('ws');
-const auth = require('./server/authentication.cjs');
-const db = require('./server/database.cjs');
-const fr = require('./server/fileReader.cjs');
-const logger = require('./server/logger.cjs');
-const port = 3001;
+const auth = require('./modules/authentication.cjs');
+const db = require('./modules/database.cjs');
+const fr = require('./modules/fileReader.cjs');
+const logger = require('./modules/logger.cjs');
+const port = 3002;
 
 
 var client;
@@ -73,7 +73,7 @@ webSocketServer.on('connection', async(socket, request) => {
     let username = await authorizeSocket(socket, request);
     if (!username) return;
 
-    if (JSON.parse(fr.read('./settings.json')).lockdown) {
+    if (JSON.parse(fr.read('../settings.json')).lockdown) {
         let ud = await client.db("communism_battlecards").collection("accounts").findOne({username: username})
         if (!ud.admin && !ud.root) {
             socket.close(1008, "LOCKDOWN")
@@ -116,7 +116,7 @@ httpServer.on('upgrade', (request, socket, head) => {
     });
 });
 
-// Listen on port 3001
+// Listen on specified
 httpServer.listen(port, () => {
     logger.debug(`Server started on port ${port}`,"chatsocket");
 });

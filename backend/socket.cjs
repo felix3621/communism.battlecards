@@ -1,13 +1,13 @@
 const http = require('http');
 const WebSocket = require('ws');
-const auth = require('./server/authentication.cjs');
-const db = require('./server/database.cjs');
-const fr = require('./server/fileReader.cjs');
-const logger = require('./server/logger.cjs');
+const auth = require('./modules/authentication.cjs');
+const db = require('./modules/database.cjs');
+const fr = require('./modules/fileReader.cjs');
+const logger = require('./modules/logger.cjs');
 
-const avatar = require('./server/Avatars.json')
-const cards = require('./server/Cards.json');
-const port = 3000;
+const avatar = require('../shared/Avatars.json')
+const cards = require('../shared/Cards.json');
+const port = 3001;
 
 //admin
 var viewer = new Array();
@@ -963,7 +963,7 @@ webSocketServer.on('connection', async(socket, request) => {
     if (!username) return;
     let ud = await client.db("communism_battlecards").collection("accounts").findOne({username: username})
 
-    if (JSON.parse(fr.read('./settings.json')).lockdown) {
+    if (JSON.parse(fr.read('../settings.json')).lockdown) {
         if (!ud.admin && !ud.root) {
             socket.close(1008, "LOCKDOWN")
         }
@@ -1155,7 +1155,7 @@ httpServer.on('upgrade', (request, socket, head) => {
     });
 });
 
-// Listen on port 3000
+// Listen on specified port
 httpServer.listen(port, () => {
     logger.debug(`Server started on port ${port}`,"gamesocket");
 });

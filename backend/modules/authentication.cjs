@@ -1,7 +1,7 @@
+const CryptoJS = require('crypto-js');
 const db = require("./database.cjs");
 const xp = require("./xp.cjs");
-const CryptoJS = require('crypto-js');
-const cards = require("./Cards.json");
+const cards = require("../../shared/Cards.json");
 const fr = require('./fileReader.cjs');
 const logger = require('./logger.cjs');
 
@@ -37,9 +37,9 @@ async function checkUser(username, password) {
         let rtn = {
             username: result.username,
             display_name: result.display_name,
-            getAllCards: JSON.parse(fr.read('./settings.json')).getAllCards||result.admin||result.root,
-            getXp: JSON.parse(fr.read('./settings.json')).getXp||result.admin||result.root,
-            view: JSON.parse(fr.read('./settings.json')).publicView||result.admin||result.root,
+            getAllCards: JSON.parse(fr.read('../settings.json')).getAllCards||result.admin||result.root,
+            getXp: JSON.parse(fr.read('../settings.json')).getXp||result.admin||result.root,
+            view: JSON.parse(fr.read('../settings.json')).publicView||result.admin||result.root,
             xp: {
                 level: xp.getLevel(result.xp),
                 xp: xp.getXp(result.xp),
@@ -84,7 +84,7 @@ async function checkUser(username, password) {
 
 auth.checkUser = async(req, res, next) => {
     try {
-        var settings = JSON.parse(fr.read('./settings.json'))
+        var settings = JSON.parse(fr.read('../settings.json'))
         if (req.body.username && req.body.password) {
             let user = await checkUser(req.body.username, req.body.password)
             if (user) {

@@ -1,7 +1,7 @@
 const express = require('express');
-const db = require("../database.cjs");
-const auth = require('../authentication.cjs');
-const fr = require('../fileReader.cjs');
+const db = require("../modules/database.cjs");
+const auth = require('../modules/authentication.cjs');
+const fr = require('../modules/fileReader.cjs');
 const router = express.Router();
 
 var client;
@@ -12,7 +12,7 @@ connectDB()
 
 router.use(async (req, res, next) => {
     try {
-        let settings = JSON.parse(fr.read('./settings.json'))
+        let settings = JSON.parse(fr.read('../settings.json'))
         if (settings.lockdown == true) {
             try {
                 if (req.body.username && req.body.password) {
