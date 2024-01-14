@@ -18,15 +18,18 @@ app.listen(port, () => {
 
 
 process.on('SIGINT', () => {
-    logger.error(`api killed by user`,"api");
+    logger.error(`killed by user`,"api");
+    process.exit(1);
 })
 
 process.on('SIGTERM', () => {
-    logger.error(`api killed by system`,"api");
+    logger.error(`killed by system`,"api");
+    process.exit(1);
 })
 
 process.on('unhandledRejection', async (reason, promise) => {
     logger.error(`unhandledRejection at: ${reason.stack}\n Reason: ${reason}`,"api");
+    process.exit(1);
 })
 
 process.on('uncaughtException', (error) => {

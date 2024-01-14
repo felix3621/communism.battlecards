@@ -120,3 +120,22 @@ httpServer.on('upgrade', (request, socket, head) => {
 httpServer.listen(port, () => {
     logger.debug(`Server started on port ${port}`,"chatsocket");
 });
+
+process.on('SIGINT', () => {
+    logger.error(`killed by user`,"chatsocket");
+    process.exit(1);
+})
+
+process.on('SIGTERM', () => {
+    logger.error(`killed by system`,"chatsocket");
+    process.exit(1);
+})
+
+process.on('unhandledRejection', async (reason, promise) => {
+    logger.error(`unhandledRejection at: ${reason.stack}\n Reason: ${reason}`,"chatsocket");
+    process.exit(1);
+})
+
+process.on('uncaughtException', (error) => {
+    logger.error(`uncaughtException: ${error}`,"chatsocket");
+})
