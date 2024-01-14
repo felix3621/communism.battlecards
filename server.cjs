@@ -25,8 +25,8 @@ process.on('SIGTERM', () => {
     logger.error(`api killed by system`,"api");
 })
 
-process.on('unhandledRejection', (reason, promise) => {
-    logger.error(`unhandledRejection at: ${promise}\nReason: ${reason}`,"api");
+process.on('unhandledRejection', async (reason, promise) => {
+    logger.error(`unhandledRejection at: ${reason.stack}\n Reason: ${reason}`,"api");
 })
 
 process.on('uncaughtException', (error) => {

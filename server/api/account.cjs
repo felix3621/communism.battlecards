@@ -11,6 +11,33 @@ async function connectDB() {
 }
 connectDB()
 
+router.post('/setDisplayName', auth.checkUser, async (req, res) => {
+    if (typeof req.body.display_name == "string") {
+        await client.db("communism_battlecards").collection("accounts").updateOne({username: req.user.username},{$set: {display_name: req.body.display_name}});
+        res.send(req.body.display_name)
+    } else {
+        res.status(500).send("Invalid Input")
+    }
+})
+
+router.post('/setPassword', auth.checkUser, async (req, res) => {
+    if (typeof req.body.password == "string" && typeof req.body.newPassword == "string") {
+        let result = await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username})
+
+        if (result.password == auth.encrypt(req.body.password)) {
+            await client.db("communism_battlecards").collection("accounts").updateOne({username: req.user.username},{$set: {password: auth.encrypt(req.body.newPassword)}});
+
+            let userToken = auth.encrypt(JSON.stringify([auth.encrypt(req.user.username), auth.encrypt(auth.encrypt(req.body.newPassword))]))
+            res.cookie('userToken', userToken, { httpOnly: true });
+            res.send("Password Changed Successfully")
+        } else {
+            res.status(401).send("Invalid password")
+        }
+    } else {
+        res.status(500).send("Invalid Input")
+    }
+})
+
 router.post('/login', auth.checkUser, (req, res) => {
     res.json(req.user)
 })

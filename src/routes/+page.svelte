@@ -518,6 +518,7 @@
 <div id="SettingsMenu">
     <div id="SettingsDropDown" style="display: none;">
         <a on:click={() => logOut()}>Logout</a>
+        <a href="/settings">Settings</a>
     </div>
     <div id="SettingsCog" on:click={() => {
         if(document.getElementById("SettingsDropDown").style.display=="none"){
