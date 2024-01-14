@@ -1,6 +1,9 @@
 const express = require('express');
 const auth = require('../modules/authentication.cjs');
 const db = require('../modules/database.cjs');
+const xp = require('../modules/xp.cjs');
+const logger = require('../modules/logger.cjs');
+const avatar = require('../../shared/Avatars.json')
 const router = express.Router();
 
 var client;
@@ -10,12 +13,35 @@ async function connectDB() {
 connectDB()
 
 router.get('/get', auth.checkUser, async (req, res) => {
-    //return all friends
+    let check = await client.db("communism_battlecards").collection("friends").find({users: {$elemMatch: {$eq: req.user.username}}}).toArray();
+
+    if (check) {
+        var rtn = []
+
+        for (let i = 0; i < check.length; i++) {
+            let un;
+            if (check[i].users[0] == req.user.username)
+                un = check[i].users[1]
+            else
+                un = check[i].users[0]
+    
+            let ud = await client.db("communism_battlecards").collection("accounts").findOne({username: un});
+    
+            rtn.push({
+                username: ud.username,
+                display_name: ud.display_name,
+                level: xp.getLevel(ud.xp),
+                avatar: avatar[ud.avatar]
+            })
+        }
+        res.json(rtn)
+    } else {
+        res.json({})
+    }
 })
 
 router.get('/allUsers', auth.checkUser, async (req, res) => {
-    let base = client.db("communism_battlecards").collection("accounts")
-    let check = await base.find({}).toArray();
+    let check = await client.db("communism_battlecards").collection("accounts").find({}).toArray();
 
     check.sort((a, b) => {
         //sort:root
@@ -55,11 +81,27 @@ router.get('/allUsers', auth.checkUser, async (req, res) => {
 })
 
 router.post('/add', auth.checkUser, async (req, res) => {
-    //add friend
-})
+    if (typeof req.body.user == "string") {
+        let user = await client.db("communism_battlecards").collection("accounts").findOne({username: req.body.user});
 
-router.post('/remove', auth.checkUser, async (req, res) => {
-    //remove friend
+        if (user) {
+            let friendElement = await client.db("communism_battlecards").collection("friends").findOne({users: {$elemMatch: {$eq: req.user.username}, $elemMatch: {$eq: req.body.user}}});
+
+            if (friendElement) {
+                await client.db("communism_battlecards").collection("friends").updateOne({_id: friendElement._id}, {$set: {accept: {[req.user.username]: true}}})
+                logger.warn(req.user.username + " accepted friend request with " + req.body.user,req.originalUrl)
+                res.send("Updated successfully")
+            } else {
+                await client.db("communism_battlecards").collection("friends").insertOne({users: [req.user.username, req.body.user], accept: {[req.user.username]: true, [req.body.user]: false}})
+                logger.warn(req.user.username + " sent friend request to " + req.body.user,req.originalUrl)
+                res.send("Added successfully")
+            }
+        } else {
+            res.status(500).send("User Does Not Exist")
+        }
+    } else {
+        res.status(500).send("Invalid input")
+    }
 })
 
 module.exports = router;

@@ -64,6 +64,7 @@
     .PanelTitle {
         margin: 0px;
         text-align: center;
+        color: white;
     }
     #CardDeck, #Inventory {
         position: absolute;
@@ -481,9 +482,24 @@
         overflow-y: scroll;
         background-color: #1f1e1e;
         outline: 5px black solid;
-        border-radius: 0px 25px 0px 0px;
+        border-radius: 0px 15px 0px 0px;
         color: white;
         padding-bottom: 5px;
+    }
+    #MessagesDisplay::-webkit-scrollbar {
+        width: 10px;
+    }
+
+    #MessagesDisplay::-webkit-scrollbar-thumb {
+        background-color: rgb(0, 0, 0);
+        border-radius: 5px;
+        border: 2px solid rgb(75, 75, 75);
+    }
+
+    #MessagesDisplay::-webkit-scrollbar-track {
+        background-color: rgb(50, 50, 50);
+        border-radius: 5px;
+        border: 2px solid rgb(127,127,127);
     }
     :global(#MessagesDisplay p) {
         margin: 0;
@@ -506,7 +522,7 @@
         left: 0;
         bottom: 25%;
         width: 200px;
-        max-width: 9%;
+        max-width: 14%;
         min-width: 10px;
         outline: 2px rgb(56, 56, 56) solid;
         background-color: #1f1e1e;
@@ -518,7 +534,7 @@
     #ProfileWindow {
         position: fixed;
         top: 15%;
-        left: 10%;
+        left: 15%;
         right: 10%;
         bottom: 15%;
         background-color: #1f1e1e;
@@ -532,6 +548,7 @@
         height: 35px;
         display: flex;
         flex-direction: row;
+        outline: black 3px solid;
     }
     :global(#TopTabs > button) {
         height: 100%;
@@ -541,15 +558,121 @@
         background-color: #1f1e1e;
         margin: 0;
         outline: 3px black solid;
-    }   
+    }
+    #TabsContent {
+        position: absolute;
+        top: 35px;
+        bottom: 0;
+        left: 0;
+        right: 0;
+    }
+    #TabsContent > div {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+    }
+    #Background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background-image: url(/images/Background.png);
+        background-size: contain;
+        pointer-events: none;
+    }
+    :global(.EmptyCard) {
+        width: 100px;
+        position: fixed;
+        transform: translate(-50%,-100%);
+        pointer-events: none;
+    }
+    #SearchProfile input {
+        position: absolute;
+        top: 15px;
+        left: 10%;
+        right: 10%;
+        border-radius: 25px;
+        height: 35px;
+        background-color: #535353;
+        margin: 0;
+        outline: 3px black solid;
+        color: white;
+        padding: 0px 15px 0px 15px;
+        font-size: larger;
+    }
+    #SearchResult {
+        position: absolute;
+        color: white;
+        left: 10%;
+        right: 10%;
+        top: 50px;
+        bottom: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    :global(#FriendList > div) {
+        width: 100%;
+        aspect-ratio: 3/1;
+        position: absolute;
+    }
+    :global(#FriendList > div:hover) {
+        background-color: #414141;
+    }
+    :global(#FriendList > div > div) {
+        height: 100%;
+        position: absolute;
+        aspect-ratio: 1/1;
+        background-size: calc(100%);
+        background-repeat: no-repeat;
+        background-position: 0;
+        border-radius: 50%;
+        border: 5px solid black;
+        float: left;
+    }
+    :global(#FriendList > div > h2) {
+        margin: 0;
+        position: absolute;
+        width: fit-content;
+        margin-left: 5px;
+        left: 40%;
+        color:white;
+    }
+    :global(#FriendList > div > h4) {
+        margin: 0;
+        width: fit-content;
+        position: absolute;
+        margin-left: 5px;
+        left: 40%;
+        top: 40%;
+        color:gray;
+    }
+    :global(#FriendList > div > p) {
+        margin: 0;
+        width: fit-content;
+        position: absolute;
+        margin-left: 5px;
+        left: 25%;
+        top: 75%;
+        aspect-ratio: 1/1;
+        width: fit-content;
+        color:white;
+        background-color: #414141;
+        outline: 2px black solid;
+        border-radius: 50%;
+        padding: 3px;
+    }
 </style>
+<div id="Background"></div>
 <img id="logo" src="images/BattlecardsLogo.png">
 <div id="MainProfileHoldre">
     <div id="profile">
         <table>
             <tr>
                 <td rowspan=2 style="aspect-ratio: 1/1;" id="pfp_row">
-                    <div id="pfp" on:click={OpenProfileMenu}>
+                    <div id="pfp" on:click={()=>{OpenProfileMenu();SwitchTab(0);}}>
 
                     </div>
                 </td>
@@ -667,13 +790,27 @@
     <div id="FriendList"></div>
     <div id="ProfileWindow">
         <div id="TopTabs">
-            <button>Stats</button>
-            <button>Leader Bords</button>
-            <button>Quests</button>
-            <button>Achievements</button>
-            <button>Search Profiles</button>
+            <button on:click={()=>{SwitchTab(0)}}>My Profile</button>
+            <button on:click={()=>{SwitchTab(1)}}>Stats</button>
+            <button on:click={()=>{SwitchTab(2)}}>Leader Bords</button>
+            <button on:click={()=>{SwitchTab(3)}}>Quests</button>
+            <button on:click={()=>{SwitchTab(4)}}>Achievements</button>
+            <button on:click={()=>{SwitchTab(5)}}>Search Profiles</button>
         </div>
-        <div id="TabsContent"></div>
+        <div id="TabsContent">
+            <div id="MyProfile"></div>
+            <div id="PlayerStats"></div>
+            <div id="LeaderBords"></div>
+            <div id="Quests"></div>
+            <div id="Achivements"></div>
+            <div id="SearchProfile">
+                <input type="search" id="PlayerSearchField">
+                <div id="SearchResult">
+                    <h1>No Player Found!</h1>
+                </div>
+            </div>
+            <div id="DisplayPlayerProfile"></div>
+        </div>
     </div>
 </div>
 
@@ -691,11 +828,58 @@
         document.getElementById("ProfilePage").style.display = "block";
         document.getElementById("ProfileHolderProfilePage").appendChild(document.getElementById("profile"));
         document.getElementById("profile").style.top = "0px";
+        UpdateFriendList();
     }
     function CloseProfileMenu() {
         document.getElementById("ProfilePage").style.display = "none";
         document.getElementById("MainProfileHoldre").appendChild(document.getElementById("profile"));
         document.getElementById("profile").style.top = "";
+    }
+    function SwitchTab(TabID) {
+        let TabParent = document.getElementById("TabsContent");
+        for (let i = 0; i < TabParent.children.length; i++) {
+            if (i== TabID) {
+                TabParent.children[i].style.display = "block";
+            } else {
+                TabParent.children[i].style.display = "none";
+            }
+        }
+    }
+    function UpdatePlayerStats() {
+        
+    }
+    async function UpdateFriendList() {
+        var Friend_data = await (await fetch(window.location.origin+'/api/friend/get', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })).json();
+        console.log(typeof Friend_data);
+        let FriendHolder = document.getElementById("FriendList");
+        FriendHolder.innerHTML = "";
+        for (let i = 0; typeof Friend_data == "object" && i < Friend_data.length; i++) {
+            console.log(Friend_data[i]);
+            let Friend = document.createElement("div");
+
+            let ProfilePic = document.createElement("div");
+            ProfilePic.style.backgroundImage = "url(/images/Cards/"+Friend_data[i].avatar.Texture+".png)";
+            Friend.appendChild(ProfilePic);
+            
+            let UserName = document.createElement("h2");
+            UserName.innerHTML = Friend_data[i].username;
+            Friend.appendChild(UserName);
+            
+            let DisplayName = document.createElement("h4");
+            DisplayName.innerHTML = Friend_data[i].display_name;
+            Friend.appendChild(DisplayName);
+            
+            let LevelIndicator = document.createElement("p");
+            LevelIndicator.innerHTML = Friend_data[i].level;
+            Friend.appendChild(LevelIndicator);
+            
+            FriendHolder.appendChild(Friend);
+        }
     }
     async function updateProfilePicture() {
         var avatar_data = await (await fetch(window.location.origin+'/api/avatar/get', {
@@ -735,7 +919,7 @@
         if (event.key === 'Enter' && socket != null) {
             // Handle the Enter key press here
             socket.send(JSON.stringify({Text:document.getElementById("ChatInputFiled").value}))
-            document.getElementById("ChatInputFiled").value = ""
+            document.getElementById("ChatInputFiled").value = "";
         }
 
     };
@@ -781,6 +965,40 @@
         socket.onerror = (error) => {
             console.error('WebSocket error:', error);
         };
+    }//Update Loop
+    let lastFrameTime = performance.now();
+    let NextCardSpawnDelay = 5;
+    let MaxSpawnDelay = 5;
+    let FallingCards = new Array();
+    function AnimationLoop() {
+        const currentTime = performance.now();
+        const deltaTime = (currentTime - lastFrameTime)/1000;
+        lastFrameTime = currentTime;
+        //Background
+        let computedStyle = getComputedStyle(document.getElementById("Background"));
+        document.getElementById("Background").style.backgroundPositionY = (parseFloat(computedStyle.backgroundPositionY)!=null?parseFloat(computedStyle.backgroundPositionY):0)+deltaTime*50+"px";
+        // Falling Random Cards
+        if (NextCardSpawnDelay<=0) {
+            NextCardSpawnDelay = (Math.random() * MaxSpawnDelay);
+            let FallingCard = CreateEmptyCard();
+            FallingCard.style.top = "0px";
+            FallingCard.style.left = (Math.random() * document.body.offsetWidth)+"px";
+            document.getElementById("Background").appendChild(FallingCard);
+            FallingCards.push(FallingCard);
+        } else {
+            NextCardSpawnDelay -= deltaTime;
+        }
+        for (let i = 0; i < FallingCards.length; i++) {
+            let computedStyle = getComputedStyle(FallingCards[i]);
+            if (parseFloat(computedStyle.top)-FallingCards[i].offsetHeight>=document.getElementById("Background").offsetHeight) {
+                FallingCards[i].remove()
+                i--;
+            } else {
+                FallingCards[i].style.top = parseFloat(computedStyle.top) + deltaTime*100 + "px";
+            }
+        }
+        
+        requestAnimationFrame(AnimationLoop);
     }
 
     onMount(async() => {
@@ -844,7 +1062,7 @@
         window.addEventListener('resize', () => SetAllFontSizeInArray(FontSizeAdjusterArray));
         SelectedAvatar = CreateCharacterStone(0,0,"MissingCharacter");
         document.getElementById("SelectedAvatar").appendChild(SelectedAvatar);
-
+        AnimationLoop();
         // Set ToolTips
         CreateTooltipEvent(document.getElementById("DeckButton"),"Set Deck", "Create Your Battle Ready Deck");
         CreateTooltipEvent(document.getElementById("AvatarButton"),"Select Avatar", "Select Avatar to Use");
@@ -1364,5 +1582,12 @@
     function CreateTooltipEvent(Element, Title, Text, DisplayImagePath = null) {
         Element.addEventListener("mouseover",()=> {ToolTip(Element,Title,Text, DisplayImagePath);});
         Element.addEventListener("mouseout",()=> {CloseAllToolTips();});
+    }
+    //Create Empty card 
+    function CreateEmptyCard() {
+        //THE Card
+        var EmptyCard = document.createElement("div");
+        EmptyCard.classList.add("EmptyCard");
+        return EmptyCard;
     }
 </script>
