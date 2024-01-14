@@ -4,6 +4,7 @@ const auth = require('./modules/authentication.cjs');
 const db = require('./modules/database.cjs');
 const fr = require('./modules/fileReader.cjs');
 const logger = require('./modules/logger.cjs');
+const processHandler = require('./modules/processErrorHandler.cjs');
 const port = 3002;
 
 
@@ -121,21 +122,4 @@ httpServer.listen(port, () => {
     logger.debug(`Server started on port ${port}`,"chatsocket");
 });
 
-process.on('SIGINT', () => {
-    logger.error(`killed by user`,"chatsocket");
-    process.exit(1);
-})
-
-process.on('SIGTERM', () => {
-    logger.error(`killed by system`,"chatsocket");
-    process.exit(1);
-})
-
-process.on('unhandledRejection', async (reason, promise) => {
-    logger.error(`unhandledRejection at: ${reason.stack}\n Reason: ${reason}`,"chatsocket");
-    process.exit(1);
-})
-
-process.on('uncaughtException', (error) => {
-    logger.error(`uncaughtException: ${error}`,"chatsocket");
-})
+processHandler(process, "chatsocket")
