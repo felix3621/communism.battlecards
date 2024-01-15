@@ -1,4 +1,5 @@
 const express = require('express');
+const he = require('he');
 const auth = require('../modules/authentication.cjs');
 const db = require('../modules/database.cjs');
 const fr = require('../modules/fileReader.cjs');
@@ -13,6 +14,7 @@ connectDB()
 
 router.post('/setDisplayName', auth.checkUser, async (req, res) => {
     if (typeof req.body.display_name == "string") {
+        req.body.display_name = he.encode(req.body.display_name)
         await client.db("communism_battlecards").collection("accounts").updateOne({username: req.user.username},{$set: {display_name: req.body.display_name}});
         res.send(req.body.display_name)
     } else {
@@ -43,9 +45,9 @@ router.post('/login', auth.checkUser, (req, res) => {
 })
 router.post('/signup', async(req, res) => {
     let settings = JSON.parse(fr.read('../settings.json'))
-    let username = req.body.username;
+    let username = he.encode(req.body.username);
     let password = req.body.password;
-    let display_name = req.body.display_name;
+    let display_name = he.encode(req.body.display_name);
 
     if (username && password && display_name) {
         password = auth.encrypt(password)

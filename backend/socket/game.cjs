@@ -4,6 +4,11 @@ const db = require('../modules/database.cjs');
 const fr = require('../modules/fileReader.cjs');
 const logger = require('../modules/logger.cjs');
 
+var dbConnected = false;
+
+db.on('open', _=> {dbConnected = true})
+db.on('topologyClosed', _=> {dbConnected = false})
+
 const avatar = require('../../shared/Avatars.json')
 const cards = require('../../shared/Cards.json');
 
@@ -951,6 +956,8 @@ async function tick() {
 
 // Handle WebSocket connections
 webSocketServer.on('connection', async(socket, request) => {
+    if (!dbConnected)
+        socket.close(1000, "server starting")
     let username = await authorizeSocket(socket, request);
     if (!username) return;
     let ud = await client.db("communism_battlecards").collection("accounts").findOne({username: username})

@@ -5,16 +5,11 @@ const cards = require("../../shared/Cards.json");
 const fr = require('./fileReader.cjs');
 const logger = require('./logger.cjs');
 
-
-async function deleteUsers () {
-    await client.db("communism_battlecards").collection("accounts").deleteMany({testUser: true})
-    logger.debug("Deleted previous testusers","authentication")
-}
-setTimeout(deleteUsers,1000);
-
 var client;
 async function connectDB() {
     client = await db.connect();
+    await client.db("communism_battlecards").collection("accounts").deleteMany({testUser: true})
+    logger.debug("Deleted previous testusers","authentication")
 }
 connectDB()
 

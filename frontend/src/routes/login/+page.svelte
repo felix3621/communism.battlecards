@@ -1,16 +1,13 @@
 <style>
-    .MainTitle {
+    #logo {
         position: fixed;
-        left:50%;
-        transform: translate(-50%,0);
+        top:0;
+        left:0;
         background-color: rgb(50, 50, 50);
-        color: white;
-        top:-25px;
-        padding:35px 15px 15px 15px;
-        border-radius: 25px;
+        border-radius: 0 0 25px 0;
         outline: 5px black solid;
-        -webkit-text-stroke-width: 0.75px;
-        -webkit-text-stroke-color: black;
+        width: 350px;
+        padding: 0 10px 7.5px 0;
     }
     #Form {
         position: fixed;
@@ -95,8 +92,19 @@
         left:10%;
         transform: translate(150px,0);
     }
+    #Background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background-image: url(/images/Background0.png);
+        background-size: contain;
+        pointer-events: none;
+    }
 </style>
-<h1 class="MainTitle" style="margin: 0px;">Welcome to BattleCards!</h1>
+<div id="Background"></div>
+<img id="logo" src="images/BattlecardsLogo.png">
 <div id="Form">
     <div id="Login">
         <h1 class="Title">Login!</h1>

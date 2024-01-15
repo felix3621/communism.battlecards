@@ -463,12 +463,62 @@
     #Chat input{
         position: absolute;
         left: 0;
-        bottom: 0;
-        width: calc(100%);
+        bottom: -4px;
+        width: calc(100% - 60px);
         height: 20px;
         background-color: #1f1e1e;
         outline: 2px rgb(192, 192, 192) solid;
         color: white;
+        padding-left: 5px;
+    }
+    #Chat #EmojiButton {
+        position: absolute;
+        right: -2px;
+        bottom: 0;
+        width: 50px;
+        height: 20px;
+        background-color: #1f1e1e;
+        outline: 2px rgb(192, 192, 192) solid;
+        color: white;
+    }
+    #Chat #SelectEmoji {
+        position: absolute;
+        left: 100%;
+        bottom: 0px;
+        width: 200px;
+        height: 100%;
+        background-color: #1f1e1e;
+        outline: 2px rgb(192, 192, 192) solid;
+        color: white;
+        overflow-x: hidden;
+        overflow-y: scroll;
+        display: flex;
+        flex-direction: column-reverse;
+        flex-flow: row wrap;
+        padding-bottom: 10px;
+    }
+    :global(#Chat #SelectEmoji img) {
+        width: 33%;
+        aspect-ratio: 1/1;
+    }
+    :global(#Chat #SelectEmoji img:hover) {
+        filter: grayscale(0.5);
+        transform: scale(1.1,1.1);
+
+    }
+    #SelectEmoji::-webkit-scrollbar {
+        width: 10px;
+    }
+    #SelectEmoji::-webkit-scrollbar-thumb {
+        background-color: rgb(0, 0, 0);
+        border-radius: 5px;
+        border: 2px solid rgb(75, 75, 75);
+    }
+
+    #SelectEmoji::-webkit-scrollbar-track {
+        background-color: rgb(50, 50, 50);
+        border-radius: 5px;
+        border: 2px solid rgb(127,127,127);
     }
     #MessagesDisplay{
         position: absolute;
@@ -489,6 +539,15 @@
     #MessagesDisplay::-webkit-scrollbar {
         width: 10px;
     }
+    :global(#MessagesDisplay a:link){
+        color: aqua;
+    }
+    :global(#MessagesDisplay a:visited){
+        color: rgb(0, 180, 180);
+    }
+    :global(#MessagesDisplay a:hover){
+        color: rgb(0, 123, 123);
+    }
 
     #MessagesDisplay::-webkit-scrollbar-thumb {
         background-color: rgb(0, 0, 0);
@@ -507,14 +566,19 @@
         float: left;
         max-width: 100%;
     }
+    :global(#MessagesDisplay img) {
+        width: 50px;
+    }
     #ProfilePage {
         position: fixed;
         left: 0;
         top: 0;
         right: 0;
         bottom: 0;
-        background-color: rgba(0,0,0,1);
         display: none;
+        background-image: url(/images/Background0.png);
+        background-size: contain;
+        filter: brightness(-0.1);
     }
     #FriendList {
         position: fixed;
@@ -579,7 +643,7 @@
         left: 0;
         bottom: 0;
         right: 0;
-        background-image: url(/images/Background.png);
+        background-image: url(/images/Background0.png);
         background-size: contain;
         pointer-events: none;
     }
@@ -588,6 +652,17 @@
         position: fixed;
         transform: translate(-50%,-100%);
         pointer-events: none;
+        filter: drop-shadow(0 5mm 8mm rgba(0, 0, 0, 0.85));
+    }
+    :global(.FallingCandle) {
+        width: 25px;
+        position: fixed;
+        transform: translate(-50%,-100%);
+        pointer-events: none;
+        filter: drop-shadow(0 5mm 8mm rgba(0, 0, 0, 0.85));
+        background-size: cover;
+        aspect-ratio: 1/2;
+        background-image: url("/images/Candle.png");
     }
     #SearchProfile input {
         position: absolute;
@@ -664,8 +739,42 @@
         border-radius: 50%;
         padding: 3px;
     }
+    :global(.Flame) {
+        position: relative;
+        width: 80%;
+        bottom: 50%;
+        animation: FadeIn 1s linear, FireMove 2s infinite 1s;
+        transform-origin: bottom;
+        border-radius: 100%;
+        filter: drop-shadow(0 0 4px rgba(255, 0, 0, 1)) drop-shadow(0 0 10px rgba(200, 200, 200, 1));
+    }
+    @keyframes FadeIn {
+        0% {
+            filter: opacity(0);
+        }
+        100% {
+            filter: opacity(1);
+        }
+    }
+    @keyframes FireMove {
+        0% {
+            transform: rotate(0deg);
+        }
+        25% {
+            transform: rotate(20deg);
+        }
+        75% {
+            transform: rotate(-20deg);
+        }
+        100% {
+            transform: rotate(0deg);
+        }
+    }
 </style>
-<div id="Background"></div>
+<div id="Background">
+    <div id="CandleHolder"></div>
+    <div id="CardHolder"></div>
+</div>
 <img id="logo" src="images/BattlecardsLogo.png">
 <div id="MainProfileHoldre">
     <div id="profile">
@@ -691,20 +800,6 @@
             </tr>
         </table>
     </div>
-</div>
-
-<div id="SettingsMenu">
-    <div id="SettingsDropDown" style="display: none;">
-        <a on:click={() => logOut()}>Logout</a>
-        <a href="/settings">Settings</a>
-    </div>
-    <div id="SettingsCog" on:click={() => {
-        if(document.getElementById("SettingsDropDown").style.display=="none"){
-            document.getElementById("SettingsDropDown").style.display="grid";
-        } else{
-            document.getElementById("SettingsDropDown").style.display="none";
-        }
-    }}></div>
 </div>
 
 <!--Select Match-->
@@ -760,9 +855,25 @@
     <div class="Icon" id="DeckButton" on:click={()=>{document.getElementById("CardDeckPanel").style.display="block"; ShowDeck();}}></div>
     <div class="Icon" id="AvatarButton" on:click={()=>{document.getElementById("AvatarPanel").style.display="block"; UpdateAvatarsPanel();}}></div>
 </div>
+<div id="SettingsMenu">
+    <div id="SettingsDropDown" style="display: none;">
+        <a on:click={() => logOut()}>Logout</a>
+        <a href="/settings">Settings</a>
+    </div>
+    <div id="SettingsCog" on:click={() => {
+        if(document.getElementById("SettingsDropDown").style.display=="none"){
+            document.getElementById("SettingsDropDown").style.display="grid";
+        } else{
+            document.getElementById("SettingsDropDown").style.display="none";
+        }
+    }}></div>
+</div>
+
 <div id="Chat">
     <div id="MessagesDisplay"></div>
     <input type="text" id="ChatInputFiled" on:keydown={MessagesSendOnEnter} placeholder="Type to text...">
+    <button id="EmojiButton" on:click={()=>{ToggleEmojiPanel()}}>Emoji</button>
+    <div id="SelectEmoji" style="display: none;"></div>
 </div>
 <div id="AvatarPanel" style="display:none;">
     <button style="position: fixed;right:0;top:0;font-size:50px" class="btn" on:click={()=>document.getElementById("AvatarPanel").style.display="none"}>Back</button>
@@ -823,6 +934,7 @@
     var SelectedAvatar;
     var socket;
     var MessagesStored = new Array();
+    var SocketPing = 0;
 
     async function OpenProfileMenu() {
         document.getElementById("ProfilePage").style.display = "block";
@@ -921,9 +1033,10 @@
             socket.send(JSON.stringify({Text:document.getElementById("ChatInputFiled").value}))
             document.getElementById("ChatInputFiled").value = "";
         }
-
     };
     function CreateSocketConnection() {
+        if (socket)
+            socket.close(1000)
         socket = new WebSocket(`wss://${window.location.host}/socket/chat`);
 
         // Event listener for when the connection is established
@@ -937,21 +1050,25 @@
             var data = event.data;
             if (data) {
                 data = JSON.parse(data);
-                MessagesStored.push(data.PlayerMessage);
-                while (MessagesStored.length>=100) {
-                    MessagesStored.splice(0,1);
-                }
-                var MessageParent = document.getElementById("MessagesDisplay");
-                for (let i = 0; i < MessagesStored.length || i < MessageParent.children.length; i++) {
-                    if (i < MessagesStored.length && i >= MessageParent.children.length) {
-                        let Text = document.createElement("p");
-                        Text.innerHTML = MessagesStored[MessagesStored.length-1-i];
-                        MessageParent.appendChild(Text);
-                    } else if (i < MessagesStored.length && i < MessageParent.children.length) {
-                        MessageParent.children[i].innerHTML = MessagesStored[MessagesStored.length-1-i];
-                    } else {
-                        MessageParent.children[i].remove();
+                if (data.PlayerMessage) {
+                    MessagesStored.push(data.PlayerMessage);
+                    while (MessagesStored.length>=100) {
+                        MessagesStored.splice(0,1);
                     }
+                    var MessageParent = document.getElementById("MessagesDisplay");
+                    for (let i = 0; i < MessagesStored.length || i < MessageParent.children.length; i++) {
+                        if (i < MessagesStored.length && i >= MessageParent.children.length) {
+                            let Text = document.createElement("p");
+                            Text.innerHTML = MessagesStored[MessagesStored.length-1-i];
+                            MessageParent.appendChild(Text);
+                        } else if (i < MessagesStored.length && i < MessageParent.children.length) {
+                            MessageParent.children[i].innerHTML = MessagesStored[MessagesStored.length-1-i];
+                        } else {
+                            MessageParent.children[i].remove();
+                        }
+                    }
+                } else if (data.ping = "keep alive") {
+                    SocketPing = 0;
                 }
             }
         };
@@ -959,6 +1076,10 @@
         // Event listener for when the connection is closed
         socket.onclose = (event) => {
             console.log('Connection closed', event);
+            setTimeout(() => {
+                if (socket.readyState === WebSocket.CLOSED)
+                    CreateSocketConnection
+            }, 1000)
         };
 
         // Event listener for errors
@@ -968,20 +1089,56 @@
     }//Update Loop
     let lastFrameTime = performance.now();
     let NextCardSpawnDelay = 5;
-    let MaxSpawnDelay = 5;
+    let MaxSpawnDelay = 2;
     let FallingCards = new Array();
+    let FallingCandles = new Array();
+    let NextCandleSpawnDelay = 1;
     function AnimationLoop() {
         const currentTime = performance.now();
         const deltaTime = (currentTime - lastFrameTime)/1000;
         lastFrameTime = currentTime;
         //Background
         let computedStyle = getComputedStyle(document.getElementById("Background"));
-        document.getElementById("Background").style.backgroundPositionY = (parseFloat(computedStyle.backgroundPositionY)!=null?parseFloat(computedStyle.backgroundPositionY):0)+deltaTime*50+"px";
+        document.getElementById("Background").style.backgroundPositionY = (parseFloat(computedStyle.backgroundPositionY)!=null?parseFloat(computedStyle.backgroundPositionY):0)+deltaTime*40+"px";
+        // Falling Random Candles
+        if (NextCandleSpawnDelay<=0) {
+            NextCandleSpawnDelay = 10;
+            let FallingCandle = document.createElement("div");
+            FallingCandle.classList.add("FallingCandle");
+            FallingCandle.style.top = "0px";
+            FallingCandle.style.left = "25%";
+            document.getElementById("CandleHolder").appendChild(FallingCandle);
+            FallingCandles.push(FallingCandle);
+
+            let FallingCandle2 = document.createElement("div");
+            FallingCandle2.classList.add("FallingCandle");
+            FallingCandle2.style.top = "0px";
+            FallingCandle2.style.left = "75%";
+            document.getElementById("CandleHolder").appendChild(FallingCandle2);
+            FallingCandles.push(FallingCandle2);
+        } else {
+            NextCandleSpawnDelay -= deltaTime;
+        }
+        for (let i = 0; i < FallingCandles.length; i++) {
+            let computedStyle = getComputedStyle(FallingCandles[i]);
+            if (parseFloat(computedStyle.top)-FallingCandles[i].offsetHeight-30>=document.getElementById("Background").offsetHeight) {
+                FallingCandles[i].remove()
+                i--;
+            } else {
+                FallingCandles[i].style.top = parseFloat(computedStyle.top) + deltaTime*40 + "px";
+                if (FallingCandles[i].children.length<=0 && parseFloat(computedStyle.top) >= 60) { // Remove Flame
+                    let Flame = document.createElement("img");
+                    Flame.src = "/images/Fire.png";
+                    Flame.classList.add("Flame");
+                    FallingCandles[i].appendChild(Flame);
+                }
+            }
+        }
         // Falling Random Cards
         if (NextCardSpawnDelay<=0) {
             NextCardSpawnDelay = (Math.random() * MaxSpawnDelay);
             let FallingCard = CreateEmptyCard();
-            FallingCard.style.top = "0px";
+            FallingCard.style.top = "-10px";
             FallingCard.style.left = (Math.random() * document.body.offsetWidth)+"px";
             document.getElementById("Background").appendChild(FallingCard);
             FallingCards.push(FallingCard);
@@ -997,10 +1154,37 @@
                 FallingCards[i].style.top = parseFloat(computedStyle.top) + deltaTime*100 + "px";
             }
         }
-        
+        SocketPing += deltaTime;
+        if (SocketPing>=5 && socket) {
+            SocketPing = 0;
+            socket.close(1000)
+            CreateSocketConnection()
+            console.log("Socket Close");
+        }
         requestAnimationFrame(AnimationLoop);
     }
-
+    async function ToggleEmojiPanel() {
+        SelectEmoji.style.display = SelectEmoji.style.display == "none" ? "flex": "none";
+        if (SelectEmoji.style.display == "flex") {
+            let Emojies = await (await fetch(window.location.origin+'/api/emoji/get', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })).json();
+            SelectEmoji.innerHTML = "";
+            for (let i = 0; i < Emojies.length; i++) {
+                let NewEmoji = document.createElement("img");
+                NewEmoji.src = "/images/emoji/"+Emojies[i].texture+".png";
+                let index = i;
+                NewEmoji.addEventListener("click",()=>{SendEmoji(index)});
+                SelectEmoji.appendChild(NewEmoji);
+            } 
+        }
+    }
+    function SendEmoji(EmojiIndex) {
+        socket.send(JSON.stringify({EmojiIndex:EmojiIndex}))
+    }
     onMount(async() => {
         const user = await fetch(window.location.origin+'/api/account/login', {
             method: 'POST',
@@ -1063,6 +1247,7 @@
         SelectedAvatar = CreateCharacterStone(0,0,"MissingCharacter");
         document.getElementById("SelectedAvatar").appendChild(SelectedAvatar);
         AnimationLoop();
+        var SelectEmoji = document.getElementById("SelectEmoji");
         // Set ToolTips
         CreateTooltipEvent(document.getElementById("DeckButton"),"Set Deck", "Create Your Battle Ready Deck");
         CreateTooltipEvent(document.getElementById("AvatarButton"),"Select Avatar", "Select Avatar to Use");

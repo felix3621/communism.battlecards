@@ -243,7 +243,7 @@
     }, 100);
 
     function createSocket() {
-        socket = new WebSocket(`wss://${window.location.host}/gamesocket?admin=true`);
+        socket = new WebSocket(`wss://${window.location.host}/socket/game?admin=true`);
 
         socket.onopen = () => {
             console.log('Connected to server');

@@ -14,7 +14,7 @@ app.use(cookieParser());
 app.use('/api', require('./api/routes.cjs'));
 
 app.listen(port, () => {
-    logger.debug(`Server started on port ${port}`,"api");
+    logger.info(`Server started on port ${port}`,"api");
 });
 
 processHandler(process, "api")

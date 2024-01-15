@@ -33,7 +33,7 @@ httpServer.on('upgrade', (request, socket, head) => {
 
 // Listen on specified port
 httpServer.listen(port, () => {
-    logger.debug(`Server started on port ${port}`,"socket");
+    logger.info(`Server started on port ${port}`,"socket");
 });
 
 processHandler(process, "socket")
