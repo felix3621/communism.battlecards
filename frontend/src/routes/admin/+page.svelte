@@ -66,7 +66,7 @@
         height: 33.3%;
     }
     #DU_title {
-        height: calc(15% - 5px);
+        height: calc(15% + 25px);
         border-bottom: 5px solid black;
     }
     #DU_avatar {
@@ -266,7 +266,7 @@
         <td adminWidth="66.7%" rootWidth="50%" class="widthAdjust">
             <div class="panel">
                 <p class="title" id="DU_title"></p>
-                <div class="content" style="height:85%">
+                <div class="content" style="height:calc(85% - 30px)">
                     <div id="DU_avatar"></div>
                     <div id="DU_avatarList"></div>
                     <div id="DU_xp"></div>

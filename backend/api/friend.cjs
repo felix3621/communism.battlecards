@@ -40,44 +40,74 @@ router.get('/get', auth.checkUser, async (req, res) => {
     }
 })
 
-router.get('/allUsers', auth.checkUser, async (req, res) => {
-    let check = await client.db("communism_battlecards").collection("accounts").find({}).toArray();
+router.post('/searchForUsers', auth.checkUser, async (req, res) => {
+    if (typeof req.body.search == "string") {
+        let check = await client.db("communism_battlecards").collection("accounts").find({}).toArray();
 
-    check.sort((a, b) => {
-        //sort:root
-        if (a.root && !b.root) {
-            return -1;
-        } else if (b.root && !a.root) {
-            return 1;
+        for (let i = 0; i < check.length; i++) {
+            if (!(check[i].username.startsWith(req.body.search) || check[i].display_name.startsWith(req.body.search))) {
+                check.splice(i,1);
+                i--;
+            }
         }
 
-        //sort:admin
-        if (a.admin && !b.admin) {
-            return -1;
-        } else if (b.admin && !a.admin) {
-            return 1;
+        check.sort((a, b) => {
+            //sort:root
+            if (a.root && !b.root) {
+                return -1;
+            } else if (b.root && !a.root) {
+                return 1;
+            }
+
+            //sort:admin
+            if (a.admin && !b.admin) {
+                return -1;
+            } else if (b.admin && !a.admin) {
+                return 1;
+            }
+
+            //sort:username
+            const usernameA = a.username;
+            const usernameB = b.username;
+        
+            if (usernameA < usernameB) {
+                return -1;
+            } else if (usernameA > usernameB) {
+                return 1;
+            } else {
+                return 0;
+            }
+        });
+
+        let rtn = []
+
+        for (let i = 0; i < check.length; i++) {
+            rtn.push({
+                username: check[i].username,
+                display_name: check[i].display_name,
+                level: xp.getLevel(check[i].xp),
+                avatar: avatar[check[i].avatar]
+            })
         }
 
-        //sort:username
-        const usernameA = a.username;
-        const usernameB = b.username;
-      
-        if (usernameA < usernameB) {
-            return -1;
-        } else if (usernameA > usernameB) {
-            return 1;
-        } else {
-            return 0;
-        }
-    });
-
-    let rtn = []
-
-    for (let i = 0; i < check.length; i++) {
-        rtn.push({username: check[i].username, display_name: check[i].display_name})
+        res.json(rtn)
+    } else {
+        res.status(500).send("Invalid Input")
     }
+})
 
-    res.json(rtn)
+router.get('/getUser/:user', auth.checkUser, async (req, res) => {
+    let check = await client.db("communism_battlecards").collection("accounts").findOne({username: req.params.user});
+    if (check) {
+        res.json({
+            username: check.username,
+            display_name: check.display_name,
+            level: xp.getLevel(check.xp),
+            avatar: avatar[check.avatar]
+        })
+    } else {
+        res.status(404).send("User not found")
+    }
 })
 
 router.post('/add', auth.checkUser, async (req, res) => {

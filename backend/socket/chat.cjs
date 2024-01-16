@@ -42,6 +42,20 @@ async function connectDB() {
 }
 connectDB()
 
+async function notMuted(user, muted, unmuted) {
+    let ud = await client.db("communism_battlecards").collection("accounts").findOne({username: user.username})
+    if (ud.mutedUntil) {
+        if (ud.mutedUntil, ud.mutedUntil < new Date()) {
+            await client.db("communism_battlecards").collection("accounts").updateOne({username: ud.username},{$unset: {mutedUntil: 1}})
+            unmuted()
+        } else {
+            muted()
+        }
+    } else {
+        unmuted()
+    }
+}
+
 async function command(user, command) {
     command = command.slice(1)
     command = command.split(" ")
@@ -78,6 +92,11 @@ async function command(user, command) {
                 returnMessage += "<p style='color:rgb(200,200,200);'>"+cmds.join(", ")+"</p>"
 
             }
+            try {
+                users.find(usr => usr.user.username == user.username).socket.send(JSON.stringify({PlayerMessage: returnMessage}))
+            } catch (error) {
+                console.error(error)
+            }
             break;
         case "users":
             var usrs = new Array();
@@ -95,6 +114,11 @@ async function command(user, command) {
                     usrs.push(element)
             }
             returnMessage += usrs.join("<p>,&nbsp;</p>")
+            try {
+                users.find(usr => usr.user.username == user.username).socket.send(JSON.stringify({PlayerMessage: returnMessage}))
+            } catch (error) {
+                console.error(error)
+            }
             break;
         case "friends":
             var friendList = new Array();
@@ -125,46 +149,64 @@ async function command(user, command) {
             }
 
             returnMessage += friendList.join("<p>,&nbsp;</p>")
+            try {
+                users.find(usr => usr.user.username == user.username).socket.send(JSON.stringify({PlayerMessage: returnMessage}))
+            } catch (error) {
+                console.error(error)
+            }
             break;
         case "msg":
-            //TODO: not muted check
-            if (command[1] && command[2]) {
-                let recipient = users.find(usr => usr.user.username == command[1])
-                if (recipient) {
-                    let msgList = new Array();
-                    for (let i = 2; i < command.length; i++) {
-                        msgList.push(command[i])
-                    }
-
-                    returnMessage += "<p>To&nbsp;</p>"
-
-                    if (recipient.user.root) {
-                        returnMessage+="<p style='color:red;'>&#60;[Owner]&nbsp;"+recipient.user.display_name+"&#62;</p>&nbsp;";
-                    } else if (recipient.user.admin) {
-                        returnMessage+="<p style='color:orange;'>&#60;[Admin]&nbsp;"+recipient.user.display_name+"&#62;</p>&nbsp;";
-                    } else {
-                        returnMessage+="<p style='color:aqua;'>&#60;"+recipient.user.display_name+"&#62;</p>&nbsp;";
-                    }
-
-                    returnMessage +="<p>: "+msgList.join(" ")+"</p>"
-
-                    var recipientMessage = "<p style='color:rgb(200,200,200)'>From&nbsp;</p>"
-                    if (user.root) {
-                        recipientMessage+="<p style='color:rgb(204,0,0);'>&#60;[Owner]&nbsp;"+user.display_name+"&#62;</p>";
-                    } else if (user.admin) {
-                        recipientMessage+="<p style='color:rgb(204,133,0);'>&#60;[Admin]&nbsp;"+user.display_name+"&#62;</p>";
-                    } else {
-                        recipientMessage+="<p style='color:rgb(0,204,204);'>&#60;"+user.display_name+"&#62;</p>";
-                    }
-                    recipientMessage+="<p style='color:rgb(200,200,200)'>: "+msgList.join(" ")+"</p>"
-
-                    recipient.socket.send(JSON.stringify({PlayerMessage: recipientMessage}))
-                } else {
-                    returnMessage += "<p style='color:rgb(230,0,0)'>Could not find '"+command[1]+"' in the chat</p>"
+            notMuted(user,()=>{
+                returnMessage += "<p style='color:rgb(230,0,0)'>Unable to message user: You are muted</p>"
+                try {
+                    users.find(usr => usr.user.username == user.username).socket.send(JSON.stringify({PlayerMessage: returnMessage}))
+                } catch (error) {
+                    console.error(error)
                 }
-            } else {
-                returnMessage += "<p style='color:rgb(230,0,0)'>Syntax error, use '/help msg' to see syntax</p>"
-            }
+            },()=>{
+                if (command[1] && command[2]) {
+                    let recipient = users.find(usr => usr.user.username == command[1])
+                    if (recipient) {
+                        let msgList = new Array();
+                        for (let i = 2; i < command.length; i++) {
+                            msgList.push(command[i])
+                        }
+    
+                        returnMessage += "<p>To&nbsp;</p>"
+    
+                        if (recipient.user.root) {
+                            returnMessage+="<p style='color:red;'>&#60;[Owner]&nbsp;"+recipient.user.display_name+"&#62;</p>&nbsp;";
+                        } else if (recipient.user.admin) {
+                            returnMessage+="<p style='color:orange;'>&#60;[Admin]&nbsp;"+recipient.user.display_name+"&#62;</p>&nbsp;";
+                        } else {
+                            returnMessage+="<p style='color:aqua;'>&#60;"+recipient.user.display_name+"&#62;</p>&nbsp;";
+                        }
+    
+                        returnMessage += "<p>: "+msgList.join(" ")+"</p>"
+    
+                        var recipientMessage = "<p style='color:rgb(200,200,200)'>From&nbsp;</p>"
+                        if (user.root) {
+                            recipientMessage+="<p style='color:rgb(204,0,0);'>&#60;[Owner]&nbsp;"+user.display_name+"&#62;</p>";
+                        } else if (user.admin) {
+                            recipientMessage+="<p style='color:rgb(204,133,0);'>&#60;[Admin]&nbsp;"+user.display_name+"&#62;</p>";
+                        } else {
+                            recipientMessage+="<p style='color:rgb(0,204,204);'>&#60;"+user.display_name+"&#62;</p>";
+                        }
+                        recipientMessage+="<p style='color:rgb(200,200,200)'>: "+msgList.join(" ")+"</p>"
+    
+                        recipient.socket.send(JSON.stringify({PlayerMessage: recipientMessage}))
+                    } else {
+                        returnMessage += "<p style='color:rgb(230,0,0)'>Could not find '"+command[1]+"' in the chat</p>"
+                    }
+                } else {
+                    returnMessage += "<p style='color:rgb(230,0,0)'>Syntax error, use '/help msg' to see syntax</p>"
+                }
+                try {
+                    users.find(usr => usr.user.username == user.username).socket.send(JSON.stringify({PlayerMessage: returnMessage}))
+                } catch (error) {
+                    console.error(error)
+                }
+            })
             break;
         case "raw":
             if (user.root || user.admin) {
@@ -173,6 +215,12 @@ async function command(user, command) {
                     raw.push(command[i])
                 }
                 returnMessage += raw.join(" ")
+
+                try {
+                    users.find(usr => usr.user.username == user.username).socket.send(JSON.stringify({PlayerMessage: returnMessage}))
+                } catch (error) {
+                    console.error(error)
+                }
 
                 webSocketServer.clients.forEach((client) => {
                     if (client.readyState === WebSocket.OPEN) {
@@ -187,7 +235,6 @@ async function command(user, command) {
             if (user.root || user.admin) {
                 if (command[1] && Number(command[2])) {
                     let usr = users.find(usr => usr.user.username == command[1])
-
                     if (usr) {
                         if (usr.user.admin || usr.user.root) {
                             returnMessage += "<p style='color:rgb(230,0,0)'>Cannot mute a admin/root account</p>"
@@ -211,48 +258,80 @@ async function command(user, command) {
 
                             msg += "<p>' for "+command[2]+" minutes</p>"
                             usr.socket.send(JSON.stringify({PlayerMessage:msg}))
+                            try {
+                                users.find(usr => usr.user.username == user.username).socket.send(JSON.stringify({PlayerMessage: returnMessage}))
+                            } catch (error) {
+                                console.error(error)
+                            }
                         }
                     } else {
                         returnMessage += "<p style='color:rgb(230,0,0)'>Could not find '"+command[1]+"' in the chat</p>"
+                        try {
+                            users.find(usr => usr.user.username == user.username).socket.send(JSON.stringify({PlayerMessage: returnMessage}))
+                        } catch (error) {
+                            console.error(error)
+                        }
                     }
                 } else {
                     returnMessage += "<p style='color:rgb(230,0,0)'>Syntax error, use '/help mute' to see syntax</p>"
+                    try {
+                        users.find(usr => usr.user.username == user.username).socket.send(JSON.stringify({PlayerMessage: returnMessage}))
+                    } catch (error) {
+                        console.error(error)
+                    }
                 }
             } else {
                 returnMessage += "<p style='color: rgb(230,0,0)'>Invalid permission for this command</p>"
+                try {
+                    users.find(usr => usr.user.username == user.username).socket.send(JSON.stringify({PlayerMessage: returnMessage}))
+                } catch (error) {
+                    console.error(error)
+                }
             }
             break;
         default:
             returnMessage += "<p style='color: rgb(230,0,0)'>Command Not Found.<br>Get a list of available commands with the command '/help'</p>"
+            try {
+                users.find(usr => usr.user.username == user.username).socket.send(JSON.stringify({PlayerMessage: returnMessage}))
+            } catch (error) {
+                console.error(error)
+            }
+            break;
     }
-
-    users.find(usr => usr.user == user).socket.send(JSON.stringify({PlayerMessage: returnMessage}))
 }
 function message(user, message) {
-    let PlayerMessage = ""
-    if (user.root) {
-        PlayerMessage+="<p style='color:red;'>&#60;[Owner]&nbsp;"+user.display_name+"&#62;</p>&nbsp;";
-    } else if (user.admin) {
-        PlayerMessage+="<p style='color:orange;'>&#60;[Admin]&nbsp;"+user.display_name+"&#62;</p>&nbsp;";
-    } else {
-        PlayerMessage+="<p style='color:aqua;'>&#60;"+user.display_name+"&#62;</p>&nbsp;";
-    }
-
-    let msg = message.split(" ")
-
-    for (let i = 0; i < msg.length; i++) {
-        if (msg[i].startsWith("http") || msg[i].startsWith("www.")) {
-            PlayerMessage += "<a href='"+he.encode(msg[i])+"' target='_blank'>"+he.encode(msg[i])+"</a> "
+    notMuted(user,()=>{
+        try {
+            users.find(usr => usr.user.username == user.username).socket.send(JSON.stringify({PlayerMessage: "<p style='color:red;'>Cannot send message: You are muted</p>"}))
+        } catch (error) {
+            console.error(error)
+        }
+    },()=>{
+        let PlayerMessage = ""
+        if (user.root) {
+            PlayerMessage+="<p style='color:red;'>&#60;[Owner]&nbsp;"+user.display_name+"&#62;</p>&nbsp;";
+        } else if (user.admin) {
+            PlayerMessage+="<p style='color:orange;'>&#60;[Admin]&nbsp;"+user.display_name+"&#62;</p>&nbsp;";
         } else {
-            PlayerMessage += he.encode(msg[i]) + " ";
+            PlayerMessage+="<p style='color:aqua;'>&#60;"+user.display_name+"&#62;</p>&nbsp;";
         }
-    }
-
-    webSocketServer.clients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify({PlayerMessage:PlayerMessage}));
+    
+        let msg = message.split(" ")
+    
+        for (let i = 0; i < msg.length; i++) {
+            if (msg[i].startsWith("http") || msg[i].startsWith("www.")) {
+                PlayerMessage += "<a href='"+he.encode(msg[i])+"' target='_blank'>"+he.encode(msg[i])+"</a> "
+            } else {
+                PlayerMessage += he.encode(msg[i]) + " ";
+            }
         }
-    });
+    
+        webSocketServer.clients.forEach((client) => {
+            if (client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify({PlayerMessage:PlayerMessage}));
+            }
+        });
+    })
 }
 
 // Create a WebSocket server and attach it to the HTTP server
@@ -324,35 +403,45 @@ webSocketServer.on('connection', async(socket, request) => {
         }
     
     
-        let user = await client.db("communism_battlecards").collection("accounts").findOne({username: username});
+        let dbuser = await client.db("communism_battlecards").collection("accounts").findOne({username: username});
+
+        sysUser = users.find(user => user.user.username == dbuser.username)
+
+        if (sysUser)
+            sysUser.socket.close(1008, "another instance")
     
-        users.push({user: user, socket: socket})
+        users.push({user: dbuser, socket: socket})
     
         socket.on('message', (msg) => {
             var msg = JSON.parse(msg);
             if (msg.Text) {
                 if(msg.Text.startsWith("/"))
-                    command(user, msg.Text)
-                else if (msg.EmojiIndex != null) {
-                    //TODO: not muted check
+                    command(dbuser, msg.Text)
+                else
+                    message(dbuser, msg.Text)
+            } else if (msg.EmojiIndex != null) {
+                notMuted(dbuser,()=>{
+                    try {
+                        users.find(usr => usr.user.username == dbuser.username).socket.send(JSON.stringify({PlayerMessage: "<p style='color:red;'>Cannot send message: You are muted</p>"}))
+                    } catch (error) {
+                        console.error(error)
+                    }
+                },()=>{
                     webSocketServer.clients.forEach((client) => {
                         if (client.readyState === WebSocket.OPEN) {
                             PlayerMessage = "";
-                            if (user.root) {
-                                PlayerMessage+="<p style='color:red;'>&#60;[Owner]&nbsp;"+user.display_name+"&#62;</p>&nbsp;";
-                            } else if (user.admin) {
-                                PlayerMessage+="<p style='color:orange;'>&#60;[Admin]&nbsp;"+user.display_name+"&#62;</p>&nbsp;";
+                            if (dbuser.root) {
+                                PlayerMessage+="<p style='color:red;'>&#60;[Owner]&nbsp;"+dbuser.display_name+"&#62;</p>&nbsp;";
+                            } else if (dbuser.admin) {
+                                PlayerMessage+="<p style='color:orange;'>&#60;[Admin]&nbsp;"+dbuser.display_name+"&#62;</p>&nbsp;";
                             } else {
-                                PlayerMessage+="<p style='color:aqua;'>&#60;"+user.display_name+"&#62;</p>&nbsp;";
+                                PlayerMessage+="<p style='color:aqua;'>&#60;"+dbuser.display_name+"&#62;</p>&nbsp;";
                             }
                             PlayerMessage += "<img src='/images/emoji/"+emojies[msg.EmojiIndex].texture+".png'>";
                             client.send(JSON.stringify({PlayerMessage:PlayerMessage}));
                         }
                     });
-                } else
-                    message(user, msg.Text) //TODO: not muted check
-            }
-            if (msg.EmojiIndex != null) {
+                })
             }
         });
     

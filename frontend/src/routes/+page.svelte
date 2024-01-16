@@ -591,9 +591,8 @@
         outline: 2px rgb(56, 56, 56) solid;
         background-color: #1f1e1e;
         border-radius: 0px 25px 25px 0px;
-        display: grid;
-        grid-template-columns: minmax(10px,200px);
-        grid-template-rows: repeat(auto, 20px);
+        display: flex;
+        flex-direction: column;
     }
     #ProfileWindow {
         position: fixed;
@@ -678,7 +677,7 @@
         padding: 0px 15px 0px 15px;
         font-size: larger;
     }
-    #SearchResult {
+    :global(#SearchResult) {
         position: absolute;
         color: white;
         left: 10%;
@@ -686,17 +685,22 @@
         top: 50px;
         bottom: 0;
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
     }
-    :global(#FriendList > div) {
-        width: 100%;
+    :global(#SearchResult>div) {
+        max-height: 50px;
+    }
+    :global(.Friend) {
+        max-width: 100%;
+        height: 50px;
         aspect-ratio: 3/1;
-        position: absolute;
+        position: relative;
+        cursor: pointer;
     }
-    :global(#FriendList > div:hover) {
+    :global(.Friend:hover) {
         background-color: #414141;
     }
-    :global(#FriendList > div > div) {
+    :global(.Friend > div) {
         height: 100%;
         position: absolute;
         aspect-ratio: 1/1;
@@ -707,7 +711,7 @@
         border: 5px solid black;
         float: left;
     }
-    :global(#FriendList > div > h2) {
+    :global(.Friend > h2) {
         margin: 0;
         position: absolute;
         width: fit-content;
@@ -715,7 +719,7 @@
         left: 40%;
         color:white;
     }
-    :global(#FriendList > div > h4) {
+    :global(.Friend > h4) {
         margin: 0;
         width: fit-content;
         position: absolute;
@@ -724,7 +728,7 @@
         top: 40%;
         color:gray;
     }
-    :global(#FriendList > div > p) {
+    :global(.Friend > p) {
         margin: 0;
         width: fit-content;
         position: absolute;
@@ -732,7 +736,7 @@
         left: 25%;
         top: 75%;
         aspect-ratio: 1/1;
-        width: fit-content;
+        height: fit-content;
         color:white;
         background-color: #414141;
         outline: 2px black solid;
@@ -903,24 +907,23 @@
         <div id="TopTabs">
             <button on:click={()=>{SwitchTab(0)}}>My Profile</button>
             <button on:click={()=>{SwitchTab(1)}}>Stats</button>
-            <button on:click={()=>{SwitchTab(2)}}>Leader Bords</button>
+            <button on:click={()=>{SwitchTab(2)}}>Leaderboards</button>
             <button on:click={()=>{SwitchTab(3)}}>Quests</button>
             <button on:click={()=>{SwitchTab(4)}}>Achievements</button>
             <button on:click={()=>{SwitchTab(5)}}>Search Profiles</button>
         </div>
         <div id="TabsContent">
-            <div id="MyProfile"></div>
+            <div id="DisplayPlayerProfile"></div>
             <div id="PlayerStats"></div>
-            <div id="LeaderBords"></div>
+            <div id="Leaderboards"></div>
             <div id="Quests"></div>
             <div id="Achivements"></div>
             <div id="SearchProfile">
-                <input type="search" id="PlayerSearchField">
+                <input type="search" id="PlayerSearchField" on:change={()=>{SearchForPlayer(document.getElementById("PlayerSearchField").value)}}>
                 <div id="SearchResult">
                     <h1>No Player Found!</h1>
                 </div>
             </div>
-            <div id="DisplayPlayerProfile"></div>
         </div>
     </div>
 </div>
@@ -936,11 +939,32 @@
     var MessagesStored = new Array();
     var SocketPing = 0;
 
+    async function ShowProfile(username) {
+        SwitchTab(0);
+        let User_data = await (await fetch(window.location.origin+'/api/friend/getUser/'+username, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })).json();
+        if (User_data) {
+            let DisplayPlayerProfile = document.getElementById("DisplayPlayerProfile");
+
+            let DisplayName = document.createElement("h1");
+            DisplayName.innerHTML = User_data.display_name;
+            DisplayPlayerProfile.appendChild(DisplayPlayerProfile)
+
+        } else {
+            SwitchTab(5);
+        }
+    }
+
     async function OpenProfileMenu() {
         document.getElementById("ProfilePage").style.display = "block";
         document.getElementById("ProfileHolderProfilePage").appendChild(document.getElementById("profile"));
         document.getElementById("profile").style.top = "0px";
         UpdateFriendList();
+        ShowProfile(Username);
     }
     function CloseProfileMenu() {
         document.getElementById("ProfilePage").style.display = "none";
@@ -960,6 +984,53 @@
     function UpdatePlayerStats() {
         
     }
+    async function SearchForPlayer(Name="") {
+        console.log(Name);
+        let User_data = await (await fetch(window.location.origin+'/api/friend/searchForUsers', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                search: Name
+            })
+        })).json();
+        let SearchHolder = document.getElementById("SearchResult");
+        SearchHolder.innerHTML = "";
+        console.log(User_data);
+        for (var i = 0; typeof User_data == "object" && i < User_data.length; i++) {
+            let user = GenerateFriend(User_data[i].display_name, User_data[i].username, User_data[i].level, User_data[i].avatar.Texture);
+            SearchHolder.appendChild(user);
+        }
+        if (0 == User_data.length) {
+            let NoUserFound = document.createElement("h1");
+            NoUserFound.innerHTML = "No Users Found!";
+            SearchHolder.appendChild(NoUserFound);
+        }
+    }
+    function GenerateFriend(Displayname, Username, Level=0, AvatarTexture) {
+        let User = document.createElement("div");
+        User.classList.add("Friend");
+
+        let ProfilePic = document.createElement("div");
+        ProfilePic.style.backgroundImage = "url(/images/Cards/"+AvatarTexture+".png)";
+        User.appendChild(ProfilePic);
+        
+        let UserName = document.createElement("h2");
+        UserName.innerHTML = Username;
+        User.appendChild(UserName);
+        
+        let DisplayName = document.createElement("h4");
+        DisplayName.innerHTML = Displayname;
+        User.appendChild(DisplayName);
+        
+        let LevelIndicator = document.createElement("p");
+        LevelIndicator.innerHTML = Level;
+        User.appendChild(LevelIndicator);
+
+        User.addEventListener("click",()=>{ShowProfile(Username);});
+        return User;
+    }
     async function UpdateFriendList() {
         var Friend_data = await (await fetch(window.location.origin+'/api/friend/get', {
             method: 'GET',
@@ -967,30 +1038,10 @@
                 'Content-Type': 'application/json',
             }
         })).json();
-        console.log(typeof Friend_data);
         let FriendHolder = document.getElementById("FriendList");
         FriendHolder.innerHTML = "";
-        for (let i = 0; typeof Friend_data == "object" && i < Friend_data.length; i++) {
-            console.log(Friend_data[i]);
-            let Friend = document.createElement("div");
-
-            let ProfilePic = document.createElement("div");
-            ProfilePic.style.backgroundImage = "url(/images/Cards/"+Friend_data[i].avatar.Texture+".png)";
-            Friend.appendChild(ProfilePic);
-            
-            let UserName = document.createElement("h2");
-            UserName.innerHTML = Friend_data[i].username;
-            Friend.appendChild(UserName);
-            
-            let DisplayName = document.createElement("h4");
-            DisplayName.innerHTML = Friend_data[i].display_name;
-            Friend.appendChild(DisplayName);
-            
-            let LevelIndicator = document.createElement("p");
-            LevelIndicator.innerHTML = Friend_data[i].level;
-            Friend.appendChild(LevelIndicator);
-            
-            FriendHolder.appendChild(Friend);
+        for (var i = 0; typeof Friend_data == "object" && i < Friend_data.length; i++) {
+            FriendHolder.appendChild(GenerateFriend(Friend_data[i].display_name, Friend_data[i].username, Friend_data[i].level, Friend_data[i].avatar.Texture));
         }
     }
     async function updateProfilePicture() {
@@ -1185,6 +1236,7 @@
     function SendEmoji(EmojiIndex) {
         socket.send(JSON.stringify({EmojiIndex:EmojiIndex}))
     }
+    var Username;
     onMount(async() => {
         const user = await fetch(window.location.origin+'/api/account/login', {
             method: 'POST',
@@ -1193,7 +1245,8 @@
 	    	}
         });
         if (user.ok) {
-            let ud = await user.json()
+            let ud = await user.json();
+            Username = ud.username;
             CreateSocketConnection();
             if (ud.rewards) {
                 OppenRewardCrate(ud.rewards);
