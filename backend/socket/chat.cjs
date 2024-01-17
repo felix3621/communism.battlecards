@@ -3,6 +3,7 @@ const he = require('he');
 const auth = require('../modules/authentication.cjs');
 const db = require('../modules/database.cjs');
 const fr = require('../modules/fileReader.cjs');
+const logger = require('../modules/logger.cjs');
 
 const emojies = require('../../shared/emoji.json')
 
@@ -49,7 +50,13 @@ async function notMuted(user, muted, unmuted) {
             await client.db("communism_battlecards").collection("accounts").updateOne({username: ud.username},{$unset: {mutedUntil: 1}})
             unmuted()
         } else {
-            muted()
+
+            let date = new Date(ud.mutedUntil)
+
+            const time = date.toLocaleTimeString('no-NO', {timeZoneName: 'short'})
+            const day = date.toLocaleDateString('no-NO').replaceAll(".","/")
+
+            muted(`${day} ${time}`)
         }
     } else {
         unmuted()
@@ -156,8 +163,8 @@ async function command(user, command) {
             }
             break;
         case "msg":
-            notMuted(user,()=>{
-                returnMessage += "<p style='color:rgb(230,0,0)'>Unable to message user: You are muted</p>"
+            notMuted(user,(time)=>{
+                returnMessage += "<p style='color:rgb(230,0,0)'>Unable to message user: You are muted until "+time+"</p>"
                 try {
                     users.find(usr => usr.user.username == user.username).socket.send(JSON.stringify({PlayerMessage: returnMessage}))
                 } catch (error) {
@@ -263,6 +270,13 @@ async function command(user, command) {
                             } catch (error) {
                                 console.error(error)
                             }
+
+                            
+
+                            const time = date.toLocaleTimeString('no-NO', {timeZoneName: 'short'})
+                            const day = date.toLocaleDateString('no-NO').replaceAll(".","/")
+
+                            logger.warn(user.username+" muted "+usr.user.username+" until "+day+" "+time,"chatsocket/command")
                         }
                     } else {
                         returnMessage += "<p style='color:rgb(230,0,0)'>Could not find '"+command[1]+"' in the chat</p>"
@@ -300,9 +314,9 @@ async function command(user, command) {
     }
 }
 function message(user, message) {
-    notMuted(user,()=>{
+    notMuted(user,(time)=>{
         try {
-            users.find(usr => usr.user.username == user.username).socket.send(JSON.stringify({PlayerMessage: "<p style='color:red;'>Cannot send message: You are muted</p>"}))
+            users.find(usr => usr.user.username == user.username).socket.send(JSON.stringify({PlayerMessage: "<p style='color:red;'>Cannot send message: You are muted until "+time+"</p>"}))
         } catch (error) {
             console.error(error)
         }
@@ -420,9 +434,9 @@ webSocketServer.on('connection', async(socket, request) => {
                 else
                     message(dbuser, msg.Text)
             } else if (msg.EmojiIndex != null) {
-                notMuted(dbuser,()=>{
+                notMuted(dbuser,(time)=>{
                     try {
-                        users.find(usr => usr.user.username == dbuser.username).socket.send(JSON.stringify({PlayerMessage: "<p style='color:red;'>Cannot send message: You are muted</p>"}))
+                        users.find(usr => usr.user.username == dbuser.username).socket.send(JSON.stringify({PlayerMessage: "<p style='color:red;'>Cannot send message: You are muted until "+time+"</p>"}))
                     } catch (error) {
                         console.error(error)
                     }

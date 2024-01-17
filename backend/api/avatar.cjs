@@ -12,7 +12,9 @@ async function connectDB() {
 }
 connectDB()
 
-router.get('/get', auth.checkUser, async (req, res) => {
+router.use(auth.checkUser)
+
+router.get('/get', async (req, res) => {
     let result = await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username})
 
     let user_avatars = [avatars[0]]
@@ -37,7 +39,7 @@ router.get('/get', auth.checkUser, async (req, res) => {
     res.json({selected: avatars[result.avatar], avatars: user_avatars})
 })
 
-router.post('/select', auth.checkUser, async (req, res) => {
+router.post('/select', async (req, res) => {
     let result = await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username})
     if (avatars[req.body.newCard] && (req.body.newCard == 0 || avatars[req.body.newCard].unlockRequirements<=xp.getLevel(result.xp))) {
 

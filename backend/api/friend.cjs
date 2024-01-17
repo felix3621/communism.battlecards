@@ -12,27 +12,31 @@ async function connectDB() {
 }
 connectDB()
 
-router.get('/get', auth.checkUser, async (req, res) => {
+router.use(auth.checkUser)
+
+router.get('/get', async (req, res) => {
     let check = await client.db("communism_battlecards").collection("friends").find({users: {$elemMatch: {$eq: req.user.username}}}).toArray();
 
     if (check) {
         var rtn = []
 
         for (let i = 0; i < check.length; i++) {
-            let un;
-            if (check[i].users[0] == req.user.username)
-                un = check[i].users[1]
-            else
-                un = check[i].users[0]
-    
-            let ud = await client.db("communism_battlecards").collection("accounts").findOne({username: un});
-    
-            rtn.push({
-                username: ud.username,
-                display_name: ud.display_name,
-                level: xp.getLevel(ud.xp),
-                avatar: avatar[ud.avatar]
-            })
+            if (check[i].accept[check[i].users[0]] && check[i].accept[check[i].users[1]]) {
+                let un;
+                if (check[i].users[0] == req.user.username)
+                    un = check[i].users[1]
+                else
+                    un = check[i].users[0]
+        
+                let ud = await client.db("communism_battlecards").collection("accounts").findOne({username: un});
+        
+                rtn.push({
+                    username: ud.username,
+                    display_name: ud.display_name,
+                    level: xp.getLevel(ud.xp),
+                    avatar: avatar[ud.avatar]
+                })
+            }
         }
         res.json(rtn)
     } else {
@@ -40,7 +44,7 @@ router.get('/get', auth.checkUser, async (req, res) => {
     }
 })
 
-router.post('/searchForUsers', auth.checkUser, async (req, res) => {
+router.post('/searchForUsers', async (req, res) => {
     if (typeof req.body.search == "string") {
         let check = await client.db("communism_battlecards").collection("accounts").find({}).toArray();
 
@@ -96,7 +100,7 @@ router.post('/searchForUsers', auth.checkUser, async (req, res) => {
     }
 })
 
-router.get('/getUser/:user', auth.checkUser, async (req, res) => {
+router.get('/getUser/:user', async (req, res) => {
     let check = await client.db("communism_battlecards").collection("accounts").findOne({username: req.params.user});
     if (check) {
         res.json({
@@ -110,24 +114,87 @@ router.get('/getUser/:user', auth.checkUser, async (req, res) => {
     }
 })
 
-router.post('/add', auth.checkUser, async (req, res) => {
-    if (typeof req.body.user == "string") {
-        let user = await client.db("communism_battlecards").collection("accounts").findOne({username: req.body.user});
+router.get('/getRequests', async (req, res) => {
+    let check = await client.db("communism_battlecards").collection("friends").find({users: {$elemMatch: {$eq: req.user.username}}}).toArray();
 
-        if (user) {
-            let friendElement = await client.db("communism_battlecards").collection("friends").findOne({users: {$elemMatch: {$eq: req.user.username}, $elemMatch: {$eq: req.body.user}}});
+    if (check) {
+        var rtn = []
 
-            if (friendElement) {
-                await client.db("communism_battlecards").collection("friends").updateOne({_id: friendElement._id}, {$set: {accept: {[req.user.username]: true}}})
-                logger.warn(req.user.username + " accepted friend request with " + req.body.user,req.originalUrl)
-                res.send("Updated successfully")
+        for (let i = 0; i < check.length; i++) {
+            if (!(check[i].accept[check[i].users[0]] && check[i].accept[check[i].users[1]])) {
+                let un;
+                if (check[i].users[0] == req.user.username)
+                    un = check[i].users[1]
+                else
+                    un = check[i].users[0]
+        
+                let ud = await client.db("communism_battlecards").collection("accounts").findOne({username: un});
+        
+                let back = {
+                    username: ud.username,
+                    display_name: ud.display_name,
+                    level: xp.getLevel(ud.xp),
+                    avatar: avatar[ud.avatar]
+                }
+
+                if (check[i].accept[req.user.username]) {
+                    back.direction = "out"
+                } else {
+                    back.direction = "in"
+                }
+                
+                rtn.push(back)
+            }
+        }
+        res.json(rtn)
+    } else {
+        res.json({})
+    }
+})
+
+router.post('/acceptRequest', async (req, res) => {
+    if (typeof req.body.accept == "boolean" && typeof req.body.username == "string") {
+        let check = await client.db("communism_battlecards").collection("friends").findOne({users: {$elemMatch: {$eq: req.user.username}, $elemMatch: {$eq: req.body.username}}});
+        if (check) {
+            if (req.body.accept) {
+                if (check.users[1] == req.user.username && !check.accept[check.users[1]]) {
+                    await client.db("communism_battlecards").collection("friends").updateOne({users: {$elemMatch: {$eq: req.user.username}, $elemMatch: {$eq: req.body.username}}}, {$set: {accept: {[check.users[1]]: true, [check.users[0]]: check.accept[check.users[0]]}}});
+                    res.status(200).send("Request accepted")
+                    logger.info(req.user.username+" accepted request from "+req.body.username,req.originalUrl)
+                } else if (check.users[0] == req.user.username && !check.accept[check.users[0]]) {
+                    await client.db("communism_battlecards").collection("friends").updateOne({users: {$elemMatch: {$eq: req.user.username}, $elemMatch: {$eq: req.body.username}}}, {$set: {accept: {[check.users[0]]: true, [check.users[1]]: check.accept[check.users[1]]}}});
+                    res.status(200).send("Request accepted")
+                    logger.info(req.user.username+" accepted request from "+req.body.username,req.originalUrl)
+                } else {
+                    res.status(500).send("Internal server error")
+                }
             } else {
-                await client.db("communism_battlecards").collection("friends").insertOne({users: [req.user.username, req.body.user], accept: {[req.user.username]: true, [req.body.user]: false}})
-                logger.warn(req.user.username + " sent friend request to " + req.body.user,req.originalUrl)
-                res.send("Added successfully")
+                let usr = await client.db("communism_battlecards").collection("friends").deleteOne({users: {$elemMatch: {$eq: req.user.username}, $elemMatch: {$eq: req.body.username}}});
+                res.status(200).send("Request denied")
+                logger.info(req.user.username+" denied request from "+usr.users[0],req.originalUrl)
             }
         } else {
-            res.status(500).send("User Does Not Exist")
+            res.status(404).send("Unable to find request")
+        }
+    } else {
+        res.status(500).send("Invalid input")
+    }
+})
+
+router.post('/sendRequest', async (req, res) => {
+    if (typeof req.body.username == "string") {
+        let check = await client.db("communism_battlecards").collection("friends").findOne({users: {$elemMatch: {$eq: req.user.username}, $elemMatch: {$eq: req.body.username}}});
+        if (check) {
+            res.status(418).send("You already have a request to this user, or you are friends")
+        } else {
+            let user = await client.db("communism_battlecards").collection("accounts").findOne({username: req.body.username});
+            if (user) {
+                await client.db("communism_battlecards").collection("friends").insertOne({users: [req.user.username, req.body.username], accept: {[req.user.username]:true,[req.body.username]:false}})
+                logger.info(req.user.username+" sent request to "+req.body.username,req.originalUrl)
+                res.status(200).send("Request sent")
+            } else {
+                res.status(404).send("User not found")
+            }
         }
     } else {
         res.status(500).send("Invalid input")

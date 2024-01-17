@@ -13,7 +13,9 @@ async function connectDB() {
 }
 connectDB()
 
-router.get('/getAllCards', auth.checkUser, async (req, res) => {
+router.use(auth.checkUser)
+
+router.get('/getAllCards', async (req, res) => {
     try {
         let settings = JSON.parse(fr.read('../settings.json'))
         if (settings.getAllCards || req.user.admin) {
@@ -46,7 +48,7 @@ router.get('/getAllCards', auth.checkUser, async (req, res) => {
     }
 })
 
-router.get('/getXp', auth.checkUser, async (req, res) => {
+router.get('/getXp', async (req, res) => {
     try {
         var settings = JSON.parse(fr.read('../settings.json'))
         if (settings.getXp || req.user.admin) {
@@ -68,7 +70,7 @@ router.get('/getXp', auth.checkUser, async (req, res) => {
 })
 
 
-router.get('/getDeck', auth.checkUser, async (req, res) => {
+router.get('/getDeck', async (req, res) => {
     let result = await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username})
 
     let deck = new Array()
@@ -79,7 +81,7 @@ router.get('/getDeck', auth.checkUser, async (req, res) => {
 
     res.json(deck)
 })
-router.get('/getInventory', auth.checkUser, async (req, res) => {
+router.get('/getInventory', async (req, res) => {
     let result = await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username})
 
     let inventory = new Array()
@@ -90,7 +92,7 @@ router.get('/getInventory', auth.checkUser, async (req, res) => {
     res.json(inventory)
 })
 
-router.post('/addToDeck', auth.checkUser, async (req, res) => {
+router.post('/addToDeck', async (req, res) => {
     let result = await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username})
     let old_result = ld.cloneDeep(result)
     if (result.inventory[req.body.WhatItemIndex]) { // Check if item exsist

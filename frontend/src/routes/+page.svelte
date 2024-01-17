@@ -686,6 +686,7 @@
         bottom: 0;
         display: flex;
         flex-direction: row;
+        flex-wrap: wrap;
     }
     :global(#SearchResult>div) {
         max-height: 50px;
@@ -701,7 +702,7 @@
         background-color: #414141;
     }
     :global(.Friend > div) {
-        height: 100%;
+        height: 85%;
         position: absolute;
         aspect-ratio: 1/1;
         background-size: calc(100%);
@@ -734,7 +735,7 @@
         position: absolute;
         margin-left: 5px;
         left: 25%;
-        top: 75%;
+        top: 55%;
         aspect-ratio: 1/1;
         height: fit-content;
         color:white;
@@ -754,9 +755,11 @@
     }
     @keyframes FadeIn {
         0% {
+            transform: scale(0,0);
             filter: opacity(0);
         }
         100% {
+            transform: scale(1,1);
             filter: opacity(1);
         }
     }
@@ -773,6 +776,42 @@
         100% {
             transform: rotate(0deg);
         }
+    }
+    :global(#DisplayPlayerProfile button) {
+        position: absolute;
+        top: 0;
+        right: 0;
+    }
+    #credits {
+        cursor: pointer;
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        color: white;
+        font-size: larger;
+    }
+    #credits:hover {
+        color: rgb(200,200,200);
+    }
+    #FriendRequests {
+        position: absolute;
+        color: white;
+        left: 10%;
+        right: 10%;
+        top: 50px;
+        bottom: 0;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    :global(#FriendRequests > div) {
+        width: fit-content;
+        height: fit-content;
+    }
+    :global(#FriendRequests button) {
+        position: relative;
+        right: 0;
+
     }
 </style>
 <div id="Background">
@@ -872,7 +911,7 @@
         }
     }}></div>
 </div>
-
+<div id="credits" on:click={() => window.location.href = "/credits"}>Credits</div>
 <div id="Chat">
     <div id="MessagesDisplay"></div>
     <input type="text" id="ChatInputFiled" on:keydown={MessagesSendOnEnter} placeholder="Type to text...">
@@ -899,18 +938,20 @@
     <div id="RewardDisplay"></div>
     <button on:click={()=>{document.getElementById("ResultPage").style.display="none";fetch(window.location.origin+'/api/account/clearRewards', {method: 'POST',headers: {'Content-Type': 'application/json'}});}}>Okay</button>
 </div>
+
 <div id="ProfilePage">
     <div id="ProfileHolderProfilePage"></div>
     <button style="position: fixed;right:0;top:0;font-size:50px" class="btn" on:click={()=>CloseProfileMenu()}>X</button>
     <div id="FriendList"></div>
     <div id="ProfileWindow">
         <div id="TopTabs">
-            <button on:click={()=>{SwitchTab(0)}}>My Profile</button>
+            <button on:click={()=>{ShowProfile(Username)}}>My Profile</button>
             <button on:click={()=>{SwitchTab(1)}}>Stats</button>
             <button on:click={()=>{SwitchTab(2)}}>Leaderboards</button>
             <button on:click={()=>{SwitchTab(3)}}>Quests</button>
             <button on:click={()=>{SwitchTab(4)}}>Achievements</button>
-            <button on:click={()=>{SwitchTab(5)}}>Search Profiles</button>
+            <button on:click={()=>{SwitchTab(5); SearchForPlayer("")}}>Search Profiles</button>
+            <button on:click={()=>{ShowFriendRequests()}}>Friend Requests</button>
         </div>
         <div id="TabsContent">
             <div id="DisplayPlayerProfile"></div>
@@ -924,6 +965,7 @@
                     <h1>No Player Found!</h1>
                 </div>
             </div>
+            <div id="FriendRequests"></div>
         </div>
     </div>
 </div>
@@ -939,6 +981,83 @@
     var MessagesStored = new Array();
     var SocketPing = 0;
 
+    async function ShowFriendRequests() {
+        SwitchTab(6);
+        let FriendRequests = document.getElementById("FriendRequests");
+        let User_data = await (await fetch(window.location.origin+'/api/friend/getRequests', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })).json();
+        FriendRequests.innerHTML = "";
+        for (let i = 0; i < User_data.length; i++) {
+            let UserHolder = document.createElement("div");
+            FriendRequests.appendChild(UserHolder);
+
+            UserHolder.appendChild(GenerateFriend(User_data[i].display_name, User_data[i].username, User_data[i].level, User_data[i].avatar.Texture));
+            
+            let index = i;
+            if (User_data[i].direction && User_data[i].direction == "out") {
+                let RemoveBtn = document.createElement("button");
+                RemoveBtn.innerHTML = "Remove";
+                RemoveBtn.addEventListener("click",()=>{
+                    fetch(window.location.origin+'/api/friend/acceptRequest', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({username:User_data[index].username,accept:false})
+                    });
+                    ShowFriendRequests();
+                });
+                UserHolder.appendChild(RemoveBtn);
+            } else {
+                let AcceptBtn = document.createElement("button");
+                AcceptBtn.innerHTML = "Accept";
+                AcceptBtn.addEventListener("click",async()=>{
+                    await fetch(window.location.origin+'/api/friend/acceptRequest', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({username:User_data[index].username,accept:true})
+                    });
+                    ShowFriendRequests();
+                    UpdateFriendList();
+                });
+                UserHolder.appendChild(AcceptBtn);
+
+                let RejectBtn = document.createElement("button");
+                RejectBtn.innerHTML = "Reject";
+                RejectBtn.style.top = "50%"
+                RejectBtn.addEventListener("click",()=>{
+                    fetch(window.location.origin+'/api/friend/acceptRequest', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({username:User_data[index].username,accept:false})
+                    });
+                    ShowFriendRequests();
+                });
+                UserHolder.appendChild(RejectBtn);
+            }
+        }
+    }
+
+    async function SendFriendRequestTo(username) {
+        let User_data = await (await fetch(window.location.origin+'/api/friend/sendRequest', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                username: username
+            })
+        })).json();
+    }
+
     async function ShowProfile(username) {
         SwitchTab(0);
         let User_data = await (await fetch(window.location.origin+'/api/friend/getUser/'+username, {
@@ -949,10 +1068,17 @@
         })).json();
         if (User_data) {
             let DisplayPlayerProfile = document.getElementById("DisplayPlayerProfile");
+            DisplayPlayerProfile.innerHTML = "";
 
-            let DisplayName = document.createElement("h1");
-            DisplayName.innerHTML = User_data.display_name;
-            DisplayPlayerProfile.appendChild(DisplayPlayerProfile)
+            DisplayPlayerProfile.appendChild(GenerateFriend(User_data.display_name, User_data.username, User_data.level, User_data.avatar.Texture, false));
+            if (username != Username && Friends.filter(e => e.username === User_data.username).length == 0) {
+                let SendFriendRequest = document.createElement("button");
+                SendFriendRequest.style.backgroundColor="";
+                SendFriendRequest.innerHTML = "Send FriendRequest";
+                DisplayPlayerProfile.appendChild(SendFriendRequest);
+                SendFriendRequest.addEventListener("click",()=>{SendFriendRequestTo(username);SendFriendRequest.style.backgroundColor="rgb(100,100,100";});
+            }
+            
 
         } else {
             SwitchTab(5);
@@ -1008,7 +1134,7 @@
             SearchHolder.appendChild(NoUserFound);
         }
     }
-    function GenerateFriend(Displayname, Username, Level=0, AvatarTexture) {
+    function GenerateFriend(Displayname, Username, Level=0, AvatarTexture, CreateClickEvent = true) {
         let User = document.createElement("div");
         User.classList.add("Friend");
 
@@ -1027,10 +1153,12 @@
         let LevelIndicator = document.createElement("p");
         LevelIndicator.innerHTML = Level;
         User.appendChild(LevelIndicator);
-
-        User.addEventListener("click",()=>{ShowProfile(Username);});
+        if (CreateClickEvent)
+            User.addEventListener("click",()=>{ShowProfile(Username);});
         return User;
     }
+
+    var Friends = new Array();
     async function UpdateFriendList() {
         var Friend_data = await (await fetch(window.location.origin+'/api/friend/get', {
             method: 'GET',
@@ -1038,6 +1166,7 @@
                 'Content-Type': 'application/json',
             }
         })).json();
+        Friends = Friend_data
         let FriendHolder = document.getElementById("FriendList");
         FriendHolder.innerHTML = "";
         for (var i = 0; typeof Friend_data == "object" && i < Friend_data.length; i++) {
@@ -1174,6 +1303,7 @@
             let computedStyle = getComputedStyle(FallingCandles[i]);
             if (parseFloat(computedStyle.top)-FallingCandles[i].offsetHeight-30>=document.getElementById("Background").offsetHeight) {
                 FallingCandles[i].remove()
+                FallingCandles.splice(i,1);
                 i--;
             } else {
                 FallingCandles[i].style.top = parseFloat(computedStyle.top) + deltaTime*40 + "px";
@@ -1200,6 +1330,7 @@
             let computedStyle = getComputedStyle(FallingCards[i]);
             if (parseFloat(computedStyle.top)-FallingCards[i].offsetHeight>=document.getElementById("Background").offsetHeight) {
                 FallingCards[i].remove()
+                FallingCards.splice(i,1);
                 i--;
             } else {
                 FallingCards[i].style.top = parseFloat(computedStyle.top) + deltaTime*100 + "px";
