@@ -952,13 +952,13 @@
                     DraggableSelectTarget.SelectedTarget = "";
                 }
                 if (TargetClass && TargetClass.Card.Health-DraggableSelectTarget.Class.Card.Attack<=0) {
-                    DraggableSelectTarget.TargetIndicator.style.backgroundImage = "url('images/kill.png');";
+                    DraggableSelectTarget.TargetIndicator.style.backgroundImage = "url('/images/kill.png');";
                 } else {
-                    DraggableSelectTarget.TargetIndicator.style.backgroundImage = "url('images/target.png');";
+                    DraggableSelectTarget.TargetIndicator.style.backgroundImage = "url('/images/target.png');";
                 }
             } else {
                 DraggableSelectTarget.SelectedTarget = "";
-                DraggableSelectTarget.TargetIndicator.style.backgroundImage = "url('images/target.png');";
+                DraggableSelectTarget.TargetIndicator.style.backgroundImage = "url('/images/target.png');";
             }
         }
     }
@@ -972,7 +972,7 @@
         if (!yourTurn) {return;}
         if (Class.Card.Type == "Projectile") {
             let Draggable = document.createElement("img");
-            Draggable.style = "width:100px:height:100px;background-image:url('images/Projectile/"+Class.Card.Texture+".png')";
+            Draggable.style = "width:100px:height:100px;background-image:url('/images/Projectile/"+Class.Card.Texture+".png')";
             DraggableCard = {Card:Element,Draggable:Draggable,Class:Class};
             DraggableCard.Draggable.style.left = 50+"%";
             DraggableCard.Draggable.style.top = 75+"%";

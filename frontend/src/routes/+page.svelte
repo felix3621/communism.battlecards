@@ -217,12 +217,12 @@
         width:100px;
     }
     #DeckButton {
-        background-image: url(images/DeckIcon.png);
+        background-image: url(/images/DeckIcon.png);
         background-size: cover;
         cursor:pointer;
     }
     #AvatarButton {
-        background-image: url(images/AvatarIcon.png);
+        background-image: url(/images/AvatarIcon.png);
         background-size: cover;
         cursor:pointer;
     }
@@ -236,7 +236,7 @@
         aspect-ratio: 2.73/3.93;
     }
     :global(#NewCard div) {
-        background-image: url(images/plus.png);
+        background-image: url(/images/plus.png);
         background-size: cover;
         aspect-ratio: 1/1;
         width: 50%;
@@ -247,7 +247,7 @@
         
     }
     :global(#RemoveCard div) {
-        background-image: url(images/minus.png);
+        background-image: url(/images/minus.png);
         background-size: cover;
         aspect-ratio: 1/1;
         width: 50%;
@@ -818,7 +818,7 @@
     <div id="CandleHolder"></div>
     <div id="CardHolder"></div>
 </div>
-<img id="logo" src="images/BattlecardsLogo.png">
+<img id="logo" src="/images/BattlecardsLogo.png">
 <div id="MainProfileHoldre">
     <div id="profile">
         <table>

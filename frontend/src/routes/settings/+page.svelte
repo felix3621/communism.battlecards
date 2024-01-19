@@ -37,7 +37,7 @@
     }
 </style>
 
-<img id="logo" src="images/BattlecardsLogo.png" on:click={()=>window.location.href="/"}>
+<img id="logo" src="/images/BattlecardsLogo.png" on:click={()=>window.location.href="/"}>
 
 <div id="settingsPanel">
     <h1>Settings</h1>

@@ -211,7 +211,7 @@
         border-bottom: 2.5px solid black;
     }
 </style>
-<img id="logo" src="images/BattlecardsLogo.png" on:click={()=>window.location.href="/"}>
+<img id="logo" src="/images/BattlecardsLogo.png" on:click={()=>window.location.href="/"}>
 
 <div id="gameList">
     <div id="games">

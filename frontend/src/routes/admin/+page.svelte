@@ -137,7 +137,7 @@
         aspect-ratio: 2.73/3.93;
     }
     :global(#NewCard div) {
-        background-image: url(images/plus.png);
+        background-image: url(/images/plus.png);
         background-size: cover;
         aspect-ratio: 1/1;
         width: 50%;
@@ -253,7 +253,7 @@
         transform: translate(-50%,0)
     }
 </style>
-<img id="logo" src="images/BattlecardsLogo.png" on:click={()=>window.location.href="/"}>
+<img id="logo" src="/images/BattlecardsLogo.png" on:click={()=>window.location.href="/"}>
 
 <table id="adminConfig">
     <tr>

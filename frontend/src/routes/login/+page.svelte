@@ -104,7 +104,7 @@
     }
 </style>
 <div id="Background"></div>
-<img id="logo" src="images/BattlecardsLogo.png">
+<img id="logo" src="/images/BattlecardsLogo.png">
 <div id="Form">
     <div id="Login">
         <h1 class="Title">Login!</h1>

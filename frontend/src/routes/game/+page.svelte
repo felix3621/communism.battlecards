@@ -559,7 +559,7 @@
                                 setTimeout(() => {data.Projectiles[i].Element.remove();},1500);
                             }
                         }
-                        data.Projectiles[i].Element.src = "images/Projectiles/"+data.Projectiles[i].Texture+".png";
+                        data.Projectiles[i].Element.src = "/images/Projectiles/"+data.Projectiles[i].Texture+".png";
                     }
                 }
                 //Tournament Screen
@@ -898,13 +898,13 @@
                     DraggableSelectTarget.SelectedTarget = "";
                 }
                 if (TargetClass && TargetClass.Health-DraggableSelectTarget.Class.Attack<=0) {
-                    DraggableSelectTarget.TargetIndicator.style.backgroundImage = "url('images/kill.png');";
+                    DraggableSelectTarget.TargetIndicator.style.backgroundImage = "url('/images/kill.png');";
                 } else {
-                    DraggableSelectTarget.TargetIndicator.style.backgroundImage = "url('images/target.png');";
+                    DraggableSelectTarget.TargetIndicator.style.backgroundImage = "url('/images/target.png');";
                 }
             } else {
                 DraggableSelectTarget.SelectedTarget = "";
-                DraggableSelectTarget.TargetIndicator.style.backgroundImage = "url('images/target.png');";
+                DraggableSelectTarget.TargetIndicator.style.backgroundImage = "url('/images/target.png');";
             }
         }
     }
