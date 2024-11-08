@@ -6,53 +6,63 @@ const fr = require('../modules/fileReader.cjs');
 const logger = require('../modules/logger.cjs');
 const router = express.Router();
 
-var client;
+let client;
 async function connectDB() {
     client = await db.connect();
 }
 connectDB()
 
+router.use((req, res, next) => {
+    if (client == null) {
+        res.status(500).send("Server starting");
+    } else {
+        next();
+    }
+})
+
 router.post('/setDisplayName', auth.checkUser, async (req, res) => {
     if (typeof req.body.display_name == "string") {
-        req.body.display_name = he.encode(req.body.display_name)
+        req.body.display_name = he.encode(req.body.display_name);
         await client.db("communism_battlecards").collection("accounts").updateOne({username: req.user.username},{$set: {display_name: req.body.display_name}});
-        res.send(req.body.display_name)
+        res.send(req.body.display_name);
+        logger.info(`'${req.user.username}' changed display name from '${req.user.display_name}' to '${req.body.display_name}'`, "api/account/setDisplayName")
     } else {
-        res.status(500).send("Invalid Input")
+        res.status(500).send("Invalid Input");
     }
 })
 
 router.post('/setPassword', auth.checkUser, async (req, res) => {
     if (typeof req.body.password == "string" && typeof req.body.newPassword == "string") {
-        let result = await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username})
+        let result = await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username});
 
-        if (result.password == auth.encrypt(req.body.password)) {
+        if (Object.is(result.password, auth.encrypt(req.body.password))) {
             await client.db("communism_battlecards").collection("accounts").updateOne({username: req.user.username},{$set: {password: auth.encrypt(req.body.newPassword)}});
 
-            let userToken = auth.encrypt(JSON.stringify([auth.encrypt(req.user.username), auth.encrypt(auth.encrypt(req.body.newPassword))]))
+            let userToken = auth.encrypt(JSON.stringify([auth.encrypt(req.user.username), auth.encrypt(auth.encrypt(req.body.newPassword))]));
             res.cookie('userToken', userToken, { httpOnly: true });
-            res.send("Password Changed Successfully")
+            res.send("Password Changed Successfully");
+            logger.info(`'${req.user.username}' changed password`, "api/account/setPassword")
         } else {
-            res.status(401).send("Invalid password")
+            res.status(401).send("Invalid password");
         }
     } else {
-        res.status(500).send("Invalid Input")
+        res.status(500).send("Invalid Input");
     }
 })
 
 router.post('/login', auth.checkUser, (req, res) => {
-    res.json(req.user)
+    res.json(req.user);
 })
 router.post('/signup', async(req, res) => {
-    let settings = JSON.parse(fr.read('../settings.json'))
+    let settings = JSON.parse(fr.read('../settings.json'));
     let username = he.encode(req.body.username);
     let password = req.body.password;
     let display_name = he.encode(req.body.display_name);
 
     if (username && password && display_name) {
-        password = auth.encrypt(password)
-        let base = client.db("communism_battlecards").collection("accounts")
-        let check = await base.findOne({username: username})
+        password = auth.hash(password);
+        let base = client.db("communism_battlecards").collection("accounts");
+        let check = await base.findOne({username: username});
         if (!check && !(/^test_\d+/).test(username)) { //does not exist AND will not interfere with testusers
             let user = {
                 username: username,
@@ -62,23 +72,22 @@ router.post('/signup', async(req, res) => {
                 deck: settings.defaultDeck,
                 inventory: settings.defaultInventory,
                 xp: settings.defaultXp
-            }
+            };
 
-            logger.debug(
-                JSON.stringify(user),
-                req.originalUrl
-            )
+            let result = await base.insertOne(user);
 
-            let result = await base.insertOne(user)
-
-            let userToken = auth.encrypt(JSON.stringify([auth.encrypt(username), auth.encrypt(password)]))
+            let userToken = auth.encrypt(JSON.stringify([auth.encrypt(username), auth.encrypt(password)]));
             res.cookie('userToken', userToken, { httpOnly: true });
-            res.json(result)
+            res.json(result);
+
+            delete user.password;
+
+            logger.info(`User created: ${JSON.stringify(user, null, 2)}`, "api/account/signup");
         } else {
-            res.status(403).send("Username already exists")
+            res.status(403).send("Username already exists");
         }
     } else {
-        res.status(500).send("Internal server error")
+        res.status(500).send("Internal server error");
     }
 })
 router.post('/logout', (req, res) => {
@@ -87,7 +96,7 @@ router.post('/logout', (req, res) => {
     res.json({ message: 'Logout successful' });
 })
 router.post('/clearRewards', auth.checkUser, async (req, res) => {
-    await client.db("communism_battlecards").collection("accounts").updateOne({username: req.user.username},{$unset:{previousGame:'',previousTournament:'',newCards:''}})
+    await client.db("communism_battlecards").collection("accounts").updateOne({username: req.user.username},{$unset:{previousGame:'',previousTournament:'',newCards:'',rewards: {}}});
 })
 
 module.exports = router;

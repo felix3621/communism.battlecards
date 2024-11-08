@@ -2,21 +2,21 @@ const logger = require('./logger.cjs');
 
 module.exports = (process, trace) => {
     process.on('SIGINT', () => {
-        logger.error(`killed by user`,trace);
+        logger.error("Process killed by user",trace);
         process.exit(1);
     })
     
     process.on('SIGTERM', () => {
-        logger.error(`killed by system`,trace);
+        logger.error("Process killed by system",trace);
         process.exit(1);
     })
     
     process.on('unhandledRejection', async (reason, promise) => {
-        logger.error(`unhandledRejection at: ${reason.stack}\n Reason: ${reason}`,trace);
+        logger.error(`Encountered unhandledRejection: ${reason.stack}`,trace);
         process.exit(1);
     })
     
     process.on('uncaughtException', (error) => {
-        logger.error(`uncaughtException: ${error}`,trace);
+        logger.error(`Encountered uncaughtException: ${error.stack}`,trace);
     })
 }

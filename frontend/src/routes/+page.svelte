@@ -149,15 +149,23 @@
     :global(.adminButton:hover) {
         color: rgba(255,0,0,0.5);
     }
+    :global(.tournamentButton) {
+        color: rgb(255,150,0);
+        text-decoration: none;
+    }
+    :global(.tournamentButton:hover) {
+        color: rgba(255,150,0,0.5);
+    }
 
-    :global(#SettingsMenu a:not(.adminButton)) {
+    :global(#SettingsMenu a:not(.adminButton):not(.tournamentButton)) {
         color: white;
         cursor: pointer;
         text-decoration: none;
     }
-    :global(#SettingsMenu a:not(.adminButton):hover) {
+    :global(#SettingsMenu a:not(.adminButton):not(.tournamentButton):hover) {
         color: rgb(150, 150, 150);
     }
+
     :global(#SettingsMenu a:active) {
         color: rgb(175, 175, 175);
     }
@@ -368,8 +376,11 @@
     #ResultTitle {
         position: fixed;
         transform: translate(-50%,-50%);
-        top: 0;
+        top: 10%;
+        width: 80%;
+        text-align: center;
         left: 50%;
+        margin: 0;
         color: white;
         font-size: 500%;
     }
@@ -392,10 +403,16 @@
         top: 50%;
         transform: translate(-50%,-50%);
         left: 50%;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(100px,200px));
-        grid-column-gap: 10%;
-        width: 50%;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        overflow-y: auto;
+        overflow-x: hidden;
+        max-height: 50%;
+        padding: 15px;
+        gap: 30px;
+        width: fit-content;
+        max-width: 50%;
     }
     :global(#RewardDisplay > div) {
         filter: drop-shadow(0 0 0.5rem crimson);
@@ -535,6 +552,14 @@
         border-radius: 0px 15px 0px 0px;
         color: white;
         padding-bottom: 5px;
+    }
+    #MessagesDisplayReverse {
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        height: fit-content;
+        display: flex;
+        flex-direction: column;
     }
     #MessagesDisplay::-webkit-scrollbar {
         width: 10px;
@@ -811,7 +836,76 @@
     :global(#FriendRequests button) {
         position: relative;
         right: 0;
+    }
+    :global(.rainbow) {
+        font-weight: bold;
+        background: linear-gradient(to right, #ef5350, #f48fb1, #7e57c2, #2196f3, #26c6da, #43a047, #eeff41, #f9a825, #ff5722);
+        background-repeat: repeat;
+        background-size: 200% auto; /* Stretch the background for a smooth scroll */
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: scrollGradient 5s linear infinite;
+    }
+    @keyframes scrollGradient {
+        0% {
+            background-position: 0% 0%;
+        }
+        100% {
+            background-position: 200% 0%;
+        }
+    }
+    :global(.bob) {
+        color: black;
+        --color: rgb(0,255,0);
+        animation: glow 1s ease-in-out infinite alternate;
+        font-weight: 1000;
+        font-size: 20px;
+    }
+    :global(.felix) {
+        color: rgb(0,0,0);
+        --color: rgb(200,0,255);
+        animation: glow 1s ease-in-out infinite alternate;
+        font-weight: 1000;
+        --glowSize: 1mm;
+        font-size: 20px;
+    }
+    @-webkit-keyframes glow {
+        from {
+            text-shadow: 0 0 var(--glowSize, 0.6mm) var(--color);
+        }
+        to {
+            text-shadow: 0 0 calc(var(--glowSize, 0.6mm) * 1.5) var(--color);
+        }
+    }
+    #publicTournamentsList {
+        position: absolute;
+        top: 0;
+        right: 100px;
+        width: 200px;
+        max-height: 200px;
+        display: flex;
+        flex-direction: column;
+        overflow-x: hidden;
+        overflow-y: auto;
+        gap: 10px;
+    }
+    :global(#publicTournamentsList > button ) {
+        background-color: rgb(50,50,50);
+        border: 2px solid rgb(150,150,150);
+        display: flex;
+        flex-direction: column;
+        padding: 10px;
+        cursor: pointer;
 
+        & > p, & > h1 {
+            margin: 0;
+            color: white;
+            pointer-events: none;
+        }
+
+        &:hover {
+            background-color: rgb(75,75,75);
+        }
     }
 </style>
 <div id="Background">
@@ -824,7 +918,7 @@
         <table>
             <tr>
                 <td rowspan=2 style="aspect-ratio: 1/1;" id="pfp_row">
-                    <div id="pfp" on:click={()=>{OpenProfileMenu();SwitchTab(0);}}>
+                    <div id="pfp">
 
                     </div>
                 </td>
@@ -886,7 +980,7 @@
                     <input type="text" placeholder="code" id="tournamentCode">
                 </td>
                 <td style="width: 50%;">
-                    <button id="JoinTournamentCodeBtn" class="btn" on:click={() => window.location.href = "/game?tournament="+encodeURIComponent(document.getElementById("tournamentCode").value)}>Join</button>
+                    <button id="JoinTournamentCodeBtn" class="btn" on:click={() => !!document.getElementById("tournamentCode").value ? window.location.href = "/game?tournament="+encodeURIComponent(document.getElementById("tournamentCode").value) : void(0)}>Join</button>
                 </td>
             </tr>
         </table>
@@ -913,15 +1007,30 @@
 </div>
 <div id="credits" on:click={() => window.location.href = "/credits"}>Credits</div>
 <div id="Chat">
-    <div id="MessagesDisplay"></div>
-    <input type="text" id="ChatInputFiled" on:keydown={MessagesSendOnEnter} placeholder="Type to text...">
+    <div id="MessagesDisplay">
+        <div id="MessagesDisplayReverse">
+            {#each MessagesStored as text, index (index)}
+                <!--MessagesStored getFormatedText(text)-->
+                <p use:setFormatedText={text}></p>
+            {/each}
+        </div>
+    </div>
+    <input type="text" id="ChatInputFiled" autocomplete="off" on:keydown={ChatOnEdit} placeholder="Type to text...">
     <button id="EmojiButton" on:click={()=>{ToggleEmojiPanel()}}>Emoji</button>
     <div id="SelectEmoji" style="display: none;"></div>
+</div>
+<div id="publicTournamentsList">
+    {#each publicTournaments as tournament}
+        <button use:useTooltipEvent={{text: `Join tournament: ${tournament.code}`}} on:click={()=> window.location.href = "/game?tournament="+tournament.code}>
+            <h1>Code: {tournament.code}</h1>
+            <p>Players: {tournament.playerCount}</p>
+        </button>
+    {/each}
 </div>
 <div id="AvatarPanel" style="display:none;">
     <button style="position: fixed;right:0;top:0;font-size:50px" class="btn" on:click={()=>document.getElementById("AvatarPanel").style.display="none"}>Back</button>
     <div id="SelectedAvatar"></div>
-    <div id="AvatarAbility"><div><p>0</p></div></div>
+    <div id="AvatarAbility" style="opacity: 0; pointer-events: none"><div><p>0</p></div></div>
     <div id="DisplayAllAvatars"></div>
 </div>
 <div id="CardDeckPanel" style="display:none;">
@@ -972,14 +1081,35 @@
 
 
 <script>
-    import { onMount } from "svelte";
+    import { Errors } from '$lib';
+    import {onDestroy, onMount} from "svelte";
     var Level = 1;
     var Exp = 0;
-    var FontSizeAdjusterArray = new Array();
+    var FontSizeAdjusterArray = [];
     var SelectedAvatar;
     var socket;
-    var MessagesStored = new Array();
+    var MessagesStored = [];
+    var SendtMessages = [];
     var SocketPing = 0;
+    var publicTournaments = [];
+
+    const replaceWords = {
+        gay: {
+            class:"rainbow"
+        },
+        bob: {
+            class:"bob"
+        },
+        itx: {
+            override: "<img src='/images/emoji/itx.png'>"
+        },
+        felix: {
+            class: "felix"
+        },
+        banana: {
+            override: "<img src='https://upload.wikimedia.org/wikipedia/commons/3/31/Banana_Icon.png'>"
+        }
+    }
 
     async function ShowFriendRequests() {
         SwitchTab(6);
@@ -1111,7 +1241,6 @@
         
     }
     async function SearchForPlayer(Name="") {
-        console.log(Name);
         let User_data = await (await fetch(window.location.origin+'/api/friend/searchForUsers', {
             method: 'POST',
             headers: {
@@ -1123,7 +1252,6 @@
         })).json();
         let SearchHolder = document.getElementById("SearchResult");
         SearchHolder.innerHTML = "";
-        console.log(User_data);
         for (var i = 0; typeof User_data == "object" && i < User_data.length; i++) {
             let user = GenerateFriend(User_data[i].display_name, User_data[i].username, User_data[i].level, User_data[i].avatar.Texture);
             SearchHolder.appendChild(user);
@@ -1185,7 +1313,18 @@
     }
     function OppenRewardCrate(Rewards) {
         document.getElementById("ResultPage").style.display = "block";
-        document.getElementById("ResultTitle").innerHTML = Rewards.won?"You Won!": "You Lost!";
+        if (Rewards.type == "Game") {
+            document.getElementById("ResultTitle").innerHTML = Rewards.won?"You Won!": "You Lost!";
+        } else if (Rewards.type == "Tournament") {
+            if (Rewards.won) {
+                document.getElementById("ResultTitle").innerHTML = `You won the tournament and got ${Rewards.winCount?Rewards.winCount:0} wins`;
+            } else {
+                document.getElementById("ResultTitle").innerHTML = `You lost the tournament but got ${Rewards.winCount?Rewards.winCount:0} wins`;
+            }
+        } else {
+            document.getElementById("ResultTitle").innerHTML = "";
+        }
+
         document.getElementById("RewardDisplay").innerHTML = "";
         
         //Create Animation + Reward Display
@@ -1194,35 +1333,65 @@
         document.getElementById("RewardCrate").addEventListener("animationend",()=>{
             document.getElementById("RewardCrate").classList.remove("CrateShake");
             document.getElementById("RewardCrate").style.display = "none";
-            // Display Rewards
             var RewardDisplay = document.getElementById("RewardDisplay");
-            var XpDisplay = document.createElement("div");
-            XpDisplay.classList.add("XpDisplay");
-            var XpText = document.createElement("h1");
-            XpText.innerHTML = Rewards.xp + " XP";
-            XpDisplay.appendChild(XpText);
-            RewardDisplay.appendChild(XpDisplay);
-            for (let i = 0; i < Rewards.cards.length; i++) {
+
+            if (Rewards.xp) {
+                // Display Rewards
+                var XpDisplay = document.createElement("div");
+                XpDisplay.classList.add("XpDisplay");
+                var XpText = document.createElement("h1");
+                XpText.innerHTML = Rewards.xp + " XP";
+                XpDisplay.appendChild(XpText);
+                RewardDisplay.appendChild(XpDisplay);
+            }
+            for (let i = 0; i < Rewards.cards?.length; i++) {
                 RewardDisplay.appendChild(CreateCard(Rewards.cards[i].Name,Rewards.cards[i].Description,Rewards.cards[i].Cost,Rewards.cards[i].Attack,Rewards.cards[i].Health,Rewards.cards[i].Texture));
             }
         });
+        SetAllFontSizeInArray(FontSizeAdjusterArray);
     }
-    function MessagesSendOnEnter(event) {
-        if (event.key === 'Enter' && socket != null) {
+    let msgIndex;
+    let text = "";
+    function ChatOnEdit(event) {
+        if (event.key === 'Enter') {
+            if (!socket) {
+                $Errors.push({text:"socket is not connected",time:2});
+                return;
+            }
             // Handle the Enter key press here
-            socket.send(JSON.stringify({Text:document.getElementById("ChatInputFiled").value}))
+            socket.send(JSON.stringify({Text: document.getElementById("ChatInputFiled").value}));
+            SendtMessages = [document.getElementById("ChatInputFiled").value, ...SendtMessages];
             document.getElementById("ChatInputFiled").value = "";
+            msgIndex = -1;
+        } else if (event.key == "ArrowUp") {
+            if (msgIndex==-1) {
+                text = document.getElementById("ChatInputFiled").value;
+            }
+            if (SendtMessages.length>msgIndex+1) {
+                msgIndex++;
+                document.getElementById("ChatInputFiled").value = SendtMessages[msgIndex];
+            }
+            event.preventDefault();
+        } else if (event.key == "ArrowDown") {
+            if (msgIndex>=0) {
+                msgIndex--;
+                document.getElementById("ChatInputFiled").value = msgIndex == -1 ? text : SendtMessages[msgIndex];
+            }
+            event.preventDefault();
+        } else {
+            msgIndex = -1;
         }
     };
     function CreateSocketConnection() {
-        if (socket)
-            socket.close(1000)
-        socket = new WebSocket(`wss://${window.location.host}/socket/chat`);
+        if (socket) {
+            socket.close(1000);
+        }
+        socket = new WebSocket(`ws://${window.location.host}/socket/chat`);
 
         // Event listener for when the connection is established
         socket.onopen = () => {
             console.log('Connected to server');
-            document.getElementById("MessagesDisplay").addEventListener("keypress", MessagesSendOnEnter);
+            //document.getElementById("MessagesDisplay").addEventListener("keypress", msgIndex);
         };
 
         // Event listener for incoming messages from the server
@@ -1231,24 +1400,15 @@
             if (data) {
                 data = JSON.parse(data);
                 if (data.PlayerMessage) {
-                    MessagesStored.push(data.PlayerMessage);
+                    MessagesStored = [...MessagesStored, data.PlayerMessage];
                     while (MessagesStored.length>=100) {
                         MessagesStored.splice(0,1);
                     }
-                    var MessageParent = document.getElementById("MessagesDisplay");
-                    for (let i = 0; i < MessagesStored.length || i < MessageParent.children.length; i++) {
-                        if (i < MessagesStored.length && i >= MessageParent.children.length) {
-                            let Text = document.createElement("p");
-                            Text.innerHTML = MessagesStored[MessagesStored.length-1-i];
-                            MessageParent.appendChild(Text);
-                        } else if (i < MessagesStored.length && i < MessageParent.children.length) {
-                            MessageParent.children[i].innerHTML = MessagesStored[MessagesStored.length-1-i];
-                        } else {
-                            MessageParent.children[i].remove();
-                        }
-                    }
                 } else if (data.ping = "keep alive") {
                     SocketPing = 0;
+                }
+                if (data.publicTournaments) {
+                    publicTournaments = data.publicTournaments;
                 }
             }
         };
@@ -1256,9 +1416,15 @@
         // Event listener for when the connection is closed
         socket.onclose = (event) => {
             console.log('Connection closed', event);
+            if (event.code==1008) {
+                return;
+            }
+            if (event.code == 1000) {
+                return;
+            }
             setTimeout(() => {
                 if (socket.readyState === WebSocket.CLOSED)
-                    CreateSocketConnection
+                    CreateSocketConnection();
             }, 1000)
         };
 
@@ -1266,8 +1432,38 @@
         socket.onerror = (error) => {
             console.error('WebSocket error:', error);
         };
-    }//Update Loop
+    }
+    function setFormatedText(node, text) {
+        for (const [key, value] of Object.entries(replaceWords)) {
+            let replaceText = value.override ? value.override : `<span class="${value.class}">{word}</span>`;
+            text = replaceWordOutsideTags(text, key, replaceText)
+        }
+        node.innerHTML = text;
+    }
+    function replaceWordOutsideTags(inputString, wordToReplace, replaceString, tagBlacklist = ['p', 'img','span']) {
+        // Build a regular expression to match blacklisted tags (like <p> and <img>), along with their contents
+        const blacklistRegex = new RegExp(`(<(?:${tagBlacklist.join('|')})\\b[^>]*>[\\s\\S]*?<\\/(?:${tagBlacklist.join('|')})>|<img\\b[^>]*>)`, 'gi');
+
+        // Split the input string into segments: parts inside blacklisted tags and parts outside
+        const segments = inputString.split(blacklistRegex);
+
+        // Word replacement regex
+        const wordRegex = new RegExp(wordToReplace, 'gi');
+
+        // Process each segment: replace in non-blacklisted parts, leave blacklisted parts unchanged
+        return segments.map(segment => {
+            if (blacklistRegex.test(segment)) {
+                // This segment is a blacklisted tag, return unchanged
+                return segment;
+            } else {
+                // This is a normal text segment, replace the word with <span> wrapping
+                return segment.replace(wordRegex, (match) => replaceString.replaceAll("{word}",match));
+            }
+        }).join('');
+    }
+    //Update Loop
     let lastFrameTime = performance.now();
+    let animationId;
     let NextCardSpawnDelay = 5;
     let MaxSpawnDelay = 2;
     let FallingCards = new Array();
@@ -1319,7 +1515,7 @@
         if (NextCardSpawnDelay<=0) {
             NextCardSpawnDelay = (Math.random() * MaxSpawnDelay);
             let FallingCard = CreateEmptyCard();
-            FallingCard.style.top = "-10px";
+            FallingCard.style.top = "-50px";
             FallingCard.style.left = (Math.random() * document.body.offsetWidth)+"px";
             document.getElementById("Background").appendChild(FallingCard);
             FallingCards.push(FallingCard);
@@ -1339,11 +1535,11 @@
         SocketPing += deltaTime;
         if (SocketPing>=5 && socket) {
             SocketPing = 0;
-            socket.close(1000)
-            CreateSocketConnection()
+            socket.close(1000);
+            CreateSocketConnection();
             console.log("Socket Close");
         }
-        requestAnimationFrame(AnimationLoop);
+        animationId = requestAnimationFrame(AnimationLoop);
     }
     async function ToggleEmojiPanel() {
         SelectEmoji.style.display = SelectEmoji.style.display == "none" ? "flex": "none";
@@ -1365,6 +1561,10 @@
         }
     }
     function SendEmoji(EmojiIndex) {
+        if (!socket) {
+            $Errors.push({text:"socket is not connected",time:2});
+            return;
+        }
         socket.send(JSON.stringify({EmojiIndex:EmojiIndex}))
     }
     var Username;
@@ -1388,19 +1588,27 @@
                 adminLink.innerText = "Admin";
                 adminLink.classList.add("adminButton");
                 document.getElementById("SettingsDropDown").appendChild(adminLink);
+
+                let tournamentLink = document.createElement("a");
+                tournamentLink.setAttribute("href","tournament");
+                tournamentLink.innerText = "Tournament";
+                tournamentLink.classList.add("tournamentButton");
+                document.getElementById("SettingsDropDown").appendChild(tournamentLink);
             }
+            /*
             if (ud.view) {
                 let viewLink = document.createElement("a");
                 viewLink.setAttribute("href","view");
                 viewLink.innerText = "View";
                 document.getElementById("SettingsDropDown").appendChild(viewLink);
-            }
+            }*/
             if (ud.getAllCards) {
                 let gac = document.createElement("a");
-                gac.onclick = () => {
-                    fetch(window.location.origin+'/api/cards/getAllCards', {
+                gac.onclick = async () => {
+                    await fetch(window.location.origin+'/api/cards/getAllCards', {
                         method: 'GET'
                     });
+                    window.location.reload();
                 }
                 gac.innerText = "CARDS"
                 document.getElementById("SettingsDropDown").appendChild(gac);
@@ -1418,10 +1626,10 @@
             }
             document.getElementById("display_displayName").innerText = ud.display_name;
             document.getElementById("display_userName").innerText = ud.username;
-            updateProfilePicture()
+            updateProfilePicture();
             SetExpFilLevel((ud.xp.xp/ud.xp.requiredXp)*100);
             document.getElementById("level_display").innerText = ud.xp.level
-            CreateTooltipEvent(document.getElementById("EXP_Bar").parentNode, "Level: "+ud.xp.level, (ud.xp.requiredXp-ud.xp.xp)+" xp remaining for next level<br>Total xp: "+ud.xp.totalXp)
+            CreateTooltipEvent(document.getElementById("EXP_Bar").parentNode, "Level: "+ud.xp.level, (ud.xp.requiredXp-ud.xp.xp)+" xp remaining for next level<br>Total xp: "+ud.xp.totalXp);
         } else {
             window.location.href = '/login';
         }
@@ -1441,10 +1649,21 @@
         CreateTooltipEvent(document.getElementById("createTournament"),"Create Tournament", "Create A Tournament That Can Be Joined By Using A Code");
         CreateTooltipEvent(document.getElementById("createTournament"),"Create Tournament", "Create A Tournament That Can Be Joined By Using A Code");
         CreateTooltipEvent(document.getElementById("JoinTournamentCodeBtn"),"Join Tournament", "Join Tournament And Have FUN");
+
+        // Return a cleanup function to cancel the animation frame
+        return () => {
+            console.log('Cleaning up animation...');
+            cancelAnimationFrame(animationId);
+        };
     })
-    
+    onDestroy(() => {
+        if (animationId)
+            cancelAnimationFrame(animationId);
+        if (socket) {
+            socket.close(1000);
+        }
+    });
     async function logOut() {
-        console.log("Hi")
         let test = await fetch(window.location.origin+'/api/account/logout', {
             method: 'POST',
             headers: {
@@ -1714,32 +1933,33 @@
         }
         // Card Update / Create Loop
         for (let i = 0; i < inventory.length || i < (InventoryParent.children.length-1); i++) {
+            console.log(inventory[i]);
             var CurrentChild;
             if (i>= (InventoryParent.children.length-1) && i < inventory.length) {
-                CurrentChild = CreateCard(inventory[i].card.Name,inventory[i].card.Description,inventory[i].card.Cost,inventory[i].card.Attack,inventory[i].card.Health,inventory[i].card.Texture);
+                CurrentChild = CreateCard(inventory[i].Name,inventory[i].Description,inventory[i].Cost,inventory[i].Attack,inventory[i].Health,inventory[i].Texture);
                 CurrentChild.classList.add("ClicableCard");
                 InventoryParent.appendChild(CurrentChild);
                 (function(index) {
                     CurrentChild.addEventListener("click", ()=> {
                         AddToDeck(index, WhatIndexToReplace);
                     });
-                    CreateTooltipEvent(CurrentChild, inventory[i].card.Name,inventory[i].card.Description+"<br>Cost: "+inventory[i].card.Cost);
+                    CreateTooltipEvent(CurrentChild, inventory[i].Name,inventory[i].Description+"<br>Cost: "+inventory[i].Cost);
                 })(i);
             } else if (i < (InventoryParent.children.length-1) && i < inventory.length) {
                 RemoveAllRefensesFromArray(InventoryParent.children[i+1],FontSizeAdjusterArray);
                 CurrentChild = removeAllEventListeners(InventoryParent.children[i+1]);
-                CurrentChild.children[0].style.backgroundImage = "url('/images/Cards/"+inventory[i].card.Texture+".png')";
-                CurrentChild.children[2].children[0].innerHTML = inventory[i].card.Attack;
-                CurrentChild.children[3].children[0].innerHTML = inventory[i].card.Health;
-                CurrentChild.children[4].children[0].innerHTML = inventory[i].card.Cost;
-                CurrentChild.children[5].children[0].innerHTML = inventory[i].card.Name;
-                CurrentChild.children[6].children[0].innerHTML = inventory[i].card.Description;
-                if(inventory[i].card.Attack == null || inventory[i].card.Attack == 0) {
+                CurrentChild.children[0].style.backgroundImage = "url('/images/Cards/"+inventory[i].Texture+".png')";
+                CurrentChild.children[2].children[0].innerHTML = inventory[i].Attack;
+                CurrentChild.children[3].children[0].innerHTML = inventory[i].Health;
+                CurrentChild.children[4].children[0].innerHTML = inventory[i].Cost;
+                CurrentChild.children[5].children[0].innerHTML = inventory[i].Name;
+                CurrentChild.children[6].children[0].innerHTML = inventory[i].Description;
+                if(inventory[i].Attack == null || inventory[i].Attack == 0) {
                     CurrentChild.children[2].style.filter = "opacity(0)";
                 } else {
                     CurrentChild.children[2].style.filter = "opacity(1)";
                 }
-                if(inventory[i].card.Health == null || inventory[i].card.Health == 0) {
+                if(inventory[i].Health == null || inventory[i].Health == 0) {
                     CurrentChild.children[3].style.filter = "opacity(0)";
                 } else {
                     CurrentChild.children[3].style.filter = "opacity(1)";
@@ -1748,11 +1968,10 @@
                     CurrentChild.addEventListener("click", ()=> {
                         AddToDeck(index, WhatIndexToReplace);
                     });
-                    CreateTooltipEvent(CurrentChild, inventory[index].card.Name,inventory[index].card.Description+"<br>Cost: "+inventory[index].card.Cost);
+                    CreateTooltipEvent(CurrentChild, inventory[index].Name,inventory[index].Description+"<br>Cost: "+inventory[index].Cost);
                 })(i);
                 AddAllOfElementTypeToArray(CurrentChild, "p",FontSizeAdjusterArray,1);
                 AddAllOfElementTypeToArray(CurrentChild, "p1",FontSizeAdjusterArray);
-                console.log(CurrentChild.parentNode.offsetHeight);
             }
             if (i>=inventory.length) {
                 RemoveAllRefensesFromArray(InventoryParent.children[i+1],FontSizeAdjusterArray);
@@ -1871,7 +2090,6 @@
         updateProfilePicture();
     }
     async function SetAvatar(index) {
-        console.log("SetAvatar",index);
         await fetch(window.location.origin+'/api/avatar/select', {
             method: 'POST',
             headers: {
@@ -1915,9 +2133,11 @@
         ToolTip.appendChild(FlexContainer);
 
         // Title
-        var TitleElement = document.createElement("h1");
-        TitleElement.innerHTML = Title;
-        FlexContainer.appendChild(TitleElement);
+        if (Title) {
+            var TitleElement = document.createElement("h1");
+            TitleElement.innerHTML = Title;
+            FlexContainer.appendChild(TitleElement);
+        }
         //Text
         var TextElement = document.createElement("p");
         TextElement.innerHTML = Text;
@@ -1951,6 +2171,19 @@
     function CreateTooltipEvent(Element, Title, Text, DisplayImagePath = null) {
         Element.addEventListener("mouseover",()=> {ToolTip(Element,Title,Text, DisplayImagePath);});
         Element.addEventListener("mouseout",()=> {CloseAllToolTips();});
+    }
+    // the use: atrebute for elements tooltip
+    function useTooltipEvent(Element, tooltipData) {
+        const hoverInEvent = ()=> {ToolTip(Element,tooltipData.title,tooltipData.text, tooltipData.displayImagePath);};
+        Element.addEventListener("mouseover",hoverInEvent);
+        Element.addEventListener("mouseout",()=> {CloseAllToolTips();});
+
+        return {
+            destroy: ()=>{
+                Element.removeEventListener("mouseover",hoverInEvent);
+                Element.removeEventListener("mouseout",()=> {CloseAllToolTips();});
+            }
+        }
     }
     //Create Empty card 
     function CreateEmptyCard() {

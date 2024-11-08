@@ -16,7 +16,7 @@ xp.getLevel = (current_xp) => {
     return level - 1;
 }
 xp.getXp = (current_xp) => {
-    if (current_xp == undefined)
+    if (Object.is(current_xp, undefined))
         current_xp = 0;
     let level = 1;
     let xpRequired = BaseXP;
@@ -24,7 +24,7 @@ xp.getXp = (current_xp) => {
 
     while (current_xp >= xpRequired) {
         level++;
-        xpPrevious = xpRequired
+        xpPrevious = xpRequired;
         xpRequired = xpRequired + Math.floor(BaseXP * Math.pow(Multiplier, level - 1));
     }
 
@@ -37,11 +37,11 @@ xp.getXpForNextLevel = (current_xp) => {
 
     while (current_xp >= xpRequired) {
         level++;
-        xpPrevious = xpRequired
+        xpPrevious = xpRequired;
         xpRequired = xpRequired + Math.floor(BaseXP * Math.pow(Multiplier, level - 1));
     }
 
-    return xpRequired - xpPrevious
+    return xpRequired - xpPrevious;
 }
 
 module.exports = xp;

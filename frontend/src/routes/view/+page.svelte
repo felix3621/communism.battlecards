@@ -243,7 +243,7 @@
     }, 100);
 
     function createSocket() {
-        socket = new WebSocket(`wss://${window.location.host}/socket/game?admin=true`);
+        socket = new WebSocket(`ws://${window.location.host}/socket/game?admin=true`);
 
         socket.onopen = () => {
             console.log('Connected to server');
@@ -252,7 +252,6 @@
 
         socket.onmessage = (event) => {
             var data = JSON.parse(event.data)
-            console.log(data)
             Update(data)
             lastPing = 0;
         }

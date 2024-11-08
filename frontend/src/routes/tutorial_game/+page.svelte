@@ -453,6 +453,10 @@
             filter: opacity(1) drop-shadow(0 0mm 0mm rgba(0, 0, 0,0));
         }
     }
+    .isDraggingCard {
+        background-color: rgba(255,255,255,0.25);
+        border-radius: 25px;
+    }
 </style>
 <hr id="MidleLine">
 <div id="EnemyAvatar"><h1 id="EnemyName">Runar</h1></div>
@@ -461,7 +465,7 @@
 <div id="EnemyHand"></div>
 <div id="PlayerHand"></div>
 <div id="EnemyOnField"></div>
-<div id="PlayerOnField"></div>
+<div id="PlayerOnField" class="{isDraggingCard?'isDraggingCard':''}"></div>
 <div id="DisplayEnergy"></div>
 <button id="EndTurn" on:click={endTurn}>EndTurn</button>
 <h1 id="TimeDisplay">2:00</h1>
@@ -516,6 +520,9 @@
     var GetPlayerDeck = true;
     var UseAttackCooldown = true;
 
+    // extra
+    var isDraggingCard = false;
+
     //Update Loop
     let lastFrameTime = performance.now();
     function Update() {
@@ -567,8 +574,7 @@
         if(Tutorial != null && Tutorial.Stage<Tutorial.Stages.length && Tutorial.Stages.length>0) {
             // Text Boble + Objective
             if (!Tutorial.Stages[Tutorial.Stage].Started) {
-                if (Tutorial.Stages[Tutorial.Stage].Text) { // Text Boble
-                    console.log("Create Boble")
+                if (Tutorial.Stages[Tutorial.Stage].Text) {
                     let X = Tutorial.Stages[Tutorial.Stage].Sender == "Opponent" ? document.getElementById("EnemyAvatar").getBoundingClientRect().right : (Tutorial.Stages[Tutorial.Stage].Sender == "You" ? document.getElementById("PlayerAvatar").getBoundingClientRect().right : 10);
                     let Y = Tutorial.Stages[Tutorial.Stage].Sender == "Opponent" ? document.getElementById("EnemyAvatar").getBoundingClientRect().bottom : (Tutorial.Stages[Tutorial.Stage].Sender == "You" ? document.getElementById("PlayerAvatar").getBoundingClientRect().top : 10);
                     CreateTextBoble(X,Y,Tutorial.Stages[Tutorial.Stage].Text,Tutorial.Stages[Tutorial.Stage].Duration);
@@ -912,7 +918,6 @@
                     DraggableCard.Draggable.style.display="none";
                     DraggableCard.InArea = true;
                     if (!DraggableCard.Stone) {
-                        console.log("Create Stone")
                         DraggableCard.Stone = CreateCharacterStone(DraggableCard.Class.Card.Attack,DraggableCard.Class.Card.Health,DraggableCard.Class.Card.Texture,"",DraggableCard.Class.Card.Type);
                         DraggableCard.Stone.classList.add("Draggable");
                         document.getElementById("DraggableParent").appendChild(DraggableCard.Stone);
@@ -991,6 +996,7 @@
             document.getElementById("DraggableParent").appendChild(DraggableCard.Draggable);
             DraggableCard.Draggable.style.left = MouseX+"px";
             DraggableCard.Draggable.style.top = MouseY+"px";
+            isDraggingCard = true;
         }
         Element.style.display = "none";
     }
@@ -1055,6 +1061,7 @@
                 element.classList.remove('Glow');
             });
         DraggableSelectTarget = null;
+        isDraggingCard = false;
     }
 
     function CreateCharacterStone(Attack, Health, Texture, Name = null, Type = null) {

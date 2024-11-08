@@ -1,13 +1,12 @@
 const http = require('http');
-const WebSocket = require('ws');
 const url = require('url');
 const logger = require('./modules/logger.cjs');
 const processHandler = require('./modules/processErrorHandler.cjs');
 
-const port = 3001;
+const port = 5001;
 
-const chat = require("./socket/chat.cjs")
-const game = require("./socket/game.cjs")
+const chat = require("./socket/chat/socket.cjs");
+const game = require("./socket/game/socket.cjs");
 
 // Create an HTTP server
 const httpServer = http.createServer((req, res) => {
@@ -16,15 +15,15 @@ const httpServer = http.createServer((req, res) => {
 });
 
 httpServer.on('upgrade', (request, socket, head) => {
-    path = url.parse(request.url).pathname
+    const path = url.parse(request.url).pathname;
 
-    if (path == "/socket/chat") {
-        chat.wss.handleUpgrade(request, socket, head, (socket) => {
-            chat.wss.emit('connection', socket, request);
+    if (path === '/socket/chat') {
+        chat.wss.handleUpgrade(request, socket, head, (ws) => {
+            chat.wss.emit('connection', ws, request);
         });
-    } else if (path == "/socket/game") {
-        game.wss.handleUpgrade(request, socket, head, (socket) => {
-            game.wss.emit('connection', socket, request);
+    } else if (path === '/socket/game') {
+        game.wss.handleUpgrade(request, socket, head, (ws) => {
+            game.wss.emit('connection', ws, request);
         });
     } else {
         socket.destroy();
@@ -33,7 +32,7 @@ httpServer.on('upgrade', (request, socket, head) => {
 
 // Listen on specified port
 httpServer.listen(port, () => {
-    logger.info(`Server started on port ${port}`,"socket");
+    logger.info(`Server started on port ${port}`,"server/socket");
 });
 
-processHandler(process, "socket")
+processHandler(process, "socket");

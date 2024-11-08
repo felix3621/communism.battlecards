@@ -5,7 +5,7 @@ const auth = require('../modules/authentication.cjs');
 const router = express.Router();
 
 router.get('/get', auth.checkUser, async (req, res) => {
-    const filepath = path.join(__dirname,"../../shared/emoji.json")
+    const filepath = path.join(__dirname,"../data/emoji.json");
 
     try {
         await fs.access(filepath);
@@ -14,6 +14,6 @@ router.get('/get', auth.checkUser, async (req, res) => {
         console.error(error);
         res.status(404).send('File not found');
     }
-})
+});
 
 module.exports = router;

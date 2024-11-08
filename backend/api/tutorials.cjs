@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.get('/get/:tutorial', auth.checkUser, async (req, res) => {
     if (req.params.tutorial) {
-        const filepath = path.join(__dirname,"../../shared","Tutorials",req.params.tutorial+".json")
+        const filepath = path.join(__dirname,"../data","Tutorials",req.params.tutorial+".json");
 
         try {
             await fs.access(filepath);
@@ -16,8 +16,8 @@ router.get('/get/:tutorial', auth.checkUser, async (req, res) => {
             res.status(404).send('File not found');
         }
     } else {
-        res.status(500).send("invalid tutorial")
+        res.status(500).send("invalid tutorial");
     }
-})
+});
 
 module.exports = router;

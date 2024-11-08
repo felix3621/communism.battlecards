@@ -1,4 +1,4 @@
-<style>
+<style lang="less">
     :global(*) {
         -webkit-user-select: none; /* Safari */
         -ms-user-select: none; /* IE 10 and IE 11 */
@@ -299,9 +299,20 @@
     #TournamentReadyButton {
         position: fixed;
         color:white;
-        background-color: black;
-        top:0;
-        right:0;
+        background-color: rgb(25,25,25);
+        border: 3px outset rgb(75,75,75);
+        border-right: 3px solid rgb(35,35,35);
+        border-bottom: 3px solid rgb(35,35,35);
+        top:50%;
+        right:15%;
+        padding: 0 10px 0 10px;
+        font-size: 5vw;
+        transform: translate(-50%,-50%);
+        cursor: pointer;
+
+      &:hover {
+        opacity: 0.75;
+      }
     }
     #TournamentGameList {
         position: fixed;
@@ -309,23 +320,12 @@
         top:10%;
         bottom: 5%;
         width: 45%;
-        display: grid;
-        grid-template-columns: 100%;
-        grid-template-rows: repeat(auto-fit, 150px);
+        display: flex;
+        flex-direction: column;
         overflow-y: auto;
         overflow-x: hidden;
         color: white;
         padding: 15px;
-    }
-    :global(#TournamentGameList .Container) {
-        display: grid;
-        grid-template-columns: auto auto auto;
-    }
-    :global(#TournamentGameList h1) {
-        margin:0;
-        height: 100%;
-        font-size: 10vw;
-        text-align: center;
     }
     :global(.Projectile) {
         aspect-ratio: 1/1;
@@ -439,6 +439,10 @@
         top: 0;
         left:0;
     }
+    .isDraggingCard {
+        background-color: rgba(255,255,255,0.25);
+        border-radius: 25px;
+    }
 </style>
 <hr id="MidleLine">
 <div id="EnemyAvatar"><h1 id="EnemyName">Waiting for Player...</h1></div>
@@ -447,7 +451,7 @@
 <div id="EnemyHand"></div>
 <div id="PlayerHand"></div>
 <div id="EnemyOnField"></div>
-<div id="PlayerOnField"></div>
+<div id="PlayerOnField" class="{isDraggingCard?'isDraggingCard':''}"></div>
 <div id="DisplayEnergy"></div>
 <button id="EndTurn" on:click={endTurn}>EndTurn</button>
 <h1 id="TimeDisplay">2:00</h1>
@@ -456,16 +460,33 @@
 <h1 id="DisplayTitle"></h1>
 <h1 id="code" style="cursor: pointer" on:click={() => {navigator.clipboard.writeText(document.getElementById("code").innerText)}}></h1>
 <div id="Tournament">
-    <button id="TournamentReadyButton" on:click={() => {socket.send(JSON.stringify({tournamentReady:true}));}}>Ready?</button>
     <div id="TournamentPlayerList">
-        <h1 style="text-align: center;">Player List (0/16)</h1>
+        <h1 style="text-align: center;">Player List ({torunamentPlayers.length})</h1>
+        {#each torunamentPlayers as player}
+            {#if Object.is(myUsername, player.username)}
+                <h2 style="color: {player.out?'rgb(150,150,150)':(player.ready?'rgb(0,255,0)':'rgb(255,0,0)')}">- {player.displayName}</h2>
+            {:else}
+                <h2 style="color: {player.out?'rgb(150,150,150)':(player.ready?'rgb(0,255,0)':'rgb(255,0,0)')}">{player.displayName}</h2>
+            {/if}
+        {/each}
     </div>
-    <div id="TournamentGameList"></div>
+    {#if Object.is(turnamentsGames.length, 0)}
+        <button id="TournamentReadyButton" on:click={() => {socket.send(JSON.stringify({tournamentReady:true}));}}>Ready?</button>
+    {/if}
+    {#if turnamentsGames.length>0}
+        <div id="TournamentGameList">
+            {#each turnamentsGames as gameData}
+                <TurnamentGame gameData={gameData}/>
+            {/each}
+        </div>
+    {/if}
 </div>
 <button id="GoHome" on:click={()=>{window.location.href="/"}}>Go Home</button>
 <script>
     import { onMount } from "svelte";
+    import { TurnamentGame } from "$lib";
 
+    // game data
     var EnemyAvatar;
     var PlayerAvatar;
     var EnemyHand = new Array();
@@ -474,23 +495,27 @@
     var PlayerOnField = new Array();
     var EnemyDisplayName;
     var PlayerDisplayName;
-
     var PlayerEnergy = 4;
     var PlayerMaxEnergy = 4;
-
     var displayTitle = "";
-
-    var FontSizeAdjusterArray = new Array();
-
-    var DraggableCard;
-    var DraggableSelectTarget;
-
-    var MouseX;
-    var MouseY;
-
     var yourTurn;
 
+    // socket
     var socket;
+
+    // client side data
+    var myUserData = {};
+    var isDraggingCard = false;
+    var DraggableCard;
+    var DraggableSelectTarget;
+    var MouseX;
+    var MouseY;
+    var FontSizeAdjusterArray = new Array();
+
+    // tournament
+    var turnamentsGames = [];
+    var torunamentPlayers = [];
+    var myUsername = "";
 
     function createSocket() {
         let query
@@ -509,7 +534,7 @@
             }
         }
 
-        socket = new WebSocket(`wss://${window.location.host}/socket/game?${query}`);
+        socket = new WebSocket(`ws://${window.location.host}/socket/game?${query}`);
 
         // Event listener for when the connection is established
         socket.onopen = () => {
@@ -568,61 +593,14 @@
                     document.getElementById("Tournament").style.filter = "opacity(1)";
                     document.getElementById("Tournament").style.pointerEvents = "auto";
                     if (data.TournamentPlayers) {
-                        var TournamentPlayerList = document.getElementById("TournamentPlayerList");
-                        for (let i = 0; i < data.TournamentPlayers.length || i < TournamentPlayerList.children.length-1; i++) {
-                            if (i < data.TournamentPlayers.length && i >= TournamentPlayerList.children.length-1) { // Create
-                                var Temp = document.createElement("h2");
-                                TournamentPlayerList.appendChild(Temp);
-                                Temp.innerHTML = data.TournamentPlayers[i].displayName;
-                                Temp.style.color = data.TournamentPlayers[i].ready ? "rgb(0,255,0)" : "red";
-                                Temp.style.color = data.TournamentPlayers[i].out ? "rgb(150,150,150)" : Temp.style.color;
-                            } else if (i < data.TournamentPlayers.length) { // Update
-                                TournamentPlayerList.children[i+1].innerHTML = data.TournamentPlayers[i].displayName;
-                                TournamentPlayerList.children[i+1].style.color = data.TournamentPlayers[i].ready ? "rgb(0,255,0)" : "red";
-                                TournamentPlayerList.children[i+1].style.color = data.TournamentPlayers[i].out ? "rgb(150,150,150)" : TournamentPlayerList.children[i+1].style.color;
-                            } else { // Remove
-                                TournamentPlayerList.children[i+1].remove();
-                            }
-                        }
-                        TournamentPlayerList.children[0].innerHTML = "Player List ("+data.TournamentPlayers.length+")";
+                        torunamentPlayers = data.TournamentPlayers;
+                    }
+                    if (data.myUsername) {
+                        myUsername = data.myUsername;
                     }
                     //Show all games in Tournament
                     if (data.TournamentGames) {
-                        var tournamentGameList = document.getElementById("TournamentGameList");
-                        for (let i = 0; i < data.TournamentGames.length || i < tournamentGameList.children.length; i++) {
-                            if (i < data.TournamentGames.length && i >= tournamentGameList.children.length && data.TournamentGames[i].p1 != null && data.TournamentGames[i].p2  != null) { // Create
-                                // Create Game Container
-                                var Container = document.createElement("div");
-                                Container.classList.add("Container");
-
-                                // player 1 Avatar
-                                var p1 = CreateCharacterStone(data.TournamentGames[i].p1.Attack,data.TournamentGames[i].p1.Health,data.TournamentGames[i].p1.Texture, data.TournamentGames[i].p1Name, "Tank");
-                                p1.classList.add("P1");
-                                Container.appendChild(p1);
-                                // Text in midle that says VS
-                                var VSText = document.createElement("h1");
-                                VSText.innerHTML = "VS";
-                                Container.appendChild(VSText);
-                                // player 1 Avatar
-                                var p2 = CreateCharacterStone(data.TournamentGames[i].p2.Attack,data.TournamentGames[i].p2.Health,data.TournamentGames[i].p2.Texture, data.TournamentGames[i].p2Name, "Tank");
-                                p2.classList.add("P2");
-                                Container.appendChild(p2);
-                                tournamentGameList.appendChild(Container);
-                            } else if (i < tournamentGameList.children.length && i < data.TournamentGames.length && data.TournamentGames[i].p1  != null && data.TournamentGames[i].p2  != null) { // Update
-                                // P1 Update
-                                tournamentGameList.children[i].children[0].getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = data.TournamentGames[i].p1.Attack;
-                                tournamentGameList.children[i].children[0].getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = data.TournamentGames[i].p1.Health;
-                                tournamentGameList.children[i].children[0].style.backgroundImage = "url('/images/Cards/"+data.TournamentGames[i].p1.Texture+".png'), url('/images/shield.png')";
-
-                                // P2 Update
-                                tournamentGameList.children[i].children[2].getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = data.TournamentGames[i].p2.Attack;
-                                tournamentGameList.children[i].children[2].getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = data.TournamentGames[i].p2.Health;
-                                tournamentGameList.children[i].children[2].style.backgroundImage = "url('/images/Cards/"+data.TournamentGames[i].p2.Texture+".png'), url('/images/shield.png')";
-                            } else if (i >= data.TournamentGames.length){ // Remove
-                                console.log("Remove");
-                                tournamentGameList.children[i].remove();
-                            }
-                        }
+                        turnamentsGames = data.TournamentGames;
                     }
                 } else {
                     document.getElementById("Tournament").style.filter = "opacity(0)";
@@ -658,11 +636,7 @@
                     UpdateEnergy();
                     displayTitle = data.PlayerInfo.Title;
                     let Continue = true;
-                    console.log(PlayerOnField.length,EnemyOnField.length);
                     for (let i = 0; (i<data.PlayerInfo.Field.length || i<PlayerOnField.length) && Continue; i++) {
-                        if (i<data.PlayerInfo.Field.length && data.PlayerInfo.Field[i].Card.Attacker) {
-                            console.log(data.PlayerInfo.Field[i].Card.Attacker);
-                        }
                         if (i<PlayerOnField.length && (i<data.PlayerInfo.Field.length || PlayerOnField[i].Attacked) && (PlayerOnField[i].Attacked || data.PlayerInfo.Field[i].Card.Attacked || data.PlayerInfo.Field[i].Card.Attacker)) {
                             Continue = false;
                             if (i<data.PlayerInfo.Field.length && data.PlayerInfo.Field[i].Card.Attacker) {
@@ -744,7 +718,6 @@
                                     EnemyOnField[i].Attacked = false;
                                 },850);
                             }
-                            console.log(EnemyOnField[i]);
                         } else if (i<data.EnemyInfo.Field.length && i>= EnemyOnField.length) {
                             EnemyOnField.push(new Stone(data.EnemyInfo.Field[i].Card, data.EnemyInfo.Field[i].attackCooldown, document.getElementById("EnemyOnField")));
                         } else if (i<data.EnemyInfo.Field.length) {
@@ -809,7 +782,7 @@
         EnemyAvatar = new Stone({Attack:0,Health:0,Texture:"MissingCharacter"},0,document.getElementById("EnemyAvatar"));
         PlayerAvatar = new Stone({Attack:0,Health:0,Texture:"MissingCharacter"},0,document.getElementById("PlayerAvatar"));
 
-        createSocket()
+        createSocket();
 
         //Actual Commands
         SetAllFontSizeInArray(FontSizeAdjusterArray);
@@ -915,7 +888,6 @@
         var LeftSide = PlayerField.getBoundingClientRect().left;
         var whereInDiv = (MouseX-LeftSide)/PlayerField.offsetWidth;
         var WhatToSend = Math.floor(whereInDiv*(PlayerOnField.length+1));
-        console.log({function:"PlaceCard",SelectedIndex:WhatToSend,SelectedCardIndex:PlayerHand.indexOf(DraggableCard.Class)});
         socket.send(JSON.stringify({function:"PlaceCard",SelectedIndex:WhatToSend,SelectedCardIndex:PlayerHand.indexOf(DraggableCard.Class)}));
         DropDraggable();
     }
@@ -947,6 +919,7 @@
             document.getElementById("DraggableParent").appendChild(DraggableCard.Draggable);
             DraggableCard.Draggable.style.left = MouseX+"px";
             DraggableCard.Draggable.style.top = MouseY+"px";
+            isDraggingCard = true;
         }
         Element.style.display = "none";
         
@@ -1005,6 +978,7 @@
                 element.classList.remove('Glow');
             });
         DraggableSelectTarget = null;
+        isDraggingCard = false;
     }
 
     function CreateCharacterStone(Attack, Health, Texture, Name = null, Type = null) {
@@ -1366,7 +1340,6 @@
                 if (this.Card.Death==true) {
                     this.Body.classList.add("DestroyStone");
                 }
-                console.log(this.Card.Death);
                 this.Removing = true;
                 let Body = this.Body;
                 setTimeout(function() {

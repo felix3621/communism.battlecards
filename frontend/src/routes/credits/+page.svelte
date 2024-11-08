@@ -81,6 +81,7 @@
         width: 50%;
         background-image: url(/images/logos/battlecards/left.png);
         background-size: contain;
+        background-repeat: no-repeat;
         aspect-ratio: 500/245;
         bottom: 0;
         filter: opacity(1);
@@ -93,6 +94,7 @@
         width: 50%;
         background-image: url(/images/logos/battlecards/right.png);
         background-size: contain;
+        background-repeat: no-repeat;
         aspect-ratio: 500/245;
         bottom: 0;
         filter: opacity(1);
@@ -102,7 +104,6 @@
         position: fixed;
         top: 0;
         left: 0;
-        top: 0;
         bottom: 0;
         background-color: white;
         transition: 1s;
@@ -296,6 +297,22 @@
         transform: translate(0,100%);
         bottom: 0;
     }
+    #ScrollCardHolder {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        right: 0;
+
+        & > div {
+            position: absolute;
+            width: 25%;
+            max-width: 100px;
+            top: 0;
+            transform: translate(-50%,-100%);
+            filter: drop-shadow(0mm 10mm 5mm black);
+        }
+    }
 </style>
 <div id="Background">
     <h1 id="MadeBy">Made By:</h1>
@@ -316,16 +333,21 @@
         <div id="CandleHolderPart2"></div>
         <div id="BattleCardsLogoRight"></div>
     </div>
+    <div id="ScrollCardHolder" class="CardHolder"></div>
     <div id="ScrollTextHolder"></div>
 </div>
 
 <div id="FlashBang"></div>
 <script>
-    import { onMount } from "svelte";
+    import { Card } from '$lib';
+    import { onMount, onDestroy } from "svelte";
     var ActivationTIme = 0;
     var CurrentStage = 0;
     var BackgroundScroll = true;
     var ScrollSpeed = 100;
+
+    export let data;
+    var SpawnCards = false;
 
     var CreditText = {
         Stage: 0,
@@ -333,6 +355,7 @@
             {
                 Title: "Database",
                 Text: "Mongo",
+                SpawnCards: true,
                 NextSpawnDelay: 75
             },
             {
@@ -379,6 +402,13 @@
     let ScrollingElements = new Array();
     let NextCandleSpawnDelay = 80;
     let TextSpawnDelay = 0.5;
+    let CardsSpawnDelay = 0;
+    let CardSpawnDelay = 1.5;
+    let AvatarsSpawnDelay = 0;
+    let AvatarSpawnDelay = 4;
+    let NextCardIndex = 0;
+    let NextAvatarIndex = 0;
+    let animationId;
     function AnimationLoop() {
         const currentTime = performance.now();
         const deltaTime = (currentTime - lastFrameTime)/1000;
@@ -435,12 +465,22 @@
                 i--;
             } else {
                 let computedStyle = getComputedStyle(ScrollingElements[i]);
-                if (parseFloat(computedStyle.bottom)-30-ScrollingElements[i].offsetHeight>=document.getElementById("Background").offsetHeight) {
-                    ScrollingElements[i].remove();
-                    ScrollingElements.splice(i,1);
-                    i--;
+                if (ScrollingElements[i].direction == "down") {
+                    if (parseFloat(computedStyle.top)-10-ScrollingElements[i].offsetHeight>=document.getElementById("Background").offsetHeight) {
+                        ScrollingElements[i].remove();
+                        ScrollingElements.splice(i,1);
+                        i--;
+                    } else {
+                        ScrollingElements[i].style.top = parseFloat(computedStyle.top) + deltaTime*ScrollSpeed*ScrollingElements[i].scrollSpeed + "px";
+                    }
                 } else {
-                    ScrollingElements[i].style.bottom = parseFloat(computedStyle.bottom) + deltaTime*ScrollSpeed + "px";
+                    if (parseFloat(computedStyle.bottom)-10-ScrollingElements[i].offsetHeight>=document.getElementById("Background").offsetHeight) {
+                        ScrollingElements[i].remove();
+                        ScrollingElements.splice(i,1);
+                        i--;
+                    } else {
+                        ScrollingElements[i].style.bottom = parseFloat(computedStyle.bottom) + deltaTime*ScrollSpeed + "px";
+                    }
                 }
             }
             
@@ -482,13 +522,70 @@
                 } else {
                     TextSpawnDelay -= deltaTime * ScrollSpeed;
                 }
+                if (typeof CreditText.Stages[CreditText.Stage]?.SpawnCards == "boolean") {
+                    SpawnCards = CreditText.Stages[CreditText.Stage].SpawnCards;
+                }
             } else {
                 CurrentStage++;
             }
         }
-        if (CurrentStage == 3 && ScrollingElements.length == 0) 
-            window.location.href = "/"
-        requestAnimationFrame(AnimationLoop);
+        if (SpawnCards) {
+            if (CardsSpawnDelay>0) {
+                CardsSpawnDelay-=deltaTime;
+            } else {
+                // Spawn card
+                if (data.Cards.length>NextCardIndex) {
+                    const NextCard = data.Cards[NextCardIndex];
+                    const CardHolder = document.getElementById("ScrollCardHolder");
+                    let cardInstance  = new Card({
+                        target: CardHolder,  // The DOM element where the component will be rendered
+                        props: {
+                            cardData: NextCard,
+                            isStone: false,
+                            isUnknownCard: false
+                        }
+                    });
+                    let element = CardHolder.children[CardHolder.children.length-1];
+                    NextCardIndex++;
+                    element.direction = "down";
+                    element.scrollSpeed = 4;
+                    element.style.left = `${Math.random()*100}%`;
+                    element.style.top = "-100px";
+                    ScrollingElements.push(element);
+                }
+
+                CardsSpawnDelay = CardSpawnDelay;
+            }
+            if (AvatarsSpawnDelay>0) {
+                AvatarsSpawnDelay -= deltaTime;
+            } else {
+                if (data.Avatars.length>NextAvatarIndex) {
+                    const NextAvatar = data.Avatars[NextAvatarIndex];
+                    const CardHolder = document.getElementById("ScrollCardHolder");
+                    let avatarInstance  = new Card({
+                        target: CardHolder,  // The DOM element where the component will be rendered
+                        props: {
+                            cardData: NextAvatar,
+                            isStone: true,
+                            isUnknownCard: false
+                        }
+                    });
+                    NextAvatarIndex++;
+                    let element = CardHolder.children[CardHolder.children.length-1];
+                    element.direction = "down";
+                    element.scrollSpeed = 2;
+                    element.style.left = `${Math.random()*100}%`;
+                    element.style.top = "-100px";
+                    ScrollingElements.push(element);
+                }
+
+                AvatarsSpawnDelay = AvatarSpawnDelay;
+            }
+        }
+        if (CurrentStage == 3 && ScrollingElements.length == 0)
+            window.location.href = "/";
+            //CurrentStage = 0;
+        animationId = requestAnimationFrame(AnimationLoop);
     }
     function OpenBackground() {
         let Part1 = document.getElementById("BackgroundPart1");
@@ -513,8 +610,20 @@
         let FlashBang = document.getElementById("FlashBang");
     }
     onMount(async() => {
+        console.log(data);
         ScrollingElements.push(document.getElementById("BattleCardsLogoLeft"));
         ScrollingElements.push(document.getElementById("BattleCardsLogoRight"));
         AnimationLoop();
+        return ()=>{
+            cancelAnimationFrame(animationId);
+        }
     });
+    onDestroy(()=>{
+        if (animationId)
+            cancelAnimationFrame(animationId);
+
+        ScrollingElements.forEach(element=>{
+            element.remove();
+        })
+    })
 </script>

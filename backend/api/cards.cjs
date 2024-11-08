@@ -4,135 +4,114 @@ const auth = require('../modules/authentication.cjs');
 const db = require('../modules/database.cjs');
 const fr = require('../modules/fileReader.cjs');
 const logger = require('../modules/logger.cjs');
-const cards = require('../../shared/Cards.json');
+const cards = require('../data/Cards.json');
 const router = express.Router();
 
-var client;
+let client;
 async function connectDB() {
     client = await db.connect();
 }
-connectDB()
+connectDB();
 
-router.use(auth.checkUser)
+router.use(auth.checkUser);
+
+router.use((req, res, next) => {
+    if (client == null) {
+        res.status(500).send("Server starting");
+    } else {
+        next();
+    }
+});
 
 router.get('/getAllCards', async (req, res) => {
     try {
-        let settings = JSON.parse(fr.read('../settings.json'))
+        let settings = JSON.parse(fr.read('../settings.json'));
         if (settings.getAllCards || req.user.admin) {
-            let result = await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username})
+            let result = await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username});
 
-            let old_deck = result.deck
-            let old_inventory = result.inventory
-    
-            result.inventory = []
-    
-            result.deck = []
-    
+            let deck = []
+            let newCards = [];
+
             for (let i = 0; i < cards.length; i++) {
-                result.deck.push(i)
+                deck.push(i);
+                newCards.push(i);
             }
 
-            logger.info(
-                req.user.username + ": old_deck="+JSON.stringify(old_deck)+", old_inventory="+JSON.stringify(old_inventory)+", new_deck="+JSON.stringify(result.deck)+", new_inventory="+JSON.stringify(result.inventory),
-                req.originalUrl
-            )
-    
-            await client.db("communism_battlecards").collection("accounts").updateOne({username: req.user.username},{$set:result})
+            await client.db("communism_battlecards").collection("accounts").updateOne({username: req.user.username},{$set: {inventory: [], deck, newCards}});
+
+            logger.info(`'${req.user.username}' ran getAllCards, previous cards: ${JSON.stringify({deck: result.deck, inventory: result.inventory}, null, 2)}`, "api/cards/getAllCards");
             
-            res.status(200).send("Cards changed")
+            res.status(200).send("Cards changed");
         } else {
-            res.status(401).send("Unauthorized")
+            res.status(401).send("Unauthorized");
         }
     } catch (e) {
-        res.status(500).send("Server Error")
+        res.status(500).send("Server Error");
     }
-})
+});
 
 router.get('/getXp', async (req, res) => {
     try {
-        var settings = JSON.parse(fr.read('../settings.json'))
+        let settings = JSON.parse(fr.read('../settings.json'));
         if (settings.getXp || req.user.admin) {
+            let result = await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username});
 
-            logger.info(
-                req.user.username + ": old_xp="+req.user.xp.totalXp+", new_xp="+settings.getXpAmount,
-                req.originalUrl
-            )
-
-            await client.db("communism_battlecards").collection("accounts").updateOne({username: req.user.username},{$set:{xp: settings.getXpAmount}})
+            await client.db("communism_battlecards").collection("accounts").updateOne({username: req.user.username},{$set:{xp: settings.getXpAmount, rewards: {xp: settings.getXpAmount-result.xp}}});
             
-            res.status(200).send("Cards changed")
+            res.status(200).send("Cards changed");
+
+            logger.info(`'${req.user.username}' ran getXp, previous XP: ${result.xp}`, "api/account/getXp");
         } else {
-            res.status(401).send("Unauthorized")
+            res.status(401).send("Unauthorized");
         }
     } catch (e) {
-        res.status(500).send("Server Error")
+        res.status(500).send("Server Error");
     }
-})
-
+});
 
 router.get('/getDeck', async (req, res) => {
-    let result = await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username})
+    let result = await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username});
 
-    let deck = new Array()
+    let deck = [];
 
     for (let i = 0; i < result.deck.length; i++) {
         deck.push(cards[result.deck[i]]);
     }
 
-    res.json(deck)
-})
+    res.json(deck);
+});
 router.get('/getInventory', async (req, res) => {
-    let result = await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username})
+    let result = await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username});
 
-    let inventory = new Array()
+    let inventory = [];
     for (let i = 0; i < result.inventory.length; i++) {
-        inventory.push({card:cards[result.inventory[i].card],count:result.inventory[i].count});
+        inventory.push(cards[result.inventory[i]]);
     }
 
-    res.json(inventory)
-})
+    res.json(inventory);
+});
 
 router.post('/addToDeck', async (req, res) => {
-    let result = await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username})
-    let old_result = ld.cloneDeep(result)
-    if (result.inventory[req.body.WhatItemIndex]) { // Check if item exsist
-        if (result.deck[req.body.WhatIndexToReplace]>=0&&result.deck.length>req.body.WhatIndexToReplace) { // check if card exsist in deck
-            var temp = result.deck[req.body.WhatIndexToReplace]; 
-            result.deck[req.body.WhatIndexToReplace] = result.inventory[req.body.WhatItemIndex].card;
-            result.inventory[req.body.WhatItemIndex].count--;
-            var item = result.inventory.find(obj => obj.card == temp);
-            if (item) {
-                item.count++;
-            } else {
-                result.inventory.push({card:temp,count:1});
-            }
+    let result = await client.db("communism_battlecards").collection("accounts").findOne({username: req.user.username});
+    if (typeof result.inventory[req.body.WhatItemIndex] == "number") { // Check if item exsist
+        if (typeof result.deck[req.body.WhatIndexToReplace] == "number" && result.deck.length>req.body.WhatIndexToReplace) { // check if card exsist in deck
+            let temp = result.deck[req.body.WhatIndexToReplace];
+            result.deck[req.body.WhatIndexToReplace] = result.inventory[req.body.WhatItemIndex];
+            result.inventory.push(temp);
         } else {
-            result.deck.push(result.inventory[req.body.WhatItemIndex].card);
-            result.inventory[req.body.WhatItemIndex].count--;
+            result.deck.push(result.inventory[req.body.WhatItemIndex]);
+            result.inventory.splice(req.body.WhatItemIndex, 1);
         }
-        if (result.inventory[req.body.WhatItemIndex].count<=0) {
-            result.inventory.splice(req.body.WhatItemIndex,1);
-        }
-    } else if (result.deck[req.body.WhatIndexToReplace]>=0&&result.deck.length>req.body.WhatIndexToReplace) { //Remove from deck
-        item = result.inventory.find(obj => obj.card == result.deck[req.body.WhatIndexToReplace]);
-        if (item) {
-            item.count++;
-        } else {
-            result.inventory.push({card:result.deck[req.body.WhatIndexToReplace],count:1});
-        }
+        logger.info(`'${req.user.username}' moved card with id ${result.deck[result.deck.length-1]} (${cards[result.deck[result.deck.length-1]].Name}) into deck`, "api/card/addToDeck");
+    } else if (result.deck[req.body.WhatIndexToReplace]>=0 && result.deck.length>req.body.WhatIndexToReplace) { //Remove from deck
+        result.inventory.push(result.deck[req.body.WhatIndexToReplace]);
         result.deck.splice(req.body.WhatIndexToReplace,1);
+        logger.info(`'${req.user.username}' moved card with id ${result.inventory[result.inventory.length-1]} (${cards[result.inventory[result.inventory.length-1]].Name}) into inventory`, "api/card/addToDeck");
     }
 
-    logger.debug(
-        req.user.username + ": old_deck="+JSON.stringify(old_result.deck)+", old_inventory="+JSON.stringify(old_result.inventory)+", new_deck="+JSON.stringify(result.deck)+", new_inventory="+JSON.stringify(result.inventory),
-        req.originalUrl
-    )
-    
+    await client.db("communism_battlecards").collection("accounts").updateOne({username: req.user.username},{$set:{deck: result.deck, inventory: result.inventory}});
 
-    await client.db("communism_battlecards").collection("accounts").updateOne({username: req.user.username},{$set:result})
-
-
-    res.json({deck: result.deck, inventory: result.inventory})
-}) 
+    res.json({deck: result.deck, inventory: result.inventory});
+});
 
 module.exports = router;

@@ -152,7 +152,7 @@
     },
     {
         "Name":"Pokeball",
-        "Description":"A Ball Is A Deadly Weapon, If Used Correctly. Gotta Catch 'Em All!",
+        "Description":"A Ball Is A Deadly Weapon, If Used Correctly.<br>Gotta Catch 'Em All!",
         "Attack":15,
         "Health":null,
         "Cost":7,
@@ -237,7 +237,7 @@
     },
     {
         "Name":"Bloon",
-        "Description":"A Bloon Of Destruction",
+        "Description":"A monkeys greates enemy",
         "Attack":1,
         "Health":1,
         "Cost":1,
@@ -282,5 +282,21 @@
         "Health":15,
         "Cost":10,
         "Texture":"Technoblade"
+    },
+    {
+        "Name":"Evil Bob",
+        "Description":"Evil bob clone attacks",
+        "Attack":9,
+        "Health":1,
+        "Cost":5,
+        "Texture":"bob_evil"
+    },
+    {
+        "Name":"Furry",
+        "Description":"A Furry With Too Much Free Time",
+        "Attack":6,
+        "Health":4,
+        "Cost":5,
+        "Texture":"Furry"
     }
 ]

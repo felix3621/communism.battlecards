@@ -1,4 +1,14 @@
 <style>
+    #Background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background-image: url(/images/Background0.png);
+        background-size: contain;
+        pointer-events: none;
+    }
     #logo {
         position: fixed;
         top:0;
@@ -253,6 +263,9 @@
         transform: translate(-50%,0)
     }
 </style>
+<div id="Background">
+
+</div>
 <img id="logo" src="/images/BattlecardsLogo.png" on:click={()=>window.location.href="/"}>
 
 <table id="adminConfig">
@@ -273,7 +286,7 @@
                     <p class="contentHeader">Deck:</p>
                     <div id="DU_deck" class="DU_cardContainer"></div>
                     <p class="contentHeader">Inventory:</p>
-                    <div id="DU_inventory"></div>
+                    <div id="DU_inventory" class="DU_cardContainer"></div>
                     <p class="contentHeader">Raw:</p>
                     <div id="DU_properties"></div>
                     <p class="contentHeader RootLocked" style="color: red;font-weight: bold">Danger Zone:</p>
@@ -365,7 +378,7 @@
         SetAllFontSizeInArray(FontSizeArray);
     }
 
-    function addCard(index) {
+    function addDeckCard(index) {
         selectCard(async (i) => {
             displayedUser.deck = [
                 ...displayedUser.deck.slice(0, index),
@@ -388,7 +401,30 @@
         });
     }
 
-    function changeCard(index) {
+    function addInventoryCard(index) {
+        selectCard(async (i) => {
+            displayedUser.inventory = [
+                ...displayedUser.inventory.slice(0, index),
+                i,
+                ...displayedUser.inventory.slice(index)
+            ]
+
+            await fetch(window.location.origin+'/api/admin/setInventory', {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    user: displayedUser.username,
+                    inventory: displayedUser.inventory
+                })
+
+            });
+            update();
+        });
+    }
+
+    function changeDeckCard(index) {
         selectCard(async (i) => {
             displayedUser.deck = [
                 ...displayedUser.deck.slice(0, index),
@@ -411,6 +447,29 @@
         });
     }
 
+    function changeInventoryCard(index) {
+        selectCard(async (i) => {
+            displayedUser.inventory = [
+                ...displayedUser.inventory.slice(0, index),
+                i,
+                ...displayedUser.inventory.slice(index+1)
+            ]
+
+            await fetch(window.location.origin+'/api/admin/setInventory', {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    user: displayedUser.username,
+                    inventory: displayedUser.inventory
+                })
+
+            });
+            update();
+        });
+    }
+
     function updateDisplayedUser() {
         if (displayedUser) {
             document.getElementById("DU_title").innerHTML = `
@@ -418,7 +477,6 @@
                 <br>
                 <i style='color: rgb(175,175,175'>`+displayedUser.username+`</i>
                 <br>
-                <button id="reset">Reset</button>
             `;
             document.getElementById("DU_title").children[0].onblur = async () => {
                 await fetch(window.location.origin+'/api/admin/setDisplayName', {
@@ -433,7 +491,14 @@
                 });
                 update()
             }
-            document.getElementById("DU_title").children[4].onclick = async () => {
+            let resetUserBtn = document.createElement("button");
+            resetUserBtn.id = "reset";
+            CreateTooltipEvent(resetUserBtn, "Reset account", "Hold <code>shift</code> and <code>ctrl</code> while clicking to reset user");
+            resetUserBtn.innerText = "Reset";
+            resetUserBtn.onclick = async e => {
+                if (!e.shiftKey || !e.ctrlKey)
+                    return
+
                 let newUser = await(await fetch(window.location.origin+'/api/admin/resetUser', {
                     method: 'POST',
                     headers: {
@@ -445,6 +510,7 @@
                 })).json()
                 update()
             }
+            document.getElementById("DU_title").appendChild(resetUserBtn);
             
             document.getElementById("DU_avatar").innerHTML = ""
             document.getElementById("DU_avatar").appendChild(CreateCharacterStone(avatars[displayedUser.avatar].Attack, avatars[displayedUser.avatar].Health, avatars[displayedUser.avatar].Texture))
@@ -507,7 +573,7 @@
 
                 options.push({
                     name: "Change",
-                    func: () => changeCard(i)
+                    func: () => changeDeckCard(i)
                 })
                 options.push({
                     name: "Remove",
@@ -531,87 +597,52 @@
                 createOptions(element, ...options)
                 document.getElementById("DU_deck").appendChild(element)
             }
-            var AddNewCard = document.createElement("div");
-            AddNewCard.id = "NewCard";
-            var AddButton = document.createElement("div");
-            AddNewCard.appendChild(AddButton);
-            AddNewCard.addEventListener("click",() => addCard(displayedUser.deck.length));
-            document.getElementById("DU_deck").appendChild(AddNewCard);
+            var AddNewDeckCard = document.createElement("div");
+            AddNewDeckCard.id = "NewCard";
+            var AddDeckButton = document.createElement("div");
+            AddNewDeckCard.appendChild(AddDeckButton);
+            AddNewDeckCard.addEventListener("click",() => addDeckCard(displayedUser.deck.length));
+            document.getElementById("DU_deck").appendChild(AddNewDeckCard);
 
             document.getElementById("DU_inventory").innerHTML = ""
-            document.getElementById("DU_inventory").appendChild(document.createElement("table"));
+
             for (let i = 0; i < displayedUser.inventory.length; i++) {
-                let invElement = document.createElement("tr");
+                let element = CreateCard(cards[displayedUser.inventory[i]].Name, cards[displayedUser.inventory[i]].Description, cards[displayedUser.inventory[i]].Cost, cards[displayedUser.inventory[i]].Attack, cards[displayedUser.inventory[i]].Health, cards[displayedUser.inventory[i]].Texture)
 
-                let cardCell = document.createElement("td");
-                let card = document.createElement("button");
-                card.innerText = cards[displayedUser.inventory[i].card].Name
-                card.onclick = () => selectCard(async (id) => {
-                    displayedUser.inventory[i].card = id;
-                    await fetch(window.location.origin+'/api/admin/setInventory', {
-                        method: 'POST',
-                        headers: {
-                            "Content-Type": "application/json"
-                        }, 
-                        body: JSON.stringify({
-                            user: displayedUser.username,
-                            inventory: displayedUser.inventory
-                        })
-                    });
-                    update()
+                let options = []
+
+                options.push({
+                    name: "Change",
+                    func: () => changeInventoryCard(i)
                 })
-                cardCell.appendChild(card);
-                invElement.appendChild(cardCell);
-                
-                let countCell = document.createElement("td");
-                let count = document.createElement("input");
-                count.type = "number"
-                count.value = displayedUser.inventory[i].count
-                count.onblur = async () => {
-                    displayedUser.inventory[i].count = Number(count.value);
-                    if (displayedUser.inventory[i].count == 0) [
-                        displayedUser.inventory.splice(i, 1)
-                    ]
-                    await fetch(window.location.origin+'/api/admin/setInventory', {
-                        method: 'POST',
-                        headers: {
-                            "Content-Type": "application/json"
-                        }, 
-                        body: JSON.stringify({
-                            user: displayedUser.username,
-                            inventory: displayedUser.inventory
-                        })
-                    });
-                    update()
-                }
-                countCell.appendChild(count);
-                invElement.appendChild(countCell);
-                
-                document.getElementById("DU_inventory").children[0].appendChild(invElement);
-            }
+                options.push({
+                    name: "Remove",
+                    func: async () => {
+                        displayedUser.inventory.splice(i,1);
 
-            let addInvRow = document.createElement("tr");
-            let addInvCell = document.createElement("td");
-            addInvCell.colSpan = 2;
-            let addInvBtn = document.createElement("button")
-            addInvBtn.innerText = "Add new card"
-            addInvBtn.onclick = async () => {
-                displayedUser.inventory.push({card: 0, count: 1})
-                await fetch(window.location.origin+'/api/admin/setInventory', {
-                    method: 'POST',
-                    headers: {
-                        "Content-Type": "application/json"
-                    }, 
-                    body: JSON.stringify({
-                        user: displayedUser.username,
-                        inventory: displayedUser.inventory
-                    })
-                });
-                update()
+                        await fetch(window.location.origin+'/api/admin/setInventory', {
+                            method: 'POST',
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                user: displayedUser.username,
+                                inventory: displayedUser.inventory
+                            })
+                        });
+                        update();
+                    }
+                })
+
+                createOptions(element, ...options)
+                document.getElementById("DU_inventory").appendChild(element)
             }
-            addInvCell.appendChild(addInvBtn);
-            addInvRow.appendChild(addInvCell);
-            document.getElementById("DU_inventory").children[0].appendChild(addInvRow)
+            var AddNewInventoryCard = document.createElement("div");
+            AddNewInventoryCard.id = "NewCard";
+            var AddInventoryButton = document.createElement("div");
+            AddNewInventoryCard.appendChild(AddInventoryButton);
+            AddNewInventoryCard.addEventListener("click",() => addInventoryCard(displayedUser.inventory.length));
+            document.getElementById("DU_inventory").appendChild(AddNewInventoryCard);
 
             document.getElementById("DU_properties").innerHTML = ""
             document.getElementById("DU_properties").appendChild(GenerateViewableProperties(displayedUser));
@@ -680,7 +711,7 @@
                         CloseAllToolTips()
                         update()
                     }
-                    CreateTooltipEvent(deleteBtn, "Delete account", "Hold <code>shift</code> and <code>ctrl</code> while clicking to delete user")
+                    CreateTooltipEvent(deleteBtn, "Delete account", "Hold <code>shift</code> and <code>ctrl</code> while clicking to delete user");
 
                     deleteDiv.appendChild(deleteBtn);
 

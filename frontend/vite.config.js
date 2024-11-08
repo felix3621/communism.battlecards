@@ -4,9 +4,17 @@ import { defineConfig } from 'vite';
 export default defineConfig({
     server: {
         proxy: {
-			'/api': 'http://localhost:3000',
-            '/socket': 'ws://localhost:3001'
+			'/api': 'http://localhost:5000',
+            '/socket': 'ws://localhost:5001'
         }
     },
-	plugins: [sveltekit()]
+	plugins: [sveltekit()],
+    css: {
+        preprocessorOptions: {
+            less: {
+                // You can add Less options here, if needed
+                math: 'always' // Example option
+            }
+        }
+    }
 });

@@ -4,7 +4,6 @@
     "getXp": false,
     "getXpAmount": 5562,
     "testUsers": false,
-    "publicView": true,
     "defaultAvatar": 0,
     "defaultDeck": [
         0,
