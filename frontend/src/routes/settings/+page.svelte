@@ -37,7 +37,7 @@
     }
 </style>
 
-<img id="logo" src="/images/BattlecardsLogo.png" on:click={()=>window.location.href="/"}>
+<img id="logo" src="{base}/images/BattlecardsLogo.png" on:click={()=>window.location.href=base}>
 
 <div id="settingsPanel">
     <h1>Settings</h1>
@@ -77,6 +77,7 @@
 
 <script>
     import { onMount } from "svelte";
+    import { base } from '$app/paths';
 
     function identicalPasswordCheck() {
         let newPassword = document.getElementById("new_password");
@@ -89,7 +90,7 @@
     }
 
     onMount(async () => {
-        let user = await fetch(window.location.origin+'/api/account/login', {
+        let user = await fetch(base+'/api/account/login', {
             method: 'POST',
             headers: {
                 "Content-Type": "application/json"
@@ -97,14 +98,14 @@
         });
 
         if (!user.ok)
-            window.location.href = "/login";
+            window.location.href = base+"/login";
 
         let ud = await user.json()
 
         document.getElementById("display_name").value = ud.display_name;
 
         document.getElementById("display_name").onblur = async () => {
-            await fetch(window.location.origin+'/api/account/setDisplayName', {
+            await fetch(base+'/api/account/setDisplayName', {
                 method: 'POST',
                 headers: {
                     "Content-Type": "application/json"
@@ -119,7 +120,7 @@
             let password = document.getElementById("password").value;
             let newPassword = document.getElementById("new_password").value;
             
-            let setPassword = await fetch(window.location.origin+'/api/account/setPassword', {
+            let setPassword = await fetch(base+'/api/account/setPassword', {
                 method: 'POST',
                 headers: {
                     "Content-Type": "application/json"

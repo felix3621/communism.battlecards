@@ -3,7 +3,7 @@ const url = require('url');
 const logger = require('./modules/logger.cjs');
 const processHandler = require('./modules/processErrorHandler.cjs');
 
-const port = 5001;
+const port = 5175;
 
 const chat = require("./socket/chat/socket.cjs");
 const game = require("./socket/game/socket.cjs");

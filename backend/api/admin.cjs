@@ -4,8 +4,6 @@ const db = require('../modules/database.cjs');
 const fr = require('../modules/fileReader.cjs');
 const xp = require('../modules/xp.cjs');
 const logger = require('../modules/logger.cjs');
-const cards = require('../data/Cards.json');
-const avatars = require('../data/Avatars.json');
 const router = express.Router();
 
 let client;
@@ -51,20 +49,12 @@ router.get('/users', async (req, res) => {
     res.json(result);
 })
 
-router.get('/cards', (req, res) => {
-    res.json(cards);
-})
-
-router.get('/avatars', (req, res) => {
-    res.json(avatars);
-})
-
 router.post('/setDeck', async (req, res) => {
     if (req.body.user && req.body.deck instanceof Array) {
         // Validator 
         let valid = true;
         for (let i = 0; i < req.body.deck.length; i++) {
-            if (typeof req.body.deck[i] != "number" || req.body.deck[i] < 0 || req.body.deck[i] >= cards.length) {
+            if (typeof req.body.deck[i] != "number" || req.body.deck[i] < 0 || req.body.deck[i] >= require('../data/Cards.json').length) {
                 valid = false;
             }
         }
@@ -103,7 +93,7 @@ router.post('/setInventory', async (req, res) => {
     if (req.body.user && req.body.inventory instanceof Array) {
         let valid = true;
         for (let i = 0; i < req.body.inventory.length; i++) {
-            if (typeof req.body.inventory[i] != "number" || req.body.inventory[i] < 0 || req.body.inventory[i] >= cards.length) {
+            if (typeof req.body.inventory[i] != "number" || req.body.inventory[i] < 0 || req.body.inventory[i] >= require('../data/Cards.json').length) {
                 valid = false;
             }
         }
@@ -134,7 +124,7 @@ router.post('/setInventory', async (req, res) => {
 
 router.post('/setAvatar', async (req, res) => {
     if (req.body.user && req.body.avatar != null) {
-        if (typeof req.body.avatar == "number" && req.body.avatar >= 0 && req.body.avatar < avatars.length) {
+        if (typeof req.body.avatar == "number" && req.body.avatar >= 0 && req.body.avatar < require('../data/Avatars.json').length) {
             let getResult;
             if (Object.is(req.user.root, true)) {
                 getResult = await client.db("communism_battlecards").collection("accounts").findOne({username: req.body.user});

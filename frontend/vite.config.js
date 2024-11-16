@@ -1,11 +1,23 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
+const base = process.env.BASE_PATH || '';
+
 export default defineConfig({
+    //dev proxy
     server: {
         proxy: {
-			'/api': 'http://localhost:5000',
-            '/socket': 'ws://localhost:5001'
+            [base+'/api']: {
+                target: 'http://localhost:5174',
+                changeOrigin: true,
+                rewrite: (path) => path.replace(/^\/battlecards\/api/, '/api'),
+            },
+            [base+'/socket']: {
+                target: 'http://localhost:5175',
+                changeOrigin: true,
+                ws: true,
+                rewrite: (path) => path.replace(/^\/battlecards\/socket/, '/socket'),
+            },
         }
     },
 	plugins: [sveltekit()],

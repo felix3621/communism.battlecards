@@ -39,7 +39,7 @@
         filter: drop-shadow(0 5mm 8mm rgba(0, 0, 0, 0.85));
         background-size: cover;
         aspect-ratio: 1/2;
-        background-image: url("/images/Candle.png");
+        background-image: url(/images/Candle.png);
     }
     :global(.Flame) {
         position: relative;
@@ -341,12 +341,15 @@
 <script>
     import { Card } from '$lib';
     import { onMount, onDestroy } from "svelte";
+    import { base } from '$app/paths';
+
     var ActivationTIme = 0;
     var CurrentStage = 0;
     var BackgroundScroll = true;
     var ScrollSpeed = 100;
+    var cards = [];;
+    var avatars = [];
 
-    export let data;
     var SpawnCards = false;
 
     var CreditText = {
@@ -453,7 +456,7 @@
                 FallingCandles[i].style.bottom = parseFloat(computedStyle.bottom) + deltaTime*ScrollSpeed + "px";
                 if (FallingCandles[i].children.length<=0 && parseFloat(computedStyle.bottom) >= 60) { // Remove Flame
                     let Flame = document.createElement("img");
-                    Flame.src = "/images/Fire.png";
+                    Flame.src = base+"/images/Fire.png";
                     Flame.classList.add("Flame");
                     FallingCandles[i].appendChild(Flame);
                 }
@@ -534,8 +537,8 @@
                 CardsSpawnDelay-=deltaTime;
             } else {
                 // Spawn card
-                if (data.Cards.length>NextCardIndex) {
-                    const NextCard = data.Cards[NextCardIndex];
+                if (cards.length>NextCardIndex) {
+                    const NextCard = cards[NextCardIndex];
                     const CardHolder = document.getElementById("ScrollCardHolder");
                     let cardInstance  = new Card({
                         target: CardHolder,  // The DOM element where the component will be rendered
@@ -559,8 +562,9 @@
             if (AvatarsSpawnDelay>0) {
                 AvatarsSpawnDelay -= deltaTime;
             } else {
-                if (data.Avatars.length>NextAvatarIndex) {
-                    const NextAvatar = data.Avatars[NextAvatarIndex];
+                // Spawn avatar
+                if (avatars.length>NextAvatarIndex) {
+                    const NextAvatar = avatars[NextAvatarIndex];
                     const CardHolder = document.getElementById("ScrollCardHolder");
                     let avatarInstance  = new Card({
                         target: CardHolder,  // The DOM element where the component will be rendered
@@ -583,7 +587,7 @@
             }
         }
         if (CurrentStage == 3 && ScrollingElements.length == 0)
-            window.location.href = "/";
+            window.location.href = base;
             //CurrentStage = 0;
         animationId = requestAnimationFrame(AnimationLoop);
     }
@@ -610,7 +614,21 @@
         let FlashBang = document.getElementById("FlashBang");
     }
     onMount(async() => {
-        console.log(data);
+        const cardRequest = await fetch(window.location.origin+base+'/api/data/cards', {
+            method: 'POST',
+            headers: {
+	    		'Content-Type': 'application/json',
+	    	}
+        });
+        const avatarRequest = await fetch(window.location.origin+base+'/api/data/avatars', {
+            method: 'POST',
+            headers: {
+	    		'Content-Type': 'application/json',
+	    	}
+        });
+        cards = await cardRequest.json();
+        avatars = await avatarRequest.json();
+
         ScrollingElements.push(document.getElementById("BattleCardsLogoLeft"));
         ScrollingElements.push(document.getElementById("BattleCardsLogoRight"));
         AnimationLoop();

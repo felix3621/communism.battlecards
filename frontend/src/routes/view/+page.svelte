@@ -211,7 +211,7 @@
         border-bottom: 2.5px solid black;
     }
 </style>
-<img id="logo" src="/images/BattlecardsLogo.png" on:click={()=>window.location.href="/"}>
+<img id="logo" src="{base}/images/BattlecardsLogo.png" on:click={()=>window.location.href=base}>
 
 <div id="gameList">
     <div id="games">
@@ -234,6 +234,7 @@
 
 <script>
     import { onMount } from "svelte";
+    import { base } from '$app/paths';
 
     var socket;
     var lastPing = 0;
@@ -243,7 +244,7 @@
     }, 100);
 
     function createSocket() {
-        socket = new WebSocket(`ws://${window.location.host}/socket/game?admin=true`);
+        socket = new WebSocket(base+'/socket/game?admin=true');
 
         socket.onopen = () => {
             console.log('Connected to server');
@@ -259,7 +260,7 @@
         socket.onclose = (event) => {
             console.log('Connection closed', event);
             if (event.code == 1008) {
-                setTimeout(() => {window.location.href = "/"},1000)
+                setTimeout(() => {window.location.href = base},1000)
             } else {
                 setTimeout(createSocket, 1000)
             }
@@ -271,7 +272,7 @@
     }
 
     onMount(async() => {
-        const user = await fetch(window.location.origin+'/api/account/login', {
+        const user = await fetch(base+'/api/account/login', {
             method: 'POST',
             headers: {
 	    		'Content-Type': 'application/json',
@@ -280,9 +281,9 @@
         if (user.ok) {
             let ud = await user.json();
             if (!ud.view)
-                window.location.href = '/';
+                window.location.href = base;
         } else
-            window.location.href = '/login';
+            window.location.href = base+'/login';
 
         createSocket();
     })
@@ -335,7 +336,7 @@
 
             //hand
             let handDiv = div.getElementsByClassName("battle_player_hand")[0]
-            handDiv.innerHTML = "<img src=\"/images/EmptyCard.png\"> X " + playerData.handCount
+            handDiv.innerHTML = '<img src="'+base+'/images/EmptyCard.png"> X ' + playerData.handCount
 
             let fieldDiv = div.getElementsByClassName("battle_player_field")[0]
             for (let i = 0; i < playerData.field.length || i<fieldDiv.children.length; i++) {
@@ -624,9 +625,9 @@
         var CharacterStone = document.createElement("div");
         CharacterStone.classList.add("CharacterStone");
         if (Type != null && Type == "Tank") {
-            CharacterStone.style.backgroundImage = "url('/images/Cards/"+Texture+".png'), url('/images/shield.png')";
+            CharacterStone.style.backgroundImage = "url("+base+"/images/Cards/"+Texture+".png), url("+base+"/images/shield.png)";
         } else 
-            CharacterStone.style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
+            CharacterStone.style.backgroundImage = "url("+base+"/images/Cards/"+Texture+".png)";
 
         //DMG
         var CharacterStoneDMG = document.createElement("div");
@@ -654,8 +655,8 @@
         Stone.getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = Attack;
         Stone.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = Health;
         if (Type != null && Type == "Tank") {
-            Stone.style.backgroundImage = "url('/images/Cards/"+Texture+".png'), url(images/shield.png)";
+            Stone.style.backgroundImage = "url("+base+"/images/Cards/"+Texture+".png), url("+base+"images/shield.png)";
         } else 
-            Stone.style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
+            Stone.style.backgroundImage = "url("+base+"/images/Cards/"+Texture+".png)";
     }
 </script>

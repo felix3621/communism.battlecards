@@ -104,7 +104,7 @@
     }
 </style>
 <div id="Background"></div>
-<img id="logo" src="/images/BattlecardsLogo.png">
+<img id="logo" src="{base}/images/BattlecardsLogo.png">
 <div id="Form">
     <div id="Login">
         <h1 class="Title">Login!</h1>
@@ -137,9 +137,10 @@
 
 <script>
     import { onMount } from "svelte";
+    import { base } from '$app/paths';
 
     onMount(async() => {
-        const user = await fetch(window.location.origin+'/api/account/login', {
+        const user = await fetch(base+'/api/account/login', {
             method: 'POST',
             headers: {
 	    		'Content-Type': 'application/json',
@@ -149,7 +150,7 @@
             })
         });
         if (user.ok) {
-            window.location.href = '/';
+            window.location.href = base;
         }
         
         document.getElementById('login_password').addEventListener("keypress",(e) => sendOnEnter(e, login))
@@ -171,7 +172,7 @@
     async function login() {
         let username = document.getElementById("login_username").value
         let password = document.getElementById("login_password").value
-        const data = await fetch(window.location.origin+'/api/account/login', {
+        const data = await fetch(base+'/api/account/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -182,7 +183,7 @@
             })
         })
         if (data.ok) {
-            window.location.href = "/"
+            window.location.href = base
         } else {
             document.getElementById("login_error").innerText = await data.text()
         }
@@ -192,7 +193,7 @@
         let username = document.getElementById("signup_username").value
         let displayName = document.getElementById("signup_display_name").value
         let password = document.getElementById("signup_password").value
-        const data = await fetch(window.location.origin+'/api/account/signup', {
+        const data = await fetch(base+'/api/account/signup', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -204,7 +205,7 @@
             })
         })
         if (data.ok) {
-            window.location.href = "/tutorial_game?tutorial=Introduction"
+            window.location.href = base+"/tutorial_game?tutorial=Introduction"
         } else {
             document.getElementById("signup_error").innerText = await data.text()
         }

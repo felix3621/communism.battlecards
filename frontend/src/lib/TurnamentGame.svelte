@@ -226,7 +226,6 @@
 
 <script>
     import { Card } from '$lib';
-    import { onMount } from "svelte";
     import { slide } from 'svelte/transition';
     import { quintOut } from 'svelte/easing';
 

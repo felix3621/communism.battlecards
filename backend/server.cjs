@@ -5,7 +5,7 @@ const cookieParser = require('cookie-parser');
 const logger = require('./modules/logger.cjs');
 const processHandler = require('./modules/processErrorHandler.cjs');
 const app = express();
-const port = 5000;
+const port = 5174;
 
 app.use(cors());
 app.use(bodyParser.json());

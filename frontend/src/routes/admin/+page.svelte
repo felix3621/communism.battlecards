@@ -266,7 +266,7 @@
 <div id="Background">
 
 </div>
-<img id="logo" src="/images/BattlecardsLogo.png" on:click={()=>window.location.href="/"}>
+<img id="logo" src="{base}/images/BattlecardsLogo.png" on:click={()=>window.location.href=base}>
 
 <table id="adminConfig">
     <tr>
@@ -309,6 +309,7 @@
 
 <script>
     import { onMount } from "svelte";
+    import { base } from '$app/paths';
 
     var cards;
     var avatars;
@@ -319,8 +320,6 @@
     var FontSizeArray = new Array();
 
     var self;
-
-    var settings;
 
     function createOptions(element, ...options) {
 
@@ -386,7 +385,7 @@
                 ...displayedUser.deck.slice(index)
             ]
 
-            await fetch(window.location.origin+'/api/admin/setDeck', {
+            await fetch(base+'/api/admin/setDeck', {
                 method: 'POST',
                 headers: {
                     "Content-Type": "application/json"
@@ -409,7 +408,7 @@
                 ...displayedUser.inventory.slice(index)
             ]
 
-            await fetch(window.location.origin+'/api/admin/setInventory', {
+            await fetch(base+'/api/admin/setInventory', {
                 method: 'POST',
                 headers: {
                     "Content-Type": "application/json"
@@ -432,7 +431,7 @@
                 ...displayedUser.deck.slice(index+1)
             ]
 
-            await fetch(window.location.origin+'/api/admin/setDeck', {
+            await fetch(base+'/api/admin/setDeck', {
                 method: 'POST',
                 headers: {
                     "Content-Type": "application/json"
@@ -455,7 +454,7 @@
                 ...displayedUser.inventory.slice(index+1)
             ]
 
-            await fetch(window.location.origin+'/api/admin/setInventory', {
+            await fetch(base+'/api/admin/setInventory', {
                 method: 'POST',
                 headers: {
                     "Content-Type": "application/json"
@@ -522,7 +521,7 @@
                 let element = CreateCharacterStone(avatars[i].Attack, avatars[i].Health, avatars[i].Texture)
 
                 element.onclick = async () => {
-                    await fetch(window.location.origin+'/api/admin/setAvatar', {
+                    await fetch(base+'/api/admin/setAvatar', {
                         method: 'POST',
                         headers: {
                             "Content-Type": "application/json"
@@ -540,7 +539,7 @@
                         document.getElementById("DU_avatarList").appendChild(element);
                     } else {
                         let locked = document.createElement("img");
-                        locked.src = "/images/locked.png";
+                        locked.src = base+"/images/locked.png";
                         locked.style.width = "100%";
                         document.getElementById("DU_avatarList").appendChild(locked);
                     }
@@ -551,7 +550,7 @@
 
             document.getElementById("DU_xp").innerHTML = "<p style='float: left'>XP:&nbsp;</p><input type='number' style='width: 10vw' value='"+displayedUser.xp+"'>"
             document.getElementById("DU_xp").children[1].onblur = async () => {
-                await fetch(window.location.origin+'/api/admin/setXp', {
+                await fetch(base+'/api/admin/setXp', {
                     method: 'POST',
                     headers: {
                         "Content-Type": "application/json"
@@ -580,7 +579,7 @@
                     func: async () => {
                         displayedUser.deck.splice(i,1);
 
-                        await fetch(window.location.origin+'/api/admin/setDeck', {
+                        await fetch(base+'/api/admin/setDeck', {
                             method: 'POST',
                             headers: {
                                 "Content-Type": "application/json"
@@ -620,7 +619,7 @@
                     func: async () => {
                         displayedUser.inventory.splice(i,1);
 
-                        await fetch(window.location.origin+'/api/admin/setInventory', {
+                        await fetch(base+'/api/admin/setInventory', {
                             method: 'POST',
                             headers: {
                                 "Content-Type": "application/json"
@@ -667,7 +666,7 @@
                         if (!e.shiftKey)
                             return
 
-                        let rtn = await fetch(window.location.origin+'/api/admin/setAdmin', {
+                        let rtn = await fetch(base+'/api/admin/setAdmin', {
                             method: 'POST',
                             headers: {
                                 "Content-Type": "application/json"
@@ -698,7 +697,7 @@
                         if (!e.shiftKey || !e.ctrlKey)
                             return
 
-                        let rtn = await fetch(window.location.origin+'/api/admin/deleteUser', {
+                        let rtn = await fetch(base+'/api/admin/deleteUser', {
                             method: 'POST',
                             headers: {
                                 "Content-Type": "application/json"
@@ -760,7 +759,7 @@
             <table>
                 <tr>
                     <td rowspan="2" style="width: 25%">
-                        <img src="/images/Cards/`+avatars[element.avatar].Texture+`.png" width="100%">
+                        <img src="`+base+`/images/Cards/`+avatars[element.avatar].Texture+`.png" width="100%">
                     </td>
                     <td style="width: 75%">
                         <p style="font-size:200%;width:1000000%;"><b><u>`+element.display_name+`</u></b></p>
@@ -779,7 +778,7 @@
 
     async function generateConfig() {
         //id: config
-        let settings = await (await fetch(window.location.origin+'/api/admin/settings', {
+        let settings = await (await fetch(base+'/api/admin/settings', {
             method: 'POST',
             headers: {
 		    	'Content-Type': 'application/json',
@@ -799,7 +798,7 @@
 
             if (data) {
                 document.getElementById("configError").innerText = "";
-                await fetch(window.location.origin+'/api/admin/settings', {
+                await fetch(base+'/api/admin/settings', {
                     method: 'POST',
                     headers: {
 		    	        'Content-Type': 'application/json',
@@ -812,7 +811,7 @@
     }
 
     async function update() {
-        let users = await fetch(window.location.origin+'/api/admin/users', {
+        let users = await fetch(base+'/api/admin/users', {
             method: 'get',
             headers: {
 		    	'Content-Type': 'application/json',
@@ -836,7 +835,7 @@
     }
 
     onMount(async() => {
-        const user = await fetch(window.location.origin+'/api/account/login', {
+        const user = await fetch(base+'/api/account/login', {
             method: 'POST',
             headers: {
 	    		'Content-Type': 'application/json',
@@ -845,13 +844,13 @@
         if (user.ok) {
             let ud = await user.json();
             if (!ud.admin) {
-                window.location.href = '/login';
+                window.location.href = base+'/login';
             }
 
             self = ud;
 
-            cards = await (await fetch(window.location.origin+'/api/admin/cards',{method:'GET',headers: {'Content-Type': 'application/json'}})).json()
-            avatars = await (await fetch(window.location.origin+'/api/admin/avatars',{method:'GET',headers: {'Content-Type': 'application/json'}})).json()
+            cards = await (await fetch(base+'/api/data/cards',{method:'GET',headers: {'Content-Type': 'application/json'}})).json()
+            avatars = await (await fetch(base+'/api/data/avatars',{method:'GET',headers: {'Content-Type': 'application/json'}})).json()
 
             let rootItems = document.getElementsByClassName("RootLocked");
             Object.entries(rootItems).forEach(([id, obj]) => {
@@ -871,7 +870,7 @@
             }
             update()
         } else {
-            window.location.href = '/login';
+            window.location.href = base+'/login';
         }
         window.addEventListener('resize', () => SetAllFontSizeInArray(FontSizeArray));
         window.addEventListener('click', (e) => {
@@ -920,9 +919,9 @@
         var CharacterStone = document.createElement("div");
         CharacterStone.classList.add("CharacterStone");
         if (Type != null && Type == "Tank") {
-            CharacterStone.style.backgroundImage = "url('/images/Cards/"+Texture+".png'), url('/images/shield.png')";
+            CharacterStone.style.backgroundImage = "url("+base+"/images/Cards/"+Texture+".png), url("+base+"/images/shield.png)";
         } else 
-            CharacterStone.style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
+            CharacterStone.style.backgroundImage = "url("+base+"/images/Cards/"+Texture+".png)";
 
         //DMG
         var CharacterStoneDMG = document.createElement("div");
@@ -957,7 +956,7 @@
         //Character In the midle
         var CardImage = document.createElement("div");
         CardImage.classList.add("CardImage");
-        CardImage.style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
+        CardImage.style.backgroundImage = "url("+base+"/images/Cards/"+Texture+".png)";
         Card.appendChild(CardImage);
 
         //Card Frame

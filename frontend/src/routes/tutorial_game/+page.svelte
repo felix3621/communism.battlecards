@@ -477,6 +477,7 @@
 <script>
     import { onMount } from "svelte";
     import { page } from '$app/stores';
+    import { base } from '$app/paths';
 
     // Tutorial Values
     var Tutorial = {
@@ -745,7 +746,7 @@
     onMount(async() => {
         let search = $page.url.searchParams;
         if (search.has("tutorial")) {
-            let data = await fetch(window.location.origin+'/api/tutorials/get/'+search.get("tutorial"), {
+            let data = await fetch(base+'/api/tutorials/get/'+search.get("tutorial"), {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -957,13 +958,13 @@
                     DraggableSelectTarget.SelectedTarget = "";
                 }
                 if (TargetClass && TargetClass.Card.Health-DraggableSelectTarget.Class.Card.Attack<=0) {
-                    DraggableSelectTarget.TargetIndicator.style.backgroundImage = "url('/images/kill.png');";
+                    DraggableSelectTarget.TargetIndicator.style.backgroundImage = "url("+base+"/images/kill.png);";
                 } else {
-                    DraggableSelectTarget.TargetIndicator.style.backgroundImage = "url('/images/target.png');";
+                    DraggableSelectTarget.TargetIndicator.style.backgroundImage = "url("+base+"/images/target.png);";
                 }
             } else {
                 DraggableSelectTarget.SelectedTarget = "";
-                DraggableSelectTarget.TargetIndicator.style.backgroundImage = "url('/images/target.png');";
+                DraggableSelectTarget.TargetIndicator.style.backgroundImage = "url("+base+"/images/target.png);";
             }
         }
     }
@@ -977,7 +978,7 @@
         if (!yourTurn) {return;}
         if (Class.Card.Type == "Projectile") {
             let Draggable = document.createElement("img");
-            Draggable.style = "width:100px:height:100px;background-image:url('/images/Projectile/"+Class.Card.Texture+".png')";
+            Draggable.style = "width:100px:height:100px;background-image:url("+base+"/images/Projectile/"+Class.Card.Texture+".png)";
             DraggableCard = {Card:Element,Draggable:Draggable,Class:Class};
             DraggableCard.Draggable.style.left = 50+"%";
             DraggableCard.Draggable.style.top = 75+"%";
@@ -1069,9 +1070,9 @@
         var CharacterStone = document.createElement("div");
         CharacterStone.classList.add("CharacterStone");
         if (Type != null && Type == "Tank") {
-            CharacterStone.style.backgroundImage = "url('/images/Cards/"+Texture+".png'), url('/images/shield.png')";
+            CharacterStone.style.backgroundImage = "url("+base+"/images/Cards/"+Texture+".png), url("+base+"/images/shield.png)";
         } else 
-            CharacterStone.style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
+            CharacterStone.style.backgroundImage = "url("+base+"/images/Cards/"+Texture+".png)";
         if (Name != null && Name != "") {
             var CharacterName = document.createElement("h1");
             CharacterName.classList.add("StoneName");
@@ -1121,7 +1122,7 @@
         for (let i = 0; i < EnergyHolder.children.length || i < MaxEnergy; i++) {
             if (i>= EnergyHolder.children.length && i < MaxEnergy) { // Create Child
                 var EnergyCrystal = document.createElement("img");
-                EnergyCrystal.src = "/images/EnergyIcon.png";
+                EnergyCrystal.src = base+"/images/EnergyIcon.png";
                 document.getElementById("DisplayEnergy").appendChild(EnergyCrystal);
             } else if (i< EnergyHolder.children.length && i >= PlayerEnergy) {
                 EnergyHolder.children[i].style.filter = "grayscale(1)";
@@ -1152,7 +1153,7 @@
         //Character In the midle
         var CardImage = document.createElement("div");
         CardImage.classList.add("CardImage");
-        CardImage.style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
+        CardImage.style.backgroundImage = "url("+base+"/images/Cards/"+Texture+".png)";
         Card.appendChild(CardImage);
 
         //Card Frame
@@ -1248,7 +1249,7 @@
 
     // Get Player Current Deck
     async function GetDeck() {
-        const deck = await fetch(window.location.origin+'/api/cards/getDeck', {
+        const deck = await fetch(base+'/api/cards/getDeck', {
             method: 'GET',
             headers: {
 	    		'Content-Type': 'application/json',
@@ -1315,7 +1316,7 @@
                 this.Body.style.display = "block";
             }
             if (this.Body && this.Body.classList.contains("Card")) {
-                this.Body.children[0].style.backgroundImage = "url('/images/Cards/"+this.Card.Texture+".png')";
+                this.Body.children[0].style.backgroundImage = "url("+base+"/images/Cards/"+this.Card.Texture+".png)";
                 this.Body.children[2].children[0].innerHTML = this.Card.Attack;
                 this.Body.children[3].children[0].innerHTML = this.Card.Health;
                 this.Body.children[4].children[0].innerHTML = this.Card.Cost;
@@ -1417,9 +1418,9 @@
                 this.Body.getElementsByClassName("CharacterStoneHealth")[0].children[0].style.color = "black";
             }
             if (this.Card.Type != null && this.Card.Type == "Tank") {
-                this.Body.style.backgroundImage = "url('/images/Cards/"+this.Card.Texture+".png'), url('/images/shield.png')";
+                this.Body.style.backgroundImage = "url("+base+"/images/Cards/"+this.Card.Texture+".png), url("+base+"/images/shield.png)";
             } else 
-                this.Body.style.backgroundImage = "url('/images/Cards/"+this.Card.Texture+".png')";
+                this.Body.style.backgroundImage = "url("+base+"/images/Cards/"+this.Card.Texture+".png)";
 
             if (this.AttackCooldown>0) {
                 this.Body.classList.add("OnCooldown");
@@ -1447,7 +1448,7 @@
             if (!yourTurn || this.AttackCooldown > 0 || Pause) {return;}
             var TargetIndicator = document.createElement("img");
             TargetIndicator.classList.add("TargetIndicator");
-            TargetIndicator.src = "/images/target.png";
+            TargetIndicator.src = base+"/images/target.png";
             DraggableSelectTarget = {Class:this,TargetIndicator:TargetIndicator,SelectedTarget:""}
             DraggableSelectTarget.Class.Body.classList.add("Glow");
             document.getElementById("DraggableParent").appendChild(TargetIndicator);

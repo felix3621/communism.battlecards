@@ -71,4 +71,5 @@ router.use('/tutorials', require('./tutorials.cjs'));
 router.use('/admin', require('./admin.cjs'));
 router.use('/friend', require('./friend.cjs'));
 router.use('/emoji', require('./emoji.cjs'));
+router.use('/data', require('./data.cjs'));
 module.exports = router;

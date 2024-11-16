@@ -2,7 +2,6 @@ const express = require('express');
 const auth = require('../modules/authentication.cjs');
 const db = require('../modules/database.cjs');
 const xp = require('../modules/xp.cjs');
-const avatar = require('../data/Avatars.json')
 const logger = require('../modules/logger.cjs');
 const router = express.Router();
 
@@ -42,7 +41,7 @@ router.get('/get', async (req, res) => {
                     username: ud.username,
                     display_name: ud.display_name,
                     level: xp.getLevel(ud.xp),
-                    avatar: avatar[ud.avatar]
+                    avatar: require('../data/Avatars.json')[ud.avatar]
                 });
             }
         }
@@ -98,7 +97,7 @@ router.post('/searchForUsers', async (req, res) => {
                 username: check[i].username,
                 display_name: check[i].display_name,
                 level: xp.getLevel(check[i].xp),
-                avatar: avatar[check[i].avatar]
+                avatar: require('../data/Avatars.json')[check[i].avatar]
             });
         }
 
@@ -115,7 +114,7 @@ router.get('/getUser/:user', async (req, res) => {
             username: check.username,
             display_name: check.display_name,
             level: xp.getLevel(check.xp),
-            avatar: avatar[check.avatar]
+            avatar: require('../data/Avatars.json')[check.avatar]
         });
     } else {
         res.status(404).send("User not found");
@@ -142,7 +141,7 @@ router.get('/getRequests', async (req, res) => {
                     username: ud.username,
                     display_name: ud.display_name,
                     level: xp.getLevel(ud.xp),
-                    avatar: avatar[ud.avatar]
+                    avatar: require('../data/Avatars.json')[ud.avatar]
                 };
 
                 if (check[i].accept[req.user.username]) {

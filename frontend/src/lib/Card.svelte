@@ -41,7 +41,6 @@
     </div>
 <script>
     import {TextAutoSizeToArea} from '$lib'
-    import {onMount} from "svelte";
 
     export let cardData = {};
     export let isStone = false;

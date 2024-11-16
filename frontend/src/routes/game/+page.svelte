@@ -209,15 +209,15 @@
         animation: glow 2s infinite;
     }
     @keyframes glow {
-      0% {
-        box-shadow: 0 0 10px rgba(248, 248, 165, 0.7);
-      }
-      50% {
-        box-shadow: 0 0 20px rgba(248, 248, 165, 0.7);
-      }
-      100% {
-        box-shadow: 0 0 10px rgba(248, 248, 165, 0.7);
-      }
+        0% {
+            box-shadow: 0 0 10px rgba(248, 248, 165, 0.7);
+        }
+        50% {
+            box-shadow: 0 0 20px rgba(248, 248, 165, 0.7);
+        }
+        100% {
+            box-shadow: 0 0 10px rgba(248, 248, 165, 0.7);
+        }
     }
     :global(.TargetIndicator) {
         position: fixed;
@@ -485,6 +485,7 @@
 <script>
     import { onMount } from "svelte";
     import { TurnamentGame } from "$lib";
+    import { base } from '$app/paths';
 
     // game data
     var EnemyAvatar;
@@ -534,7 +535,7 @@
             }
         }
 
-        socket = new WebSocket(`ws://${window.location.host}/socket/game?${query}`);
+        socket = new WebSocket(base+'/socket/game?'+query);
 
         // Event listener for when the connection is established
         socket.onopen = () => {
@@ -584,7 +585,7 @@
                                 setTimeout(() => {data.Projectiles[i].Element.remove();},1500);
                             }
                         }
-                        data.Projectiles[i].Element.src = "/images/Projectiles/"+data.Projectiles[i].Texture+".png";
+                        data.Projectiles[i].Element.src = base+"/images/Projectiles/"+data.Projectiles[i].Texture+".png";
                     }
                 }
                 //Tournament Screen
@@ -871,13 +872,13 @@
                     DraggableSelectTarget.SelectedTarget = "";
                 }
                 if (TargetClass && TargetClass.Health-DraggableSelectTarget.Class.Attack<=0) {
-                    DraggableSelectTarget.TargetIndicator.style.backgroundImage = "url('/images/kill.png');";
+                    DraggableSelectTarget.TargetIndicator.style.backgroundImage = "url("+base+"/images/kill.png);";
                 } else {
-                    DraggableSelectTarget.TargetIndicator.style.backgroundImage = "url('/images/target.png');";
+                    DraggableSelectTarget.TargetIndicator.style.backgroundImage = "url("+base+"/images/target.png);";
                 }
             } else {
                 DraggableSelectTarget.SelectedTarget = "";
-                DraggableSelectTarget.TargetIndicator.style.backgroundImage = "url('/images/target.png');";
+                DraggableSelectTarget.TargetIndicator.style.backgroundImage = "url("+base+"/images/target.png);";
             }
         }
     }
@@ -900,7 +901,7 @@
         if (!yourTurn) {return;}
         if (Class.Card.Type == "Projectile") {
             let Draggable = document.createElement("img");
-            Draggable.style = "width:100px:height:100px;background-image:url('images/Projectile/"+Class.Card.Texture+".png')";
+            Draggable.style = "width:100px:height:100px;background-image:url("+base+"images/Projectile/"+Class.Card.Texture+".png)";
             DraggableCard = {Card:Element,Draggable:Draggable,Class:Class}
             DraggableCard.Draggable.style.left = 50+"%";
             DraggableCard.Draggable.style.top = 75+"%";
@@ -908,7 +909,7 @@
             //Target Select!
             var TargetIndicator = document.createElement("img");
             TargetIndicator.classList.add("TargetIndicator");
-            TargetIndicator.src = "/images/target.png";
+            TargetIndicator.src = base+"/images/target.png";
             DraggableSelectTarget = {Class:Class,TargetIndicator:TargetIndicator,SelectedTarget:""}
             document.getElementById("DraggableParent").appendChild(TargetIndicator);
             DraggableSelectTarget.TargetIndicator.style.left = MouseX+"px";
@@ -986,9 +987,9 @@
         var CharacterStone = document.createElement("div");
         CharacterStone.classList.add("CharacterStone");
         if (Type != null && Type == "Tank") {
-            CharacterStone.style.backgroundImage = "url('/images/Cards/"+Texture+".png'), url('/images/shield.png')";
+            CharacterStone.style.backgroundImage = "url("+base+"/images/Cards/"+Texture+".png), url("+base+"/images/shield.png)";
         } else 
-            CharacterStone.style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
+            CharacterStone.style.backgroundImage = "url("+base+"/images/Cards/"+Texture+".png)";
         if (Name != null) {
             var CharacterName = document.createElement("h1");
             CharacterName.classList.add("StoneName");
@@ -1039,7 +1040,7 @@
         for (let i = 0; i < EnergyHolder.children.length || i < PlayerMaxEnergy; i++) {
             if (i>= EnergyHolder.children.length && i < PlayerMaxEnergy) { // Create Child
                 var EnergyCrystal = document.createElement("img");
-                EnergyCrystal.src = "/images/EnergyIcon.png";
+                EnergyCrystal.src = base+"/images/EnergyIcon.png";
                 document.getElementById("DisplayEnergy").appendChild(EnergyCrystal);
             } else if (i< EnergyHolder.children.length && i >= PlayerEnergy) {
                 EnergyHolder.children[i].style.filter = "grayscale(1)";
@@ -1070,7 +1071,7 @@
         //Character In the midle
         var CardImage = document.createElement("div");
         CardImage.classList.add("CardImage");
-        CardImage.style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
+        CardImage.style.backgroundImage = "url("+base+"/images/Cards/"+Texture+".png)";
         Card.appendChild(CardImage);
 
         //Card Frame
@@ -1233,7 +1234,7 @@
             }
             
             if (this.Body && this.Body.classList.contains("Card")) {
-                this.Body.children[0].style.backgroundImage = "url('/images/Cards/"+this.Card.Texture+".png')";
+                this.Body.children[0].style.backgroundImage = "url("+base+"/images/Cards/"+this.Card.Texture+".png)";
                 this.Body.children[2].children[0].innerHTML = this.Card.Attack;
                 this.Body.children[3].children[0].innerHTML = this.Card.Health;
                 this.Body.children[4].children[0].innerHTML = this.Card.Cost;
@@ -1324,9 +1325,9 @@
                 this.Body.getElementsByClassName("CharacterStoneDMG")[0].style.filter = "opacity(0)";
 
             if (Card.Type != null && Card.Type == "Tank") {
-                this.Body.style.backgroundImage = "url('/images/Cards/"+this.Card.Texture+".png'), url('/images/shield.png')";
+                this.Body.style.backgroundImage = "url("+base+"/images/Cards/"+this.Card.Texture+".png), url("+base+"/images/shield.png)";
             } else 
-                this.Body.style.backgroundImage = "url('/images/Cards/"+this.Card.Texture+".png')";
+                this.Body.style.backgroundImage = "url("+base+"/images/Cards/"+this.Card.Texture+".png)";
             this.AttackCooldown = AttackCooldown;
 
             if (this.AttackCooldown>0) {
@@ -1354,7 +1355,7 @@
             if (!yourTurn || this.AttackCooldown > 0) {return;}
             var TargetIndicator = document.createElement("img");
             TargetIndicator.classList.add("TargetIndicator");
-            TargetIndicator.src = "/images/target.png";
+            TargetIndicator.src = base+"/images/target.png";
             DraggableSelectTarget = {Class:this,TargetIndicator:TargetIndicator,SelectedTarget:""}
             DraggableSelectTarget.Class.Body.classList.add("Glow");
             document.getElementById("DraggableParent").appendChild(TargetIndicator);

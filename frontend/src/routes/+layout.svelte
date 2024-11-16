@@ -24,6 +24,7 @@
     }
   }
 </style>
+<Styles/>
 <slot />
 
 {#if $Errors.length > 0}
@@ -37,6 +38,7 @@
 {/if}
 <script>
     import { Errors } from '$lib';
+    import { Styles } from '$lib'
     import { onMount, onDestroy } from "svelte";
 
     onMount(()=>{

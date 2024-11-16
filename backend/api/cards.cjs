@@ -1,10 +1,8 @@
 const express = require('express');
-const ld = require('lodash');
 const auth = require('../modules/authentication.cjs');
 const db = require('../modules/database.cjs');
 const fr = require('../modules/fileReader.cjs');
 const logger = require('../modules/logger.cjs');
-const cards = require('../data/Cards.json');
 const router = express.Router();
 
 let client;
@@ -32,7 +30,7 @@ router.get('/getAllCards', async (req, res) => {
             let deck = []
             let newCards = [];
 
-            for (let i = 0; i < cards.length; i++) {
+            for (let i = 0; i < require('../data/Cards.json').length; i++) {
                 deck.push(i);
                 newCards.push(i);
             }
@@ -75,7 +73,7 @@ router.get('/getDeck', async (req, res) => {
     let deck = [];
 
     for (let i = 0; i < result.deck.length; i++) {
-        deck.push(cards[result.deck[i]]);
+        deck.push(require('../data/Cards.json')[result.deck[i]]);
     }
 
     res.json(deck);
@@ -85,7 +83,7 @@ router.get('/getInventory', async (req, res) => {
 
     let inventory = [];
     for (let i = 0; i < result.inventory.length; i++) {
-        inventory.push(cards[result.inventory[i]]);
+        inventory.push(require('../data/Cards.json')[result.inventory[i]]);
     }
 
     res.json(inventory);
@@ -102,11 +100,11 @@ router.post('/addToDeck', async (req, res) => {
             result.deck.push(result.inventory[req.body.WhatItemIndex]);
             result.inventory.splice(req.body.WhatItemIndex, 1);
         }
-        logger.info(`'${req.user.username}' moved card with id ${result.deck[result.deck.length-1]} (${cards[result.deck[result.deck.length-1]].Name}) into deck`, "api/card/addToDeck");
+        logger.info(`'${req.user.username}' moved card with id ${result.deck[result.deck.length-1]} (${require('../data/Cards.json')[result.deck[result.deck.length-1]].Name}) into deck`, "api/card/addToDeck");
     } else if (result.deck[req.body.WhatIndexToReplace]>=0 && result.deck.length>req.body.WhatIndexToReplace) { //Remove from deck
         result.inventory.push(result.deck[req.body.WhatIndexToReplace]);
         result.deck.splice(req.body.WhatIndexToReplace,1);
-        logger.info(`'${req.user.username}' moved card with id ${result.inventory[result.inventory.length-1]} (${cards[result.inventory[result.inventory.length-1]].Name}) into inventory`, "api/card/addToDeck");
+        logger.info(`'${req.user.username}' moved card with id ${result.inventory[result.inventory.length-1]} (${require('../data/Cards.json')[result.inventory[result.inventory.length-1]].Name}) into inventory`, "api/card/addToDeck");
     }
 
     await client.db("communism_battlecards").collection("accounts").updateOne({username: req.user.username},{$set:{deck: result.deck, inventory: result.inventory}});

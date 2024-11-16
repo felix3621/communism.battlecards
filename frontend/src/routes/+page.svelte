@@ -134,7 +134,7 @@
         background-color: rgb(50, 50, 50);
         border-radius: 50%;
         border: 5px solid black;
-        background-image: url("/images/settings.png");
+        background-image: url(/images/settings.png);
         background-size: contain;
     }
     #SettingsCog:hover {
@@ -300,7 +300,7 @@
         top:0;
         right:0;
         aspect-ratio: 1/1;
-        background-image: url('/images/EnergyIcon.png');
+        background-image: url(/images/EnergyIcon.png);
         transform: translate(30%,-50%);
         width: 50%;
         background-size: cover;
@@ -389,7 +389,7 @@
         transform: translate(-50%,-50%);
         top: 35%;
         left: 50%;
-        background-image: url("/images/loot_crate.png");
+        background-image: url(/images/loot_crate.png);
         aspect-ratio: 1/1;
         width: 200px;
         background-size: contain;
@@ -686,7 +686,7 @@
         filter: drop-shadow(0 5mm 8mm rgba(0, 0, 0, 0.85));
         background-size: cover;
         aspect-ratio: 1/2;
-        background-image: url("/images/Candle.png");
+        background-image: url(/images/Candle.png);
     }
     #SearchProfile input {
         position: absolute;
@@ -869,7 +869,7 @@
         --glowSize: 1mm;
         font-size: 20px;
     }
-    @-webkit-keyframes glow {
+    @-keyframes glow {
         from {
             text-shadow: 0 0 var(--glowSize, 0.6mm) var(--color);
         }
@@ -912,7 +912,7 @@
     <div id="CandleHolder"></div>
     <div id="CardHolder"></div>
 </div>
-<img id="logo" src="/images/BattlecardsLogo.png">
+<img id="logo" src="{base}/images/BattlecardsLogo.png">
 <div id="MainProfileHoldre">
     <div id="profile">
         <table>
@@ -946,12 +946,12 @@
         <table class="content">
             <tr>
                 <td colspan="2">
-                    <button id="quickPlay" class="btn" on:click={() => window.location.href = "/game"}>Quick Play</button>
+                    <button id="quickPlay" class="btn" on:click={() => window.location.href = base+"/game"}>Quick Play</button>
                 </td>
             </tr>
             <tr>
                 <td colspan="2">
-                    <button id="privateGame" class="btn" on:click={() => window.location.href = "/game?private=true"}>Private Game</button>
+                    <button id="privateGame" class="btn" on:click={() => window.location.href = base+"/game?private=true"}>Private Game</button>
                 </td>
             </tr>
             <tr>
@@ -959,7 +959,7 @@
                     <input type="text" placeholder="code" id="gameCode">
                 </td>
                 <td style="width: 50%;">
-                    <button id="JoinByCodeBtn" class="btn" on:click={() => window.location.href = "/game?code="+encodeURIComponent(document.getElementById("gameCode").value)}>Join</button>
+                    <button id="JoinByCodeBtn" class="btn" on:click={() => window.location.href = base+"/game?code="+encodeURIComponent(document.getElementById("gameCode").value)}>Join</button>
                 </td>
             </tr>
         </table>
@@ -972,7 +972,7 @@
         <table class="content">
             <tr>
                 <td colspan="2">
-                    <button class="btn" id="createTournament" on:click={() => window.location.href = "/game?tournament=new"}>New tournament</button>
+                    <button class="btn" id="createTournament" on:click={() => window.location.href = base+"/game?tournament=new"}>New tournament</button>
                 </td>
             </tr>
             <tr>
@@ -980,7 +980,7 @@
                     <input type="text" placeholder="code" id="tournamentCode">
                 </td>
                 <td style="width: 50%;">
-                    <button id="JoinTournamentCodeBtn" class="btn" on:click={() => !!document.getElementById("tournamentCode").value ? window.location.href = "/game?tournament="+encodeURIComponent(document.getElementById("tournamentCode").value) : void(0)}>Join</button>
+                    <button id="JoinTournamentCodeBtn" class="btn" on:click={() => !!document.getElementById("tournamentCode").value ? window.location.href = base+"/game?tournament="+encodeURIComponent(document.getElementById("tournamentCode").value) : void(0)}>Join</button>
                 </td>
             </tr>
         </table>
@@ -1005,7 +1005,7 @@
         }
     }}></div>
 </div>
-<div id="credits" on:click={() => window.location.href = "/credits"}>Credits</div>
+<div id="credits" on:click={() => window.location.href = base+"/credits"}>Credits</div>
 <div id="Chat">
     <div id="MessagesDisplay">
         <div id="MessagesDisplayReverse">
@@ -1021,7 +1021,7 @@
 </div>
 <div id="publicTournamentsList">
     {#each publicTournaments as tournament}
-        <button use:useTooltipEvent={{text: `Join tournament: ${tournament.code}`}} on:click={()=> window.location.href = "/game?tournament="+tournament.code}>
+        <button use:useTooltipEvent={{text: `Join tournament: ${tournament.code}`}} on:click={()=> window.location.href = base+"/game?tournament="+tournament.code}>
             <h1>Code: {tournament.code}</h1>
             <p>Players: {tournament.playerCount}</p>
         </button>
@@ -1045,7 +1045,7 @@
     <h1 id="ResultTitle">Title</h1>
     <div id="RewardCrate" style="display: none;"></div>
     <div id="RewardDisplay"></div>
-    <button on:click={()=>{document.getElementById("ResultPage").style.display="none";fetch(window.location.origin+'/api/account/clearRewards', {method: 'POST',headers: {'Content-Type': 'application/json'}});}}>Okay</button>
+    <button on:click={()=>{document.getElementById("ResultPage").style.display="none";fetch(base+'/api/account/clearRewards', {method: 'POST',headers: {'Content-Type': 'application/json'}});}}>Okay</button>
 </div>
 
 <div id="ProfilePage">
@@ -1082,9 +1082,8 @@
 
 <script>
     import { Errors } from '$lib';
+    import { base } from '$app/paths';
     import {onDestroy, onMount} from "svelte";
-    var Level = 1;
-    var Exp = 0;
     var FontSizeAdjusterArray = [];
     var SelectedAvatar;
     var socket;
@@ -1101,7 +1100,7 @@
             class:"bob"
         },
         itx: {
-            override: "<img src='/images/emoji/itx.png'>"
+            override: "<img src='"+base+"/images/emoji/itx.png'>"
         },
         felix: {
             class: "felix"
@@ -1114,7 +1113,7 @@
     async function ShowFriendRequests() {
         SwitchTab(6);
         let FriendRequests = document.getElementById("FriendRequests");
-        let User_data = await (await fetch(window.location.origin+'/api/friend/getRequests', {
+        let User_data = await (await fetch(base+'/api/friend/getRequests', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -1132,7 +1131,7 @@
                 let RemoveBtn = document.createElement("button");
                 RemoveBtn.innerHTML = "Remove";
                 RemoveBtn.addEventListener("click",()=>{
-                    fetch(window.location.origin+'/api/friend/acceptRequest', {
+                    fetch(base+'/api/friend/acceptRequest', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1146,7 +1145,7 @@
                 let AcceptBtn = document.createElement("button");
                 AcceptBtn.innerHTML = "Accept";
                 AcceptBtn.addEventListener("click",async()=>{
-                    await fetch(window.location.origin+'/api/friend/acceptRequest', {
+                    await fetch(base+'/api/friend/acceptRequest', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1162,7 +1161,7 @@
                 RejectBtn.innerHTML = "Reject";
                 RejectBtn.style.top = "50%"
                 RejectBtn.addEventListener("click",()=>{
-                    fetch(window.location.origin+'/api/friend/acceptRequest', {
+                    fetch(base+'/api/friend/acceptRequest', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1177,7 +1176,7 @@
     }
 
     async function SendFriendRequestTo(username) {
-        let User_data = await (await fetch(window.location.origin+'/api/friend/sendRequest', {
+        let User_data = await (await fetch(base+'/api/friend/sendRequest', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1190,7 +1189,7 @@
 
     async function ShowProfile(username) {
         SwitchTab(0);
-        let User_data = await (await fetch(window.location.origin+'/api/friend/getUser/'+username, {
+        let User_data = await (await fetch(base+'/api/friend/getUser/'+username, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -1237,11 +1236,8 @@
             }
         }
     }
-    function UpdatePlayerStats() {
-        
-    }
     async function SearchForPlayer(Name="") {
-        let User_data = await (await fetch(window.location.origin+'/api/friend/searchForUsers', {
+        let User_data = await (await fetch(base+'/api/friend/searchForUsers', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1288,7 +1284,7 @@
 
     var Friends = new Array();
     async function UpdateFriendList() {
-        var Friend_data = await (await fetch(window.location.origin+'/api/friend/get', {
+        var Friend_data = await (await fetch(window.location.origin+base+'/api/friend/get', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -1302,14 +1298,14 @@
         }
     }
     async function updateProfilePicture() {
-        var avatar_data = await (await fetch(window.location.origin+'/api/avatar/get', {
+        var avatar_data = await (await fetch(window.location.origin+base+'/api/avatar/get', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
             }
         })).json();
         document.getElementById("pfp_row").width = document.getElementById("pfp_row").offsetHeight+"px";
-        document.getElementById("pfp").style.backgroundImage = 'url("/images/Cards/'+avatar_data.selected.Texture+'.png")';
+        document.getElementById("pfp").style.backgroundImage = 'url('+base+'/images/Cards/'+avatar_data.selected.Texture+'.png)';
     }
     function OppenRewardCrate(Rewards) {
         document.getElementById("ResultPage").style.display = "block";
@@ -1386,7 +1382,7 @@
         if (socket) {
             socket.close(1000);
         }
-        socket = new WebSocket(`ws://${window.location.host}/socket/chat`);
+        socket = new WebSocket(base+'/socket/chat');
 
         // Event listener for when the connection is established
         socket.onopen = () => {
@@ -1505,7 +1501,7 @@
                 FallingCandles[i].style.top = parseFloat(computedStyle.top) + deltaTime*40 + "px";
                 if (FallingCandles[i].children.length<=0 && parseFloat(computedStyle.top) >= 60) { // Remove Flame
                     let Flame = document.createElement("img");
-                    Flame.src = "/images/Fire.png";
+                    Flame.src = base+"/images/Fire.png";
                     Flame.classList.add("Flame");
                     FallingCandles[i].appendChild(Flame);
                 }
@@ -1544,7 +1540,7 @@
     async function ToggleEmojiPanel() {
         SelectEmoji.style.display = SelectEmoji.style.display == "none" ? "flex": "none";
         if (SelectEmoji.style.display == "flex") {
-            let Emojies = await (await fetch(window.location.origin+'/api/emoji/get', {
+            let Emojies = await (await fetch(base+'/api/emoji/get', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1553,7 +1549,7 @@
             SelectEmoji.innerHTML = "";
             for (let i = 0; i < Emojies.length; i++) {
                 let NewEmoji = document.createElement("img");
-                NewEmoji.src = "/images/emoji/"+Emojies[i].texture+".png";
+                NewEmoji.src = base+"/images/emoji/"+Emojies[i].texture+".png";
                 let index = i;
                 NewEmoji.addEventListener("click",()=>{SendEmoji(index)});
                 SelectEmoji.appendChild(NewEmoji);
@@ -1569,7 +1565,7 @@
     }
     var Username;
     onMount(async() => {
-        const user = await fetch(window.location.origin+'/api/account/login', {
+        const user = await fetch(window.location.origin+base+'/api/account/login', {
             method: 'POST',
             headers: {
 	    		'Content-Type': 'application/json',
@@ -1584,13 +1580,13 @@
             }
             if (ud.admin) {
                 let adminLink = document.createElement("a");
-                adminLink.setAttribute("href","admin");
+                adminLink.setAttribute("href",base+"/admin");
                 adminLink.innerText = "Admin";
                 adminLink.classList.add("adminButton");
                 document.getElementById("SettingsDropDown").appendChild(adminLink);
 
                 let tournamentLink = document.createElement("a");
-                tournamentLink.setAttribute("href","tournament");
+                tournamentLink.setAttribute("href",base+"/tournament");
                 tournamentLink.innerText = "Tournament";
                 tournamentLink.classList.add("tournamentButton");
                 document.getElementById("SettingsDropDown").appendChild(tournamentLink);
@@ -1598,14 +1594,14 @@
             /*
             if (ud.view) {
                 let viewLink = document.createElement("a");
-                viewLink.setAttribute("href","view");
+                viewLink.setAttribute("href",base+"view");
                 viewLink.innerText = "View";
                 document.getElementById("SettingsDropDown").appendChild(viewLink);
             }*/
             if (ud.getAllCards) {
                 let gac = document.createElement("a");
                 gac.onclick = async () => {
-                    await fetch(window.location.origin+'/api/cards/getAllCards', {
+                    await fetch(base+'/api/cards/getAllCards', {
                         method: 'GET'
                     });
                     window.location.reload();
@@ -1616,7 +1612,7 @@
             if (ud.getXp) {
                 let gXp = document.createElement("a");
                 gXp.onclick = async () => {
-                    await fetch(window.location.origin+'/api/cards/getXp', {
+                    await fetch(base+'/api/cards/getXp', {
                         method: 'GET'
                     });
                     window.location.reload();
@@ -1631,7 +1627,7 @@
             document.getElementById("level_display").innerText = ud.xp.level
             CreateTooltipEvent(document.getElementById("EXP_Bar").parentNode, "Level: "+ud.xp.level, (ud.xp.requiredXp-ud.xp.xp)+" xp remaining for next level<br>Total xp: "+ud.xp.totalXp);
         } else {
-            window.location.href = '/login';
+            window.location.href = base+'/login';
         }
         
         SetAllFontSizeInArray(FontSizeAdjusterArray);
@@ -1664,13 +1660,13 @@
         }
     });
     async function logOut() {
-        let test = await fetch(window.location.origin+'/api/account/logout', {
+        let test = await fetch(base+'/api/account/logout', {
             method: 'POST',
             headers: {
 	    		'Content-Type': 'application/json',
 	    	}
         });
-        window.location.href = '/login';
+        window.location.href = base+'/login';
     }
 
     function SetExpFilLevel(Level) {
@@ -1683,9 +1679,9 @@
         var CharacterStone = document.createElement("div");
         CharacterStone.classList.add("CharacterStone"); 
         if (Type != null && Type == "Tank") {
-            CharacterStone.style.backgroundImage = "url('/images/Cards/"+Texture+".png'), url('/images/shield.png')";
+            CharacterStone.style.backgroundImage = "url("+base+"/images/Cards/"+Texture+".png), url("+base+"/images/shield.png)";
         } else 
-            CharacterStone.style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
+            CharacterStone.style.backgroundImage = "url("+base+"/images/Cards/"+Texture+".png)";
 
         //DMG
         var CharacterStoneDMG = document.createElement("div");
@@ -1720,7 +1716,7 @@
         //Character In the midle
         var CardImage = document.createElement("div");
         CardImage.classList.add("CardImage");
-        CardImage.style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
+        CardImage.style.backgroundImage = "url("+base+"/images/Cards/"+Texture+".png)";
         Card.appendChild(CardImage);
 
         //Card Frame
@@ -1816,7 +1812,7 @@
     }
 
     async function ShowDeck() {
-        const deck = await fetch(window.location.origin+'/api/cards/getDeck', {
+        const deck = await fetch(base+'/api/cards/getDeck', {
             method: 'GET',
             headers: {
 	    		'Content-Type': 'application/json',
@@ -1848,7 +1844,7 @@
                 })(i);
             } else if (i < Deck.length && i < DeckParent.children.length) {
                 CurrentChild = DeckParent.children[i];
-                CurrentChild.children[0].style.backgroundImage = "url(/images/Cards/"+Deck[i].Texture+".png)";
+                CurrentChild.children[0].style.backgroundImage = "url("+base+"/images/Cards/"+Deck[i].Texture+".png)";
                 CurrentChild.children[2].children[0].innerHTML = Deck[i].Attack;
                 CurrentChild.children[3].children[0].innerHTML = Deck[i].Health;
                 CurrentChild.children[4].children[0].innerHTML = Deck[i].Cost;
@@ -1903,7 +1899,7 @@
         var InventoryPanel = document.getElementById("InventoryPanel");
         InventoryPanel.style.display = "block";
         var InventoryParent = document.getElementById("Inventory");
-        var inventory = await fetch(window.location.origin+'/api/cards/getInventory', {
+        var inventory = await fetch(base+'/api/cards/getInventory', {
             method: 'GET',
             headers: {
 	    		'Content-Type': 'application/json',
@@ -1948,7 +1944,7 @@
             } else if (i < (InventoryParent.children.length-1) && i < inventory.length) {
                 RemoveAllRefensesFromArray(InventoryParent.children[i+1],FontSizeAdjusterArray);
                 CurrentChild = removeAllEventListeners(InventoryParent.children[i+1]);
-                CurrentChild.children[0].style.backgroundImage = "url('/images/Cards/"+inventory[i].Texture+".png')";
+                CurrentChild.children[0].style.backgroundImage = "url("+base+"/images/Cards/"+inventory[i].Texture+".png')";
                 CurrentChild.children[2].children[0].innerHTML = inventory[i].Attack;
                 CurrentChild.children[3].children[0].innerHTML = inventory[i].Health;
                 CurrentChild.children[4].children[0].innerHTML = inventory[i].Cost;
@@ -1984,7 +1980,7 @@
     }
 
     async function AddToDeck(index, WhatIndexToReplace) {
-        await fetch(window.location.origin+'/api/cards/addToDeck', {
+        await fetch(base+'/api/cards/addToDeck', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -2025,7 +2021,7 @@
 
     async function UpdateAvatarsPanel() {
         // Get All Avatars And The Players Avatar
-        var Avatars = await fetch(window.location.origin+'/api/avatar/get', {
+        var Avatars = await fetch(base+'/api/avatar/get', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -2048,8 +2044,8 @@
             document.getElementById("AvatarAbility").style.opacity = 1;
             RemoveAllRefensesFromArray(document.getElementById("AvatarAbility"),FontSizeAdjusterArray);
             removeAllEventListeners(document.getElementById("AvatarAbility"));
-            document.getElementById("AvatarAbility").style.backgroundImage = "url('/images/Ability/"+Avatars.selected.AbilityStone.Texture+".png')";
-            CreateTooltipEvent(document.getElementById("AvatarAbility"),Avatars.selected.AbilityStone.Name,Avatars.selected.AbilityStone.Description+"<br>Cost: "+Avatars.selected.AbilityStone.Cost,"/images/Ability/"+Avatars.selected.AbilityStone.Texture+".png");
+            document.getElementById("AvatarAbility").style.backgroundImage = "url("+base+"/images/Ability/"+Avatars.selected.AbilityStone.Texture+".png)";
+            CreateTooltipEvent(document.getElementById("AvatarAbility"),Avatars.selected.AbilityStone.Name,Avatars.selected.AbilityStone.Description+"<br>Cost: "+Avatars.selected.AbilityStone.Cost,base+"/images/Ability/"+Avatars.selected.AbilityStone.Texture+".png");
             AddAllOfElementTypeToArray(document.getElementById("AvatarAbility"),"p",FontSizeAdjusterArray, 0.5);
             document.getElementById("AvatarAbility").children[0].children[0].innerHTML = Avatars.selected.AbilityStone.Cost;
         } else {
@@ -2063,7 +2059,7 @@
             if (i>= DisplayAllAvatarsParent.children.length && i < Avatars.avatars.length) {
                 if (Avatars.avatars[i].Locked) {
                     var NewAvatar = document.createElement("div");
-                    NewAvatar.style.backgroundImage = "url(/images/locked.png)";
+                    NewAvatar.style.backgroundImage = "url("+base+"/images/locked.png)";
                     NewAvatar.classList.add("CharacterStone");
                     NewAvatar.Locked = true;
                 } else {
@@ -2090,7 +2086,7 @@
         updateProfilePicture();
     }
     async function SetAvatar(index) {
-        await fetch(window.location.origin+'/api/avatar/select', {
+        await fetch(base+'/api/avatar/select', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -2106,9 +2102,9 @@
         Stone.getElementsByClassName("CharacterStoneDMG")[0].children[0].innerHTML = Attack;
         Stone.getElementsByClassName("CharacterStoneHealth")[0].children[0].innerHTML = Health;
         if (Type != null && Type == "Tank") {
-            Stone.style.backgroundImage = "url('/images/Cards/"+Texture+".png'), url(images/shield.png)";
+            Stone.style.backgroundImage = "url("+base+"/images/Cards/"+Texture+".png), url(images/shield.png)";
         } else 
-            Stone.style.backgroundImage = "url('/images/Cards/"+Texture+".png')";
+            Stone.style.backgroundImage = "url("+base+"/images/Cards/"+Texture+".png)";
     }
     // Show ToolTip
     function ToolTip(Element, Title, Text, DisplayImagePath = null) {

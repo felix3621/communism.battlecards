@@ -2,6 +2,7 @@
 
 export { default as TurnamentGame } from './TurnamentGame.svelte';
 export { default as Card } from './Card.svelte';
-export { default as TextAutoSizeToArea} from './TextAutoSizeToArea.svelte';
+export { default as TextAutoSizeToArea } from './TextAutoSizeToArea.svelte';
+export { default as Styles } from './styles.svelte';
 
 export * from './store.js';

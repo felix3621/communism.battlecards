@@ -1,0 +1,39 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+    volumes:
+      - ./frontend:/frontend
+    networks:
+      - battlecards-net
+    hostname: frontend
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+    volumes:
+      - ./backend:/backend
+    networks:
+      - battlecards-net
+    hostname: backend
+    environment:
+      - MONGODB_URI=mongodb+srv://Felix:Felix@cluster0.58kx042.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - battlecards-net
+    depends_on:
+      - frontend
+      - backend
+    ports:
+      - "1000:80"
+    restart: unless-stopped
+
+networks:
+  battlecards-net:
+    driver: bridge
