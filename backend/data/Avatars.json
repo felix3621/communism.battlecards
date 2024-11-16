@@ -29,7 +29,7 @@
         "Description":"Professor Horning -Adrian",
         "Attack":2,
         "Health":18,
-        "Texture":"Professor Hornung",
+        "Texture":"Professor_Hornung",
         "AttackType":"Burst",
         "TargetType":"Enemy",
         "unlockRequirements":2

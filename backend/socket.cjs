@@ -9,10 +9,7 @@ const chat = require("./socket/chat/socket.cjs");
 const game = require("./socket/game/socket.cjs");
 
 // Create an HTTP server
-const httpServer = http.createServer((req, res) => {
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end('WebSocket server is running.');
-});
+const httpServer = http.createServer();
 
 httpServer.on('upgrade', (request, socket, head) => {
     const path = url.parse(request.url).pathname;

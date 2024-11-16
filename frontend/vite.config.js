@@ -1,7 +1,9 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
-const base = process.env.BASE_PATH || '';
+import config from './svelte.config';
+
+const base = config.kit.paths.base || '';
 
 export default defineConfig({
     //dev proxy

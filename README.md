@@ -8,6 +8,3 @@ start backend by: ```npm run backend```
 
 .env file in backend:
 - MONGODB_URI (table name: communism_battlecards)
-
-env properties for frontend:
-- BASE_PATH - the base path for the website (should start with / if defined)

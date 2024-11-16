@@ -535,7 +535,7 @@
             }
         }
 
-        socket = new WebSocket(base+'/socket/game?'+query);
+        socket = new WebSocket(base+'/socket/game?'+(query||''));
 
         // Event listener for when the connection is established
         socket.onopen = () => {
@@ -739,7 +739,7 @@
                         }
                     }
                 }
-                if (data.code) {
+                if (data.code) {newQueryStringnewQueryString
                     document.getElementById("code").innerText = data.code;
                     if (data.TournamentScreen) {
                         let currentParams = new URLSearchParams(window.location.search);
@@ -749,7 +749,7 @@
                             let newParams = { tournament: data.code};
                             let newQueryString = new URLSearchParams(newParams).toString();
                         
-                            let newUrl = window.location.pathname + '?' + newQueryString;
+                            let newUrl = base + '?' + newQueryString;
                         
                             history.pushState(newParams, '', newUrl);
                         }
@@ -767,7 +767,7 @@
         socket.onclose = (event) => {
             console.log('Connection closed', event);
             if (event.code == 1008) {
-                setTimeout(() => {window.location.href = "/"},1000)
+                setTimeout(() => {window.location.href = base},1000)
             } else {
                 setTimeout(createSocket, 1000)
             }

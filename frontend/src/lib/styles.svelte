@@ -156,7 +156,7 @@
         position: relative;
         aspect-ratio: 2.73/3.93;
         background-size: cover;
-        background-image: url(images/EmptyCard.png);
+        background-image: url(/images/EmptyCard.png);
     }
     :global(.ToolTip) {
         position: fixed;
