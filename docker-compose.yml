@@ -20,8 +20,8 @@ services:
       - ./backend:/backend
     networks:
       - battlecards-net
-    environment:
-      - MONGODB_URI=mongodb+srv://Felix:Felix@cluster0.58kx042.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+    env_file:
+      - ./.env
 
   nginx:
     image: nginx:latest

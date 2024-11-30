@@ -64,6 +64,12 @@ router.use(async (req, res, next) => {
     }
 })
 
+router.get('/ping', (req, res) => {
+    // Respond to health check
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('WebSocket server is online');
+});
+
 router.use('/account', require('./account.cjs'));
 router.use('/cards', require('./cards.cjs'));
 router.use('/avatar', require('./avatar.cjs'));
