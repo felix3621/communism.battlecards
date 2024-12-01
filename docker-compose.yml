@@ -20,8 +20,8 @@ services:
       - ./backend:/backend
     networks:
       - battlecards-net
-    env_file:
-      - ./.env
+    environment:
+      - MONGODB_URI=mongodb://root:password@mongo:27017/communism_battlecards
 
   nginx:
     image: nginx:latest
@@ -37,6 +37,23 @@ services:
     ports:
       - "1000:80"
 
+  mongodb:
+    image: mongo:latest
+    hostname: mongo
+    container_name: battlecards-data
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - battlecards-net
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=password
+      - MONGO_INITDB_DATABASE=communism_battlecards
+
 networks:
   battlecards-net:
     driver: bridge
+
+volumes:
+  mongo-data:
