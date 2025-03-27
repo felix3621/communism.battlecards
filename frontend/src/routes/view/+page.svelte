@@ -211,7 +211,7 @@
         border-bottom: 2.5px solid black;
     }
 </style>
-<img id="logo" src="{base}/images/BattlecardsLogo.png" on:click={()=>window.location.href=base}>
+<img id="logo" src="{base}/images/BattlecardsLogo.png" on:click={()=>goto('/')}>
 
 <div id="gameList">
     <div id="games">
@@ -233,13 +233,14 @@
 </div>
 
 <script>
-    import { onMount } from "svelte";
+    import { onMount, onDestroy } from "svelte";
     import { base } from '$app/paths';
+    import { goto } from '$app/navigation';
 
     var socket;
     var lastPing = 0;
-
-    setInterval(() => {
+    
+    const pingInterval = setInterval(() => {
         lastPing += 0.1;
     }, 100);
 
@@ -281,12 +282,14 @@
         if (user.ok) {
             let ud = await user.json();
             if (!ud.view)
-                window.location.href = base;
+                goto('/');
         } else
-            window.location.href = base+'/login';
+            goto('/login');
 
         createSocket();
-    })
+    });
+
+    onDestroy(() => clearInterval(pingInterval)); // doesn't clear when you navigate away
 
     async function autoScroll(element) {
         element.scroll({ top: element.scrollHeight, behavior: 'smooth' });

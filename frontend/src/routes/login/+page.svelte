@@ -138,6 +138,7 @@
 <script>
     import { onMount } from "svelte";
     import { base } from '$app/paths';
+    import { goto } from '$app/navigation';
 
     onMount(async() => {
         const user = await fetch(base+'/api/account/login', {
@@ -150,7 +151,7 @@
             })
         });
         if (user.ok) {
-            window.location.href = base;
+            goto('/');
         }
         
         document.getElementById('login_password').addEventListener("keypress",(e) => sendOnEnter(e, login))
@@ -183,7 +184,7 @@
             })
         })
         if (data.ok) {
-            window.location.href = base
+            goto('/');
         } else {
             document.getElementById("login_error").innerText = await data.text()
         }
@@ -205,7 +206,7 @@
             })
         })
         if (data.ok) {
-            window.location.href = base+"/tutorial_game?tutorial=Introduction"
+            goto('/tutorial_game?tutorial=Introduction');
         } else {
             document.getElementById("signup_error").innerText = await data.text()
         }

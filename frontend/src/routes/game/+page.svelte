@@ -481,11 +481,12 @@
         </div>
     {/if}
 </div>
-<button id="GoHome" on:click={()=>{window.location.href="/"}}>Go Home</button>
+<button id="GoHome" on:click={()=>goto('/')}>Go Home</button>
 <script>
     import { onMount } from "svelte";
     import { TurnamentGame } from "$lib";
     import { base } from '$app/paths';
+    import { goto } from '$app/navigation';
 
     // game data
     var EnemyAvatar;
@@ -767,7 +768,7 @@
         socket.onclose = (event) => {
             console.log('Connection closed', event);
             if (event.code == 1008) {
-                setTimeout(() => {window.location.href = base},1000)
+                setTimeout(() => {goto('/')},1000)
             } else {
                 setTimeout(createSocket, 1000)
             }

@@ -266,7 +266,7 @@
 <div id="Background">
 
 </div>
-<img id="logo" src="{base}/images/BattlecardsLogo.png" on:click={()=>window.location.href=base}>
+<img id="logo" src="{base}/images/BattlecardsLogo.png" on:click={()=>goto('/')}>
 
 <table id="adminConfig">
     <tr>
@@ -310,6 +310,7 @@
 <script>
     import { onMount } from "svelte";
     import { base } from '$app/paths';
+    import { goto } from '$app/navigation';
 
     var cards;
     var avatars;
@@ -478,7 +479,7 @@
                 <br>
             `;
             document.getElementById("DU_title").children[0].onblur = async () => {
-                await fetch(window.location.origin+'/api/admin/setDisplayName', {
+                await fetch(base+'/api/admin/setDisplayName', {
                     method: 'POST',
                     headers: {
                         "Content-Type": "application/json"
@@ -498,7 +499,7 @@
                 if (!e.shiftKey || !e.ctrlKey)
                     return
 
-                let newUser = await(await fetch(window.location.origin+'/api/admin/resetUser', {
+                let newUser = await(await fetch(base+'/api/admin/resetUser', {
                     method: 'POST',
                     headers: {
                         "Content-Type": "application/json"
@@ -844,7 +845,7 @@
         if (user.ok) {
             let ud = await user.json();
             if (!ud.admin) {
-                window.location.href = base+'/login';
+                goto('/login');
             }
 
             self = ud;
@@ -870,7 +871,7 @@
             }
             update()
         } else {
-            window.location.href = base+'/login';
+            goto('/login');
         }
         window.addEventListener('resize', () => SetAllFontSizeInArray(FontSizeArray));
         window.addEventListener('click', (e) => {

@@ -946,12 +946,12 @@
         <table class="content">
             <tr>
                 <td colspan="2">
-                    <button id="quickPlay" class="btn" on:click={() => window.location.href = base+"/game"}>Quick Play</button>
+                    <button id="quickPlay" class="btn" on:click={() => goto('/game')}>Quick Play</button>
                 </td>
             </tr>
             <tr>
                 <td colspan="2">
-                    <button id="privateGame" class="btn" on:click={() => window.location.href = base+"/game?private=true"}>Private Game</button>
+                    <button id="privateGame" class="btn" on:click={() => goto('/game?private=true')}>Private Game</button>
                 </td>
             </tr>
             <tr>
@@ -959,7 +959,7 @@
                     <input type="text" placeholder="code" id="gameCode">
                 </td>
                 <td style="width: 50%;">
-                    <button id="JoinByCodeBtn" class="btn" on:click={() => window.location.href = base+"/game?code="+encodeURIComponent(document.getElementById("gameCode").value)}>Join</button>
+                    <button id="JoinByCodeBtn" class="btn" on:click={() => goto('/game?code='+encodeURIComponent(document.getElementById("gameCode").value))}>Join</button>
                 </td>
             </tr>
         </table>
@@ -972,7 +972,7 @@
         <table class="content">
             <tr>
                 <td colspan="2">
-                    <button class="btn" id="createTournament" on:click={() => window.location.href = base+"/game?tournament=new"}>New tournament</button>
+                    <button class="btn" id="createTournament" on:click={() => goto('/game?tournament=new')}>New tournament</button>
                 </td>
             </tr>
             <tr>
@@ -980,7 +980,7 @@
                     <input type="text" placeholder="code" id="tournamentCode">
                 </td>
                 <td style="width: 50%;">
-                    <button id="JoinTournamentCodeBtn" class="btn" on:click={() => !!document.getElementById("tournamentCode").value ? window.location.href = base+"/game?tournament="+encodeURIComponent(document.getElementById("tournamentCode").value) : void(0)}>Join</button>
+                    <button id="JoinTournamentCodeBtn" class="btn" on:click={() => !!document.getElementById("tournamentCode").value ? goto('/game?tournament='+encodeURIComponent(document.getElementById("tournamentCode").value)) : void(0)}>Join</button>
                 </td>
             </tr>
         </table>
@@ -1021,7 +1021,7 @@
 </div>
 <div id="publicTournamentsList">
     {#each publicTournaments as tournament}
-        <button use:useTooltipEvent={{text: `Join tournament: ${tournament.code}`}} on:click={()=> window.location.href = base+"/game?tournament="+tournament.code}>
+        <button use:useTooltipEvent={{text: `Join tournament: ${tournament.code}`}} on:click={()=> goto('/game?tournament='+tournament.code)}>
             <h1>Code: {tournament.code}</h1>
             <p>Players: {tournament.playerCount}</p>
         </button>
@@ -1083,6 +1083,7 @@
 <script>
     import { Errors } from '$lib';
     import { base } from '$app/paths';
+    import { goto } from '$app/navigation';
     import {onDestroy, onMount} from "svelte";
     var FontSizeAdjusterArray = [];
     var SelectedAvatar;
@@ -1591,13 +1592,12 @@
                 tournamentLink.classList.add("tournamentButton");
                 document.getElementById("SettingsDropDown").appendChild(tournamentLink);
             }
-            /*
             if (ud.view) {
                 let viewLink = document.createElement("a");
-                viewLink.setAttribute("href",base+"view");
+                viewLink.setAttribute("href",base+"/view");
                 viewLink.innerText = "View";
                 document.getElementById("SettingsDropDown").appendChild(viewLink);
-            }*/
+            }
             if (ud.getAllCards) {
                 let gac = document.createElement("a");
                 gac.onclick = async () => {
@@ -1627,7 +1627,7 @@
             document.getElementById("level_display").innerText = ud.xp.level
             CreateTooltipEvent(document.getElementById("EXP_Bar").parentNode, "Level: "+ud.xp.level, (ud.xp.requiredXp-ud.xp.xp)+" xp remaining for next level<br>Total xp: "+ud.xp.totalXp);
         } else {
-            window.location.href = base+'/login';
+            goto('/login');
         }
         
         SetAllFontSizeInArray(FontSizeAdjusterArray);
@@ -1666,7 +1666,7 @@
 	    		'Content-Type': 'application/json',
 	    	}
         });
-        window.location.href = base+'/login';
+        goto('/login');
     }
 
     function SetExpFilLevel(Level) {

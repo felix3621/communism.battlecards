@@ -3,22 +3,19 @@ import { defineConfig } from 'vite';
 
 import config from './svelte.config';
 
-const base = config.kit.paths.base || '';
 
 export default defineConfig({
     //dev proxy
     server: {
         proxy: {
-            [base+'/api']: {
+            ['/api']: {
                 target: 'http://localhost:5174',
-                changeOrigin: true,
-                rewrite: (path) => path.replace(/^\/battlecards\/api/, '/api'),
+                changeOrigin: true
             },
-            [base+'/socket']: {
+            ['/socket']: {
                 target: 'http://localhost:5175',
                 changeOrigin: true,
-                ws: true,
-                rewrite: (path) => path.replace(/^\/battlecards\/socket/, '/socket'),
+                ws: true
             },
         }
     },

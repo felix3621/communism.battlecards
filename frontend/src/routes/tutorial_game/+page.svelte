@@ -478,6 +478,7 @@
     import { onMount } from "svelte";
     import { page } from '$app/stores';
     import { base } from '$app/paths';
+    import { goto } from '$app/navigation';
 
     // Tutorial Values
     var Tutorial = {
@@ -755,7 +756,7 @@
             if (data.ok) {
                 Tutorial.Stages = await data.json()
             } else {
-                window.location.href = "/";
+                goto('/');
             }
         } else {
             Tutorial.Stage = -1;
