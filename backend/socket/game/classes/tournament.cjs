@@ -62,7 +62,9 @@ class tournament {
                     if (this.Battles[i].looser && Object.is(this.Battles[i].looser, p1.username)) {
                         p1.out = true;
                     } else {
-                        this.Sockets.find(obj => Object.is(obj.username, this.Battles[i].p2.UserName)).wins++;
+                        const socket = this.Sockets.find(obj => Object.is(obj.username, this.Battles[i].p2.UserName));
+                        if (socket)
+                            socket.wins++;
                     }
                     if (!p1) {
                         this.Battles[i].EndGame(this.Battles[i].p1.UserName);
@@ -74,7 +76,9 @@ class tournament {
                     if (this.Battles[i].looser && Object.is(this.Battles[i].looser, p2.username)) {
                         p2.out = true;
                     } else {
-                        this.Sockets.find(obj => Object.is(obj.username, this.Battles[i].p1.UserName)).wins++;
+                        const socket = this.Sockets.find(obj => Object.is(obj.username, this.Battles[i].p1.UserName));
+                        if (socket)
+                            socket.wins++;
                     }
                     if (!p2) {
                         this.Battles[i].EndGame(this.Battles[i].p2.UserName);
@@ -193,6 +197,16 @@ class tournament {
                 }));
             }
         }
+    }
+    Kill() {
+        this.Battles.forEach((battle) => {
+            battle.EndGame();
+        });
+        while (this.Sockets.length > 0) {
+            this.Sockets[0].socket.close(1008, 'Tournament Ended');
+            this.Sockets.splice(0,1);
+        }
+        this.Alive = false;
     }
 }
 

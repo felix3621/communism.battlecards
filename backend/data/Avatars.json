@@ -4,7 +4,8 @@
         "Description":"He Weak But He Angry",
         "Attack":2,
         "Health":8,
-        "Texture":"sandbag"
+        "Texture":"sandbag",
+        "Type":"Tank"
     },
     {
         "Name":"FixFox",
@@ -12,7 +13,8 @@
         "Attack":8,
         "Health":12,
         "Texture":"FixFox",
-        "unlockRequirements":4
+        "unlockRequirements":4,
+        "Type":"Tank"
     },
     {
         "Name":"Ian",
@@ -22,7 +24,8 @@
         "Texture":"Ian",
         "AttackType":"Burst",
         "TargetType":"Enemy",
-        "unlockRequirements":3
+        "unlockRequirements":3,
+        "Type":"Tank"
     },
     {
         "Name":"Professor Hornung",
@@ -32,7 +35,8 @@
         "Texture":"Professor_Hornung",
         "AttackType":"Burst",
         "TargetType":"Enemy",
-        "unlockRequirements":2
+        "unlockRequirements":2,
+        "Type":"Tank"
     },
     {
         "Name":"BOB",
@@ -40,7 +44,8 @@
         "Attack":8,
         "Health":12,
         "Texture":"BOB",
-        "unlockRequirements":5
+        "unlockRequirements":5,
+        "Type":"Tank"
     },
     {
         "Name":"Felix",
@@ -48,7 +53,8 @@
         "Attack":9,
         "Health":11,
         "Texture":"Felix",
-        "unlockRequirements":5
+        "unlockRequirements":5,
+        "Type":"Tank"
     },
     {
         "Name":"Felixia",
@@ -56,6 +62,7 @@
         "Attack":7,
         "Health":13,
         "Texture":"Felixia",
-        "unlockRequirements":5
+        "unlockRequirements":5,
+        "Type":"Tank"
     }
 ]

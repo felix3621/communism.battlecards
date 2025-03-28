@@ -241,13 +241,13 @@ class battle {
     }
     EndGame(looser) {
         if (!this.dead && !this.Tournament) {
-            if (this.p1 && Object.is(this.p1.UserName, looser && this.p2)) {
+            if (this.p1 && Object.is(this.p1.UserName, looser) && this.p2) {
                 utilFunc.giveCard(this.p2.UserName);
 
                 utilFunc.giveXP(this.p1.UserName, data.config.lossPoints);
                 data.db.getClient().db("communism_battlecards").collection("accounts").updateOne({username: this.p1.UserName},{$set:{previousGame: {won: false, rewardXp: data.config.lossPoints}}});
 
-                utilFunc.giveXP(this.p2.UserName, winPoints);
+                utilFunc.giveXP(this.p2.UserName, data.config.winPoints);
                 data.db.getClient().db("communism_battlecards").collection("accounts").updateOne({username: this.p2.UserName},{$set:{previousGame: {won: true, rewardXp: data.config.winPoints}}});
 
                 logger.info(`'${this.code}' ended, winner: '${this.p2.UserName}', looser: ${this.p1.UserName}`, "socket/game/classes/battle");

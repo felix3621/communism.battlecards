@@ -3,7 +3,7 @@
         "Name":"Bandit",
         "Description":"A Bandit Ready To Kill",
         "Attack":2,
-        "Health":3,
+        "Health":2,
         "Cost":3,
         "Texture":"Bandit",
         "Type":"Tank"

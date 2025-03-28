@@ -9,8 +9,8 @@ RUN npm install
 
 COPY . .
 
-RUN npm run build --base=/
+# RUN npm run build --base=/
 
-EXPOSE 3000
+EXPOSE 5173
 
-CMD ["node", "build"]
+CMD ["npm", "run", "dev"]

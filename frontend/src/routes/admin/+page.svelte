@@ -266,7 +266,7 @@
 <div id="Background">
 
 </div>
-<img id="logo" src="{base}/images/BattlecardsLogo.png" on:click={()=>goto('/')}>
+<img id="logo" src="{base}/images/BattlecardsLogo.png" on:click={()=>window.location.href=base+"/"}>
 
 <table id="adminConfig">
     <tr>
@@ -310,7 +310,6 @@
 <script>
     import { onMount } from "svelte";
     import { base } from '$app/paths';
-    import { goto } from '$app/navigation';
 
     var cards;
     var avatars;
@@ -845,7 +844,7 @@
         if (user.ok) {
             let ud = await user.json();
             if (!ud.admin) {
-                goto('/login');
+                window.location.href = base+"/login";
             }
 
             self = ud;
@@ -871,7 +870,7 @@
             }
             update()
         } else {
-            goto('/login');
+            window.location.href = base+"/login";
         }
         window.addEventListener('resize', () => SetAllFontSizeInArray(FontSizeArray));
         window.addEventListener('click', (e) => {

@@ -1,7 +1,7 @@
 {
     "lockdown": false,
-    "getAllCards": false,
-    "getXp": false,
+    "getAllCards": true,
+    "getXp": true,
     "getXpAmount": 5562,
     "testUsers": false,
     "defaultAvatar": 0,

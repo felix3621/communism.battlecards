@@ -37,7 +37,7 @@
     }
 </style>
 
-<img id="logo" src="{base}/images/BattlecardsLogo.png" on:click={()=>goto('/')}>
+<img id="logo" src="{base}/images/BattlecardsLogo.png" on:click={()=>window.location.href=base+"/"}>
 
 <div id="settingsPanel">
     <h1>Settings</h1>
@@ -78,7 +78,6 @@
 <script>
     import { onMount } from "svelte";
     import { base } from '$app/paths';
-    import { goto } from '$app/navigation';
 
     function identicalPasswordCheck() {
         let newPassword = document.getElementById("new_password");
@@ -99,7 +98,7 @@
         });
 
         if (!user.ok)
-            goto('/login');
+            window.location.href=base+"/login"
 
         let ud = await user.json()
 

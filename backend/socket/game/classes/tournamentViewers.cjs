@@ -22,7 +22,7 @@ class tournamentViewer {
             } else {
                 this.RtnData.errors.push("Unknown Tournament Game");
             }
-        } else if (typeof msg.createTournament === "boolean") {
+        } else if (msg.createTournament) {
             data.game.tournaments.push(new c_tournament.tournament(true));
             let code = auth.encrypt("P_"+data.config.tournamentID);
             data.game.tournaments[data.game.tournaments.length-1].code = code;
@@ -31,12 +31,13 @@ class tournamentViewer {
                 data.game.tournaments[data.game.tournaments.length-1].public = true;
             data.config.tournamentID++;
             logger.info(`'${this.username}' created new ${msg.createTournament ? "public" : ""} tournament: '${code}'`, "socket/game/classes/tournamentViewers");
-        } if (typeof msg.startBattles === "boolean") {
+        } else if (msg.startBattles) {
             const SelectedTournament = getTournamentByCode(this.SelectedTournament);
             if (SelectedTournament) {
                 if (!SelectedTournament.battles || Object.is(SelectedTournament.battles.length,0)) {
                     if (SelectedTournament.Sockets.length>=2) {
                         SelectedTournament.StartBattles();
+                        logger.info(`'${this.SelectedTournament}': Started by '${this.username}'`, "socket/game/classes/tournamentViewers")
                     } else {
                         this.RtnData.Errors.push(`there are less than 2 players in this tournament`);
                     }
@@ -45,6 +46,14 @@ class tournamentViewer {
                 }
             } else {
                 this.RtnData.Errors.push(`you have not selected a tournament`);
+            }
+        } else if (msg.killTournament) {
+            const SelectedTournament = getTournamentByCode(msg.killTournament);
+            if (SelectedTournament) {
+                SelectedTournament.Kill();
+                logger.warn(`'${msg.killTournament}': Killed by '${this.username}'`, "socket/game/classes/tournamentViewers")
+            } else {
+                this.RtnData.Errors.push(`unable to find the tournament by code ${msg.killTournament}`);
             }
         }
     }

@@ -342,7 +342,6 @@
     import { Card } from '$lib';
     import { onMount, onDestroy } from "svelte";
     import { base } from '$app/paths';
-    import { goto } from '$app/navigation';
 
     var ActivationTIme = 0;
     var CurrentStage = 0;
@@ -588,7 +587,7 @@
             }
         }
         if (CurrentStage == 3 && ScrollingElements.length == 0)
-            goto('/');
+            window.location.href=base+"/"
             //CurrentStage = 0;
         animationId = requestAnimationFrame(AnimationLoop);
     }
@@ -616,13 +615,13 @@
     }
     onMount(async() => {
         const cardRequest = await fetch(base+'/api/data/cards', {
-            method: 'POST',
+            method: 'GET',
             headers: {
 	    		'Content-Type': 'application/json',
 	    	}
         });
         const avatarRequest = await fetch(base+'/api/data/avatars', {
-            method: 'POST',
+            method: 'GET',
             headers: {
 	    		'Content-Type': 'application/json',
 	    	}

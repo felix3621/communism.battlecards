@@ -671,7 +671,7 @@
         background-size: contain;
         pointer-events: none;
     }
-    :global(.EmptyCard) {
+    :global(#CardHolder .EmptyCard) {
         width: 100px;
         position: fixed;
         transform: translate(-50%,-100%);
@@ -869,7 +869,7 @@
         --glowSize: 1mm;
         font-size: 20px;
     }
-    @-keyframes glow {
+    @keyframes glow {
         from {
             text-shadow: 0 0 var(--glowSize, 0.6mm) var(--color);
         }
@@ -946,12 +946,12 @@
         <table class="content">
             <tr>
                 <td colspan="2">
-                    <button id="quickPlay" class="btn" on:click={() => goto('/game')}>Quick Play</button>
+                    <button id="quickPlay" class="btn" on:click={() => window.location.href=base+"/game"}>Quick Play</button>
                 </td>
             </tr>
             <tr>
                 <td colspan="2">
-                    <button id="privateGame" class="btn" on:click={() => goto('/game?private=true')}>Private Game</button>
+                    <button id="privateGame" class="btn" on:click={() => window.location.href=base+"/game?private=true"}>Private Game</button>
                 </td>
             </tr>
             <tr>
@@ -959,7 +959,7 @@
                     <input type="text" placeholder="code" id="gameCode">
                 </td>
                 <td style="width: 50%;">
-                    <button id="JoinByCodeBtn" class="btn" on:click={() => goto('/game?code='+encodeURIComponent(document.getElementById("gameCode").value))}>Join</button>
+                    <button id="JoinByCodeBtn" class="btn" on:click={() => window.location.href=base+"/game?code="+encodeURIComponent(document.getElementById("gameCode").value)}>Join</button>
                 </td>
             </tr>
         </table>
@@ -972,7 +972,7 @@
         <table class="content">
             <tr>
                 <td colspan="2">
-                    <button class="btn" id="createTournament" on:click={() => goto('/game?tournament=new')}>New tournament</button>
+                    <button class="btn" id="createTournament" on:click={() => window.location.href=base+"/game?tournament=new"}>New tournament</button>
                 </td>
             </tr>
             <tr>
@@ -980,7 +980,7 @@
                     <input type="text" placeholder="code" id="tournamentCode">
                 </td>
                 <td style="width: 50%;">
-                    <button id="JoinTournamentCodeBtn" class="btn" on:click={() => !!document.getElementById("tournamentCode").value ? goto('/game?tournament='+encodeURIComponent(document.getElementById("tournamentCode").value)) : void(0)}>Join</button>
+                    <button id="JoinTournamentCodeBtn" class="btn" on:click={() => !!document.getElementById("tournamentCode").value ? window.location.href=base+"/game?tournament="+encodeURIComponent(document.getElementById("tournamentCode").value) : void(0)}>Join</button>
                 </td>
             </tr>
         </table>
@@ -1005,13 +1005,13 @@
         }
     }}></div>
 </div>
-<div id="credits" on:click={() => window.location.href = base+"/credits"}>Credits</div>
+<div id="credits" on:click={() => window.location.href=base+"/credits"}>Credits</div>
 <div id="Chat">
     <div id="MessagesDisplay">
         <div id="MessagesDisplayReverse">
             {#each MessagesStored as text, index (index)}
                 <!--MessagesStored getFormatedText(text)-->
-                <p use:setFormatedText={text}></p>
+                <p use:setFormatedText={text} transition:fly={{duration: 250, x: 200}}></p>
             {/each}
         </div>
     </div>
@@ -1021,7 +1021,7 @@
 </div>
 <div id="publicTournamentsList">
     {#each publicTournaments as tournament}
-        <button use:useTooltipEvent={{text: `Join tournament: ${tournament.code}`}} on:click={()=> goto('/game?tournament='+tournament.code)}>
+        <button use:useTooltipEvent={{text: `Join tournament: ${tournament.code}`}} on:click={()=> window.location.href=base+"/game?tournament="+tournament.code}>
             <h1>Code: {tournament.code}</h1>
             <p>Players: {tournament.playerCount}</p>
         </button>
@@ -1083,8 +1083,8 @@
 <script>
     import { Errors } from '$lib';
     import { base } from '$app/paths';
-    import { goto } from '$app/navigation';
     import {onDestroy, onMount} from "svelte";
+    import {fly, slide} from 'svelte/transition';
     var FontSizeAdjusterArray = [];
     var SelectedAvatar;
     var socket;
@@ -1514,7 +1514,7 @@
             let FallingCard = CreateEmptyCard();
             FallingCard.style.top = "-50px";
             FallingCard.style.left = (Math.random() * document.body.offsetWidth)+"px";
-            document.getElementById("Background").appendChild(FallingCard);
+            document.getElementById("CardHolder").appendChild(FallingCard);
             FallingCards.push(FallingCard);
         } else {
             NextCardSpawnDelay -= deltaTime;
@@ -1592,12 +1592,14 @@
                 tournamentLink.classList.add("tournamentButton");
                 document.getElementById("SettingsDropDown").appendChild(tournamentLink);
             }
+            /*
             if (ud.view) {
                 let viewLink = document.createElement("a");
                 viewLink.setAttribute("href",base+"/view");
                 viewLink.innerText = "View";
                 document.getElementById("SettingsDropDown").appendChild(viewLink);
             }
+            */
             if (ud.getAllCards) {
                 let gac = document.createElement("a");
                 gac.onclick = async () => {
@@ -1627,7 +1629,7 @@
             document.getElementById("level_display").innerText = ud.xp.level
             CreateTooltipEvent(document.getElementById("EXP_Bar").parentNode, "Level: "+ud.xp.level, (ud.xp.requiredXp-ud.xp.xp)+" xp remaining for next level<br>Total xp: "+ud.xp.totalXp);
         } else {
-            goto('/login');
+            window.location.href=base+"/login"
         }
         
         SetAllFontSizeInArray(FontSizeAdjusterArray);
@@ -1666,7 +1668,7 @@
 	    		'Content-Type': 'application/json',
 	    	}
         });
-        goto('/login');
+        window.location.href=base+"/login"
     }
 
     function SetExpFilLevel(Level) {

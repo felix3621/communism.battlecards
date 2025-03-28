@@ -167,7 +167,7 @@
     <div id="CandleHolder"></div>
     <div id="CardHolder"></div>
 </div>
-<img id="logo" src="{base}/images/BattlecardsLogo.png" on:click={()=>goto('/')}>
+<img id="logo" src="{base}/images/BattlecardsLogo.png" on:click={()=>window.location.href=base+"/"}>
 <div id="TournamensPanel" class="{minimizeTournamentsPanel?'Open':''}">
     <button id="MinimizeBtn" on:click={()=>minimizeTournamentsPanel=!minimizeTournamentsPanel}><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M0 96C0 78.3 14.3 64 32 64l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 128C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 288c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32L32 448c-17.7 0-32-14.3-32-32s14.3-32 32-32l384 0c17.7 0 32 14.3 32 32z"/></svg></button>
     <button id="AddTournament" on:click={()=>createTournament()}>New Tournament</button>
@@ -177,6 +177,7 @@
             <h1>{tournament.Code}</h1>
             <p>Players: {tournament.Players}</p>
         </div>
+        <button on:click={()=>killTournament(tournament.Code)}>kill</button>
     {/each}
 </div>
 {#if selectedTournamentGameData}
@@ -202,8 +203,7 @@
 <script>
     import { TurnamentGame, Errors } from "$lib";
     import { onMount, onDestroy } from "svelte";
-    import { base } from '$app/paths';
-    import { goto } from '$app/navigation';
+    import { base } from '$app/paths'
 
     let self;
     let tournamentGames = [];
@@ -238,6 +238,14 @@
             $Errors.push({text:"Socket is not connected",time:2});
         }
     }
+    function killTournament(code) {
+        console.log(code);
+        if (socket && socket.readyState == WebSocket.OPEN) {
+            socket.send(JSON.stringify({killTournament: code}));
+        } else {
+            $Errors.push({text:"Socket is not connected", time:2});
+        }
+    }
 
     onMount(async() => {
         const user = await fetch(base+'/api/account/login', {
@@ -249,7 +257,7 @@
         if (user.ok) {
             let ud = await user.json();
             if (!ud.admin) {
-                goto('/login');
+                window.location.href=base+"/login"
             }
 
             self = ud;
@@ -263,7 +271,7 @@
                 cancelAnimationFrame(animationId);
             };
         } else {
-            goto('/login');
+            window.location.href=base+"/login"
         }
     });
     onDestroy(() => {
